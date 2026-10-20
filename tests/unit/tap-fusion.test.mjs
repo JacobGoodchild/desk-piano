@@ -137,3 +137,43 @@ test('a note stops when its finger slides sideways off the key', () => {
   assert.equal(ctx.played.length, 1);
   assert.equal(ctx.stopped.length, 1, 'stopped after sliding');
 });
+
+test('edge cases: hand vanishes mid-note → note stops', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 900; t += 33) {
+    if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+    const hands = t < 600 ? [fakeHand('A', { x: 210, y: 300 }, press([8], 300, 2000)(t))] : [];
+    ctx.fusion.onFrame({ t, hands });
+  }
+  assert.equal(ctx.played.length, 1);
+  assert.equal(ctx.stopped.length, 1);
+});
+
+test('edge cases: a finger resting down for ages is released after the safety time', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 5000; t += 33) {
+    if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+    ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, press([8], 300, 99999)(t))] });
+  }
+  assert.equal(ctx.stopped.length, 1);
+});
+
+test('edge cases: a tap whose camera frames never arrive is dropped, not played late', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 297; t += 33) ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, press([8], 300)(t))] });
+  ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+  ctx.fusion.tick(700); // camera stalled
+  for (let t = 700; t <= 1000; t += 33) ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, press([8], 300)(t))] });
+  assert.equal(ctx.played.length, 0);
+  assert.equal(ctx.fusion.stats.tapsRejected, 1);
+});
+
+test('edge cases: no hands at all → taps rejected, nothing played', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 600; t += 33) {
+    if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+    ctx.fusion.onFrame({ t, hands: [] });
+  }
+  ctx.fusion.tick(2000);
+  assert.equal(ctx.played.length, 0);
+});
