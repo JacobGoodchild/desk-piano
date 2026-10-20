@@ -48,3 +48,13 @@ test('sustained speech-like sound produces few or no onsets', () => {
   const on = run(place(1.2, [{ at: 0.1, sound: speechSound(SR, 0.1, 1) }]));
   assert.ok(on.length <= 2, `got ${on.length}`);
 });
+
+test('velocity mapper learns a quiet player\'s range', async () => {
+  const { VelocityMapper } = await import('../../src/onset.js');
+  const vm = new VelocityMapper(0.5);
+  // a player whose taps are all quite soft (mic far away): peaks 0.002 .. 0.02
+  for (let i = 0; i < 30; i++) vm.add(0.002 * Math.pow(10, (i % 10) / 9));
+  const soft = vm.map(0.002), loud = vm.map(0.02);
+  assert.ok(loud > 0.75, `their loudest tap is loud: ${loud}`);
+  assert.ok(soft < 0.35, `their softest is soft: ${soft}`);
+});

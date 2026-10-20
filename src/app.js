@@ -4,7 +4,7 @@
 import { Piano } from './piano.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
-import { peakToVelocity } from './onset.js';
+import { VelocityMapper } from './onset.js';
 import { paperLayout, markerCorners, paperToKey } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
 import { fitHomography, applyH, invertH } from './homography.js';
@@ -36,6 +36,7 @@ const state = {
 };
 
 const strikes = new StrikeDetector();
+const velocityMap = new VelocityMapper(settings.sensitivity);
 const fusion = new Fusion({
   keyFor: (f) => keyForPoint(f.x, f.y),
   play: (midi, vel, info) => noteOn(midi, vel, info),
@@ -125,7 +126,8 @@ async function startMic() {
 }
 
 function handleTap({ t, peak, velocity }) {
-  const vel = velocity ?? peakToVelocity(peak, settings.sensitivity);
+  let vel = velocity;
+  if (vel == null) { vel = velocityMap.map(peak); velocityMap.add(peak); }
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.calib) return; // calibration taps are handled from the camera landing
@@ -174,7 +176,8 @@ const detCanvas = document.createElement('canvas');
 function processVideoFrame(t) {
   const video = $('video');
   frameCount++;
-  if (settings.mode === 'paper' && frameCount % 3 === 0) findPaper(video);
+  // look for the paper often until found, then every 10th frame (it rarely moves)
+  if (settings.mode === 'paper' && frameCount % (state.markersSeen.size >= 4 ? 10 : 3) === 0) findPaper(video);
   if (landmarker && !SIM) {
     const res = landmarker.detectForVideo(video, t);
     const hands = handIds.assign((res.landmarks || []).map((lm) => ({
@@ -410,6 +413,7 @@ function applySettings() {
   $('camWrap').classList.toggle('mirror', !!settings.mirror);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   fusion.speakerMode = settings.output === 'speaker';
+  velocityMap.sensitivity = settings.sensitivity;
   if (state.micNode) state.micNode.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });
   updatePedal();
   drawPiano();
@@ -500,10 +504,18 @@ async function start() {
   try { await startCamera(); } catch (e) { problems.push('camera'); console.warn('camera', e); $('camMsg').textContent = 'No camera'; }
   state.started = true;
   $('start').textContent = 'Running';
+  keepAwake();
   applySettings();
   setStatus(problems.length ? `Could not start the ${problems.join(' and ')}. You can still play with the computer keyboard.` : 'Ready – tap your fingers on the paper keys. Nothing is recorded or uploaded.');
   if (settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
 }
+
+// keep the phone screen on while playing
+let wakeLock = null;
+async function keepAwake() {
+  try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { /* not allowed */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.started) keepAwake(); });
 
 $('start').onclick = start;
 bindSettings();

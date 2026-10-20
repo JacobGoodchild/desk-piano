@@ -71,3 +71,25 @@ export function peakToVelocity(peak, sensitivity = 0.5) {
   const v = (db - lo) / (hi - lo);
   return Math.min(1, Math.max(0.08, 0.08 + 0.92 * v));
 }
+
+// Learns the player's own range of tap loudness (desks, paper and microphones differ a lot) so
+// their softest taps come out pp and their hardest ff. Until enough taps are heard it uses the
+// fixed mapping above.
+export class VelocityMapper {
+  constructor(sensitivity = 0.5) { this.sensitivity = sensitivity; this.dbs = []; }
+  add(peak) {
+    this.dbs.push(20 * Math.log10(Math.max(peak, 1e-6)));
+    if (this.dbs.length > 60) this.dbs.shift();
+  }
+  map(peak) {
+    const fixed = peakToVelocity(peak, this.sensitivity);
+    if (this.dbs.length < 8) return fixed;
+    const sorted = [...this.dbs].sort((a, b) => a - b);
+    const hi = sorted[Math.floor(sorted.length * 0.9)] + 3;
+    const lo = Math.min(sorted[Math.floor(sorted.length * 0.1)] - 3, hi - 24);
+    const db = 20 * Math.log10(Math.max(peak, 1e-6));
+    const learnt = Math.min(1, Math.max(0.08, 0.1 + 0.9 * ((db - lo) / (hi - lo))));
+    const w = Math.min(1, (this.dbs.length - 7) / 12); // blend in gradually
+    return fixed * (1 - w) + learnt * w;
+  }
+}
