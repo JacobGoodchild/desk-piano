@@ -177,3 +177,20 @@ test('edge cases: no hands at all → taps rejected, nothing played', () => {
   ctx.fusion.tick(2000);
   assert.equal(ctx.played.length, 0);
 });
+
+test('auto-sync: taps that consistently arrive late (mic/camera clock offset) get shifted back', () => {
+  const ctx = setup();
+  const fingers = [4, 8, 12, 16, 20];
+  const N = 80, gap = 300, LATE = 60;
+  let t = 0;
+  const strikes = Array.from({ length: N }, (_, i) => ({ tip: fingers[i % 5], at: 300 + i * gap }));
+  let si = 0;
+  for (; t <= 300 + N * gap + 300; t += 33) {
+    while (si < strikes.length && strikes[si].at + LATE <= t) { ctx.fusion.onTap({ t: strikes[si].at + LATE, velocity: 0.6 }); si++; }
+    const l = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+    for (const s of strikes) if (t >= s.at - 100 && t < s.at + 150) l[s.tip] = Math.min(l[s.tip], press([s.tip], s.at, 150)(t)[s.tip]);
+    ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, l)] });
+    ctx.fusion.tick(t);
+  }
+  assert.ok(ctx.fusion.syncOffset < -15, `syncOffset ${ctx.fusion.syncOffset}`);
+});

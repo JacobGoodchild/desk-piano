@@ -81,7 +81,7 @@ function tapsFromAudio(samples, sensitivity) {
 
 // Replays one clip's frames + taps through the same logic as the app, in time order,
 // with camera results arriving `latency` ms after the frame was captured.
-function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {}, resolverOpts = {}, tipOffset = TIP_OFFSET_MM, engine = 'tap' }) {
+function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {}, resolverOpts = {}, tipOffset = TIP_OFFSET_MM, engine = 'tap', avOffset = 0 }) {
   const layout = paperLayout(variant);
   let paperInv = null, paperFrames = 0, markerCounts = [];
   const detector = new StrikeDetector(strikeOpts);
@@ -98,10 +98,10 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     stop: () => {},
     opts: fusionOpts,
   };
-  const fusion = engine === 'tap' ? new TapFusion({ ...handlers, resolverOpts }) : new Fusion(handlers);
+  const fusion = engine === 'tap' ? new TapFusion({ ...handlers, resolverOpts, opts: { autoSync: !flag('no-sync'), ...fusionOpts } }) : new Fusion(handlers);
   const events = [];
   for (const f of frames) events.push({ at: f.t + latency, kind: 'frame', f });
-  for (const tp of taps) events.push({ at: tp.t + 3, kind: 'tap', tp });
+  for (const tp0 of taps) { const tp = { ...tp0, t: tp0.t + avOffset }; events.push({ at: tp.t + 3, kind: 'tap', tp }); }
   events.sort((a, b) => a.at - b.at);
   for (const e of events) {
     if (e.kind === 'frame') {
@@ -223,7 +223,7 @@ async function main() {
     const audio = decodeAudio(file);
     const taps = tapsFromAudio(audio, sensitivity);
     analysed.push({ clip, frames, audio, exp });
-    const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)), tipOffset: Number(opt('tip-offset', TIP_OFFSET_MM)), engine: opt('engine', 'tap') });
+    const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)), tipOffset: Number(opt('tip-offset', TIP_OFFSET_MM)), engine: opt('engine', 'tap'), avOffset: Number(opt('av-offset', 0)) });
     const groups = groupChords(notes);
     const handFrames = frames.filter((f) => f.hands.length).length;
     const sc = exp ? score(exp, groups) : null;
@@ -291,8 +291,10 @@ function sweep(analysed, { variant, latency }) {
       if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity ?? 0.65));
       const { notes } = replay(a.frames, tapCache.get(key), {
         variant, latency,
-        resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset'].includes(k))),
+        resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset', 'avOffset', 'autoSync'].includes(k))),
         tipOffset: c.tipOffset ?? TIP_OFFSET_MM,
+        avOffset: c.avOffset ?? 0,
+        fusionOpts: { autoSync: c.autoSync ?? true },
       });
       const groups = groupChords(notes);
       if (!a.exp) continue;

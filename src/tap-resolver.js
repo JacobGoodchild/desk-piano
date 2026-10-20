@@ -123,6 +123,28 @@ export class TapResolver {
     return kept;
   }
 
+  // When did this finger stop coming down (velocity fell below 25% of its peak), around tap time t?
+  // Needs frames up to t+120 ms. Returns a time or null. Used to keep sound and picture in sync.
+  landingTime(t, pick) {
+    const ser = [];
+    for (const f of this.frames) {
+      if (f.t < t - 200 || f.t > t + 120) continue;
+      const h = f.hands.find((x) => x.label === pick.hand);
+      if (h) ser.push({ t: f.t, y: h.points[pick.tip].y / handSize(h.points) });
+    }
+    if (ser.length < 5) return null;
+    const v = [];
+    for (let i = 1; i < ser.length; i++) v.push({ t: (ser[i].t + ser[i - 1].t) / 2, v: (ser[i].y - ser[i - 1].y) / ((ser[i].t - ser[i - 1].t) / 1000) });
+    let pk = 0;
+    for (let i = 1; i < v.length; i++) if (v[i].v > v[pk].v) pk = i;
+    if (v[pk].v < 0.5) return null;
+    const lim = v[pk].v * 0.25;
+    for (let i = pk + 1; i < v.length; i++) {
+      if (v[i].v < lim) { const a = v[i - 1], b = v[i]; return a.t + ((a.v - lim) / (a.v - b.v)) * (b.t - a.t); }
+    }
+    return null;
+  }
+
   // For teaching: the movement pattern of the hand that moved most at time t (5 numbers, thumb →
   // little finger), or null.
   pattern(t) {

@@ -8,6 +8,14 @@ export const TAP_FUSION_DEFAULTS = {
   echoMs: 250, // speaker mode: taps this soon after the app's own note need a clearer finger
   echoLeadFactor: 1.8,
   maxHoldMs: 4000, // safety: release a note if its finger was lost track of
+  // Auto-sync: on Jacob's (in-sync) clips the pressing finger stops ~17 ms before the tap is heard.
+  // If the live app sees a different typical gap, the microphone and camera clocks are offset (each
+  // device has its own delays) and taps are shifted to line up again. Accuracy is very sensitive to
+  // this (±15 ms cost 4–10 points on the clips).
+  autoSync: true,
+  syncTargetMs: -17,
+  syncSamples: 25,
+  syncMaxMs: 120,
 };
 
 export class TapFusion {
@@ -19,6 +27,8 @@ export class TapFusion {
     this.resolver = new TapResolver(resolverOpts);
     this.speakerMode = false;
     this.pending = [];
+    this.syncOffset = 0; // ms added to tap times
+    this.syncQueue = []; this.syncData = [];
     this.sounding = new Map(); // finger id → { midi, landY, size, t }
     this.lastPlayT = -1e9;
     this.stats = { taps: 0, tapsRejected: 0, notes: 0 };
@@ -27,7 +37,7 @@ export class TapFusion {
 
   onTap(tap) {
     this.stats.taps++;
-    this.pending.push(tap);
+    this.pending.push({ ...tap, t: tap.t + this.syncOffset });
     this._resolvePending();
   }
 
@@ -41,6 +51,26 @@ export class TapFusion {
       }
     }
     this._resolvePending();
+    this._measureSync();
+  }
+
+  _measureSync() {
+    if (!this.o.autoSync) return;
+    const r = this.resolver;
+    while (this.syncQueue.length && r.latestT() >= this.syncQueue[0].t + 120) {
+      const { t, pick } = this.syncQueue.shift();
+      const land = r.landingTime(t, pick);
+      if (land == null) continue;
+      this.syncData.push(land - t);
+      if (this.syncData.length >= this.o.syncSamples) {
+        const sorted = [...this.syncData].sort((a, b) => a - b);
+        const err = sorted[sorted.length >> 1] - this.o.syncTargetMs; // >0: picture runs late vs sound
+        if (Math.abs(err) > 15) {
+          this.syncOffset = Math.max(-this.o.syncMaxMs, Math.min(this.o.syncMaxMs, this.syncOffset + Math.max(-30, Math.min(30, err * 0.5))));
+        }
+        this.syncData = [];
+      }
+    }
   }
 
   tick(now) {
@@ -72,8 +102,9 @@ export class TapFusion {
         this.stats.notes++;
         this.log.push({ t: tap.t, midi, vel: tap.velocity, how: 'tap', fingerId: p.id });
         if (this.log.length > 200) this.log.shift();
-        this.play(midi, tap.velocity, { fingerId: p.id, how: 'tap', t: tap.t, tap });
+        this.play(midi, tap.velocity, { fingerId: p.id, how: 'tap', t: tap.t - this.syncOffset, tap });
         played++;
+        if (!p.repeat && this.syncQueue.length < 50) this.syncQueue.push({ t: tap.t, pick: p });
       }
       if (!played) this.stats.tapsRejected++;
     }

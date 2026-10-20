@@ -576,6 +576,7 @@ function drawDebug() {
     `camera: ${fps().toFixed(0)} frames/s tracked, hand tracking ${state.trackMs.toFixed(0)} ms per frame (${state.delegate || '–'})`,
     `audio out: base ${fmt(state.ctx && state.ctx.baseLatency * 1000)} ms, output ${fmt(state.ctx && state.ctx.outputLatency * 1000)} ms, input ${fmt(state.inputLatencyMs)} ms`,
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
+    `sound/picture sync correction: ${engines.tap.syncOffset.toFixed(0)} ms`,
     `engine ${settings.engine}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
     `paper markers: ${[...state.markersSeen].join(',') || 'none'}`,
     `last tap, finger scores (thumb→little): ${(() => { const ls = engines.tap.resolver.lastScores; return ls ? ls.fingers.map((f) => f.score).join(' ') : '–'; })()}`,
