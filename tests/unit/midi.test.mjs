@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Recorder } from '../../src/midi.js';
+
+test('recorder writes a valid standard MIDI file', () => {
+  const r = new Recorder();
+  const events = [{ t: 0, type: 'on', a: 60, b: 0.8 }, { t: 500, type: 'off', a: 60 }, { t: 500, type: 'pedal', a: true }, { t: 1000, type: 'on', a: 64, b: 0.5 }];
+  const f = r.toMidiFile(events);
+  assert.equal(String.fromCharCode(...f.slice(0, 4)), 'MThd');
+  assert.equal(String.fromCharCode(...f.slice(14, 18)), 'MTrk');
+  const len = (f[18] << 24) | (f[19] << 16) | (f[20] << 8) | f[21];
+  assert.equal(len, f.length - 22);
+  // first note-on: delta 0, 0x90 60 velocity ~102
+  const i = 22 + 7; // after tempo meta event
+  assert.deepEqual([...f.slice(i, i + 4)], [0, 0x90, 60, 102]);
+  // the end-of-track marker
+  assert.deepEqual([...f.slice(-3)], [0xff, 0x2f, 0x00]);
+});

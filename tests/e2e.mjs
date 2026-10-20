@@ -81,6 +81,20 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   assert.equal(played[0][0], 'C4');
   assert.equal(played[1][0], 'C5');
   assert.ok(played[1][1] > played[0][1], 'shift = louder');
+  // record → play back → save
+  await page.click('#recBtn');
+  await page.keyboard.press('KeyD');
+  await page.waitForTimeout(150);
+  await page.click('#recBtn');
+  assert.ok(await page.isVisible('#playBtn'));
+  const n0 = await page.evaluate(() => window.deskPiano.state.played.length);
+  await page.click('#playBtn');
+  await page.waitForFunction((n) => window.deskPiano.state.played.length > n, n0, { timeout: 5000 });
+  const last = await page.evaluate(() => window.deskPiano.state.played.slice(-1)[0]);
+  assert.equal(last.name, 'E4');
+  assert.equal(last.how, 'playback');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.click('#saveBtn')]);
+  assert.match(download.suggestedFilename(), /\.mid$/);
 });
 
 // Synthetic paper + hands: build a camera view of the paper, inject the markers the camera

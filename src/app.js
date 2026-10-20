@@ -4,6 +4,7 @@
 import { Piano } from './piano.js';
 import { SYNTHS, INSTRUMENTS } from './synths.js';
 import { makeReverbBus } from './reverb.js';
+import { MidiOut, Recorder } from './midi.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
@@ -38,6 +39,8 @@ const state = {
   video: { w: 0, h: 0 },
 };
 
+const midiOut = new MidiOut();
+const recorder = new Recorder();
 const strikes = new StrikeDetector();
 const velocityMap = new VelocityMapper(settings.sensitivity);
 const handlers = {
@@ -65,6 +68,7 @@ function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
   if (state.inst) state.inst.setSustain(on);
+  if (on !== state.pedalWas) { midiOut.pedal(on); recorder.add('pedal', on); state.pedalWas = on; }
 }
 
 function noteOn(midi, vel, info = {}) {
@@ -75,6 +79,8 @@ function noteOn(midi, vel, info = {}) {
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   if (state.inst) state.inst.noteOn(midi, vel);
+  midiOut.noteOn(midi, vel);
+  recorder.add('on', midi, vel);
   // tap → sound delay: time since the tap was heard + the audio output path
   if (info.t != null && state.ctx && info.how && info.how.startsWith('tap')) {
     const out = ((state.ctx.baseLatency || 0) + (state.ctx.outputLatency || 0)) * 1000;
@@ -89,6 +95,8 @@ function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
   if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
   if (state.inst) state.inst.noteOff(midi);
+  midiOut.noteOff(midi);
+  recorder.add('off', midi);
   drawPiano();
 }
 
@@ -560,6 +568,46 @@ function bindSettings() {
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
+  // MIDI output: asking for MIDI access only when the player chooses to
+  const fillMidi = (outs) => {
+    const sel = form.elements.midiOut;
+    while (sel.options.length > 1) sel.remove(1);
+    outs.forEach((o) => sel.add(new Option(o.name, o.id)));
+    sel.value = outs.some((o) => o.id === settings.midiOut) ? settings.midiOut : '';
+    midiOut.select(sel.value);
+  };
+  $('midiEnable').onclick = async () => {
+    try { fillMidi(await midiOut.enable()); } catch (e) { $('midiEnable').textContent = 'MIDI not available'; console.warn(e); }
+  };
+  form.elements.midiOut.addEventListener('change', () => midiOut.select(settings.midiOut));
+  // recording
+  $('recBtn').onclick = () => {
+    if (!recorder.recording) { recorder.start(); $('recBtn').textContent = '■ Stop'; $('recBtn').setAttribute('aria-pressed', 'true'); }
+    else {
+      const ev = recorder.stop();
+      $('recBtn').textContent = '● Rec'; $('recBtn').setAttribute('aria-pressed', 'false');
+      $('playBtn').hidden = $('saveBtn').hidden = !ev.some((e) => e.type === 'on');
+    }
+  };
+  $('playBtn').onclick = () => {
+    ensureAudio();
+    const ev = recorder.last || [];
+    for (const e of ev) {
+      setTimeout(() => {
+        if (e.type === 'on') noteOn(e.a, e.b, { how: 'playback' });
+        else if (e.type === 'off') noteOff(e.a);
+        else if (e.type === 'pedal') { state.pedalButton = e.a; updatePedal(); }
+      }, e.t + 50);
+    }
+  };
+  $('saveBtn').onclick = () => {
+    const blob = new Blob([recorder.toMidiFile()], { type: 'audio/midi' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `desk-piano-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.mid`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
   // quick controls on the main screen
   const setMode = (m) => {
     settings.mode = m;

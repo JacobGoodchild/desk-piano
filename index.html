@@ -20,6 +20,9 @@
     <button id="modePaper" aria-pressed="true" title="Play on the printed paper keyboard">Paper</button><button id="modeDesk" aria-pressed="false" title="Play on a plain desk – no paper needed">Desk</button>
   </span>
   <label class="vol" title="Volume">🔊 <input id="volume" type="range" min="0" max="2" step="0.05" aria-label="Volume"></label>
+  <button id="recBtn" title="Record what you play">● Rec</button>
+  <button id="playBtn" hidden title="Play back the recording">▶ Play back</button>
+  <button id="saveBtn" hidden title="Save the recording as a MIDI file">Save .mid</button>
   <button id="setupBtn">Set-up</button>
   <button id="settingsBtn">Settings</button>
   <a href="print.html" target="_blank" rel="noopener">Print keyboard</a>
@@ -99,6 +102,7 @@
     <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
     <label class="row"><input name="mirror" type="checkbox"> Mirror camera picture</label>
     <label class="row"><input name="debug" type="checkbox"> Debug view</label>
+    <label>MIDI output <span><select name="midiOut"><option value="">Off</option></select> <button type="button" id="midiEnable">Find devices</button></span></label>
     <label>Microphone <select name="mic"><option value="">Default</option></select></label>
     <label>Camera <select name="camera"><option value="">Default (front camera on phones, so you can see the screen)</option></select></label>
     <div class="buttons"><button value="close" class="primary">Done</button></div>
