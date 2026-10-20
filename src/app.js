@@ -474,6 +474,7 @@ function bindKeys() {
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }
+    if (k === 'r' && !e.repeat && settings.mode === 'desk') { recentre(); return; }
     if (k === 'x' && !e.repeat) { state.kbdOctave = Math.min(3, state.kbdOctave + 1); drawPiano(); return; }
     if (!(k in KEYMAP) || e.repeat || kbdDown.has(k)) return;
     ensureAudio();

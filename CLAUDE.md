@@ -174,3 +174,9 @@ done, and the best ideas for next time.
 - **16:58** Sound levels (`node scripts/measure-sound.mjs`, offline render): single C4 pp −50 dB rms,
   mf −39, ff −26 (≈24 dB range); 10-note ff chord peaks 0.99 through a soft-knee limiter with 2× headroom
   (no hard clipping, no added delay — a DynamicsCompressor would add ~6 ms look-ahead).
+- **17:05** Damper release sounds (Salamander release samples, subtle level); paper fit now drops
+  misread markers and won't replace a good fit with a 2-marker one; MediaPipe timestamp guard; phone
+  rotation; fixed double-counted input delay in the tap→sound figure; loudness learner only learns from
+  taps that became notes; clip tester `--sweep`. Marker stress test (synthetic blur + uneven light):
+  at 960 px wide (what the app uses) 9–12 of 12 markers found in every case; at 640 px small far
+  markers start to drop (5–12). Detection takes ~15–20 ms per 960 px frame in Node.
