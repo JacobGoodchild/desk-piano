@@ -22,6 +22,7 @@ export const RESOLVER_DEFAULTS = {
   repeatMs: 600, // repeated-note fallback window (0 = off)
   repeatLateFactor: 0, // ...the finger must not be rising (tuned on clips) // compare against this finger in travel order (0 = least moved, 2 = median)
   liftDist: 0.12, // a sounding finger is lifted when it rises this far above where it landed
+  slideDist: 0.35, // ...or slides sideways this far (hand-sizes; ~a key width)
   historyMs: 1200,
 };
 
@@ -148,13 +149,14 @@ export class TapResolver {
     return bestVec;
   }
 
-  // Has this finger lifted since it landed at landY? (image y, larger = lower)
-  lifted(id, landY, size) {
+  // Has this finger lifted (or slid sideways off its key) since it landed at (landX, landY)?
+  lifted(id, landY, size, landX = null) {
     const [label, tipStr] = id.split('-');
     const tip = Number(tipStr);
     const f = this.frames[this.frames.length - 1];
     const h = f && f.hands.find((x) => x.label === label);
     if (!h) return true; // hand gone
+    if (landX != null && Math.abs(h.points[tip].x - landX) / size > this.o.slideDist) return true;
     return (landY - h.points[tip].y) / size > this.o.liftDist;
   }
 }

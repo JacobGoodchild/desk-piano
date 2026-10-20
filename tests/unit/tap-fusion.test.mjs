@@ -126,3 +126,14 @@ test('teaching: a ring finger that is dragged along further than the middle fing
   runOne(taught2, 16);
   assert.equal(taught2.played[0].m, ringKey);
 });
+
+test('a note stops when its finger slides sideways off the key', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 900; t += 33) {
+    if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+    const shift = t > 500 ? Math.min(60, (t - 500) * 0.5) : 0; // whole hand slides right after 0.5 s
+    ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210 + shift, y: 300 }, press([8], 300, 2000)(t))] });
+  }
+  assert.equal(ctx.played.length, 1);
+  assert.equal(ctx.stopped.length, 1, 'stopped after sliding');
+});

@@ -35,7 +35,7 @@ export class TapFusion {
     this.resolver.pushFrame(frame);
     // lifts
     for (const [id, s] of this.sounding) {
-      if (this.resolver.lifted(id, s.landY, s.size) || frame.t - s.t > this.o.maxHoldMs) {
+      if (this.resolver.lifted(id, s.landY, s.size, s.landX) || frame.t - s.t > this.o.maxHoldMs) {
         this.sounding.delete(id);
         this.stop(s.midi, { fingerId: id });
       }
@@ -67,7 +67,7 @@ export class TapFusion {
         if (midi == null || midis.has(midi)) continue;
         midis.add(midi);
         if (this.sounding.has(p.id)) this.stop(this.sounding.get(p.id).midi, { fingerId: p.id });
-        this.sounding.set(p.id, { midi, landY: p.y, size: p.size, t: tap.t });
+        this.sounding.set(p.id, { midi, landX: p.x, landY: p.y, size: p.size, t: tap.t });
         this.lastPlayT = tap.t;
         this.stats.notes++;
         this.log.push({ t: tap.t, midi, vel: tap.velocity, how: 'tap', fingerId: p.id });
