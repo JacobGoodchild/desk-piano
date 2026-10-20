@@ -315,3 +315,5 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   sideways off its key; loud spike on the first notes of every instrument (output gain started at 1
   and glided down) — fixed, and all 5 sounds level-matched to the piano within 1 dB
   (`scripts/measure-instruments.mjs`). Added a full-screen button (locks phones to landscape).
+- *(Note: the overnight entries labelled 20:20–22:10 were written from estimated times that ran up to
+  ~1 h fast; real clock for all of them was ~19:55–21:06. From here on times are read from `date`.)*
