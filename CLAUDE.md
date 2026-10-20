@@ -306,3 +306,6 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **21:40** Added MediaPipe's fingertip depth change to the finger score (zWeight 1): overall
   **54.4%** (from 49.1%) — gain is all in the chromatic clip (9→12 correct); Mary unchanged; hovering +1
   false note (2 total). Weight 0.5 was worse than 0 and 1, so treat as tentative; re-check on new clips.
+- **21:55** Offline support (`sw.js`): samples + vendor cache-first (bump `CACHE` in sw.js if they ever
+  change), app code network-first. Browser test: reload offline → page and piano still work. Fixed: a
+  speakers/headphones change was ignored until the hand tracker had finished loading.
