@@ -138,3 +138,17 @@ done, and the best ideas for next time.
   push to `main`. I push every commit to both: the session branch and `main` (main = what Pages deploys).
 - **Decision (markers):** wrote a small custom square-marker detector (4×4-bit codes in a black frame) as a plain
   ES module rather than vendoring js-aruco2, which isn't an ES module.
+- **16:42** First full version pushed to `main`: printable keyboard (`print.html`), marker detection +
+  homography, MediaPipe hand tracking, AudioWorklet tap detector, strike detector, tap/strike fusion,
+  Salamander piano engine, computer-keyboard + on-screen keys, settings, set-up dialog, debug view,
+  plain desk mode with calibration/recentre. 19 unit tests + 5 headless-browser tests (fake camera/mic).
+  - Decisions: 2-octave "smaller version" = C4–C6 life-size on 2 sheets (vs 3 sheets for C3–C6), because
+    shrinking key width would make it unplayable. Full strip is 585 mm so sheet 3 is a narrow end piece.
+  - On a tap, fingers still *descending* in the latest camera frame are played straight away (lowest
+    delay) at their predicted touch-down point; if the actual landing is on a different key within 80 ms
+    the note is corrected. Taps with no finger moving are dropped. Landings without a tap play after
+    100 ms at a quiet velocity.
+  - Fingertip motion is measured relative to 60% of its knuckle's motion so sliding the hand forward
+    (which also moves it down the picture) isn't seen as a strike.
+  - Tap detector: high-pass 250 Hz, peak follower; onset when it jumps >3× within 2 ms, >2.5× the 15 ms
+    average and >4× the 80 ms background; 45 ms refractory; loudness = peak over the next 3 ms.
