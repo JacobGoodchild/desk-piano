@@ -71,8 +71,7 @@ function pedalDown() { return settings.pedalAlways || state.pedalKey || state.pe
 function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
-  if (state.inst) state.inst.setSustain(on);
-  if (state.layer) state.layer.setSustain(on);
+  for (const v of new Set([state.inst, state.layer, state.split].filter(Boolean))) v.setSustain(on);
   if (on !== state.pedalWas) { midiOut.pedal(on); recorder.add('pedal', on); state.pedalWas = on; }
 }
 
@@ -87,8 +86,7 @@ function noteOn(midi, vel, info = {}) {
   if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
-  if (state.inst) state.inst.noteOn(midi, vel);
-  if (state.layer) state.layer.noteOn(midi, vel);
+  for (const v of voicesFor(midi)) v.noteOn(midi, vel);
   midiOut.noteOn(midi, vel);
   recorder.add('on', midi, vel);
   // tap → sound delay: time since the tap was heard + the audio output path
@@ -105,8 +103,8 @@ function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
   if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
   for (let i = state.spans.length - 1; i >= 0; i--) if (state.spans[i].midi === midi && state.spans[i].end == null) { state.spans[i].end = performance.now(); break; }
-  if (state.inst) state.inst.noteOff(midi);
-  if (state.layer) state.layer.noteOff(midi);
+  // release on every sound (the split/layer may have changed while the key was down)
+  for (const v of new Set([state.inst, state.layer, state.split].filter(Boolean))) v.noteOff(midi);
   midiOut.noteOff(midi);
   recorder.add('off', midi);
   drawPiano();
@@ -125,6 +123,18 @@ function selectLayer(id) {
   if (prev && prev !== state.layer && prev !== state.inst) prev.allOff();
   if (state.layer) { state.layer.setVolume(settings.volume * 0.6, prev !== state.layer); state.layer.setSustain(pedalDown()); }
 }
+const SPLIT_POINT = 60; // notes below middle C go to the split sound
+function selectSplit(id) {
+  const prev = state.split;
+  state.split = id && id !== settings.instrument ? makeInstrument(id) : null;
+  if (prev && prev !== state.split && prev !== state.inst && prev !== state.layer) prev.allOff();
+  if (state.split) { state.split.setVolume(settings.volume, prev !== state.split); state.split.setSustain(pedalDown()); }
+}
+// which sounds play this note
+function voicesFor(midi) {
+  if (state.split && midi < SPLIT_POINT) return [state.split];
+  return [state.inst, state.layer].filter(Boolean);
+}
 function selectInstrument(id) {
   if (!state.ctx) return;
   const prev = state.inst;
@@ -133,6 +143,7 @@ function selectInstrument(id) {
   state.inst.setVolume(settings.volume, prev !== state.inst);
   state.inst.setSustain(pedalDown());
   selectLayer(settings.layer);
+  selectSplit(settings.split);
 }
 
 // The grand piano's own samples through a treble lift and a touch of presence: a brighter,
@@ -729,7 +740,7 @@ function setSetup(on, autoStart = true) {
 
 function bindSettings() {
   const form = $('settings').querySelector('form');
-  for (const [id, label] of Object.entries(INSTRUMENTS)) { form.elements.instrument.add(new Option(label, id)); form.elements.layer.add(new Option(label, id)); }
+  for (const [id, label] of Object.entries(INSTRUMENTS)) { form.elements.instrument.add(new Option(label, id)); form.elements.layer.add(new Option(label, id)); form.elements.split.add(new Option(label, id)); }
   for (const el of form.elements) {
     if (!el.name || !(el.name in settings)) continue;
     if (el.type === 'checkbox') el.checked = !!settings[el.name]; else el.value = settings[el.name];
@@ -797,6 +808,7 @@ function bindSettings() {
     settings.volume = Number($('volume').value);
     if (state.inst) state.inst.setVolume(settings.volume);
     if (state.layer) state.layer.setVolume(settings.volume * 0.6);
+    if (state.split) state.split.setVolume(settings.volume);
     saveSettings(settings);
   });
   $('setupBtn').onclick = () => setSetup(true);

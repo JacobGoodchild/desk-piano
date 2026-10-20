@@ -170,6 +170,26 @@ export class MusicBox extends SynthBase {
   }
 }
 
+// Bass: round electric-bass-like pluck, an octave down (for the left hand in a split).
+export class Bass extends SynthBase {
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.07; this.setVolume(1, true); this.releaseTime = 0.06; }
+  makeVoice(midi, vel, t) {
+    const ctx = this.ctx, f = mtof(midi - 12);
+    const amp = ctx.createGain(); amp.connect(this.out);
+    const filt = ctx.createBiquadFilter(); filt.type = 'lowpass'; filt.Q.value = 2;
+    filt.frequency.setValueAtTime(300 + 1800 * vel, t); filt.frequency.setTargetAtTime(220, t, 0.15);
+    filt.connect(amp);
+    const saw = ctx.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = f;
+    const sine = ctx.createOscillator(); sine.frequency.value = f;
+    const sg = ctx.createGain(); sg.gain.value = 0.6;
+    saw.connect(filt); sine.connect(sg).connect(amp);
+    saw.start(t); sine.start(t);
+    amp.gain.setValueAtTime(0, t); amp.gain.linearRampToValueAtTime(0.25 + 0.6 * vel, t + 0.004);
+    amp.gain.setTargetAtTime((0.25 + 0.6 * vel) * 0.5, t + 0.004, 0.4);
+    return { amp, nodes: [saw, sine] };
+  }
+}
+
 export const INSTRUMENTS = {
   piano: 'Grand piano',
   bright: 'Bright piano',
@@ -179,5 +199,6 @@ export const INSTRUMENTS = {
   strings: 'Strings',
   vibes: 'Vibraphone',
   musicbox: 'Music box',
+  bass: 'Bass',
 };
-export const SYNTHS = { epiano: ElectricPiano, organ: Organ, harpsichord: Harpsichord, strings: Strings, vibes: Vibraphone, musicbox: MusicBox };
+export const SYNTHS = { epiano: ElectricPiano, organ: Organ, harpsichord: Harpsichord, strings: Strings, vibes: Vibraphone, musicbox: MusicBox, bass: Bass };

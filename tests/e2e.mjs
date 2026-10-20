@@ -108,6 +108,13 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   await page.keyboard.down('KeyH'); await page.waitForTimeout(120); await page.keyboard.up('KeyH');
   assert.ok(await page.evaluate(() => !!window.deskPiano.state.layer));
   await page.evaluate(() => { const s = document.querySelector('select[name=layer]'); s.value = ''; s.dispatchEvent(new Event('change')); });
+  // split: bass below middle C
+  await page.evaluate(() => { const s = document.querySelector('select[name=split]'); s.value = 'bass'; s.dispatchEvent(new Event('change')); });
+  await page.keyboard.press('KeyZ'); // octave down → C3..
+  await page.keyboard.down('KeyA'); await page.waitForTimeout(120); await page.keyboard.up('KeyA');
+  await page.keyboard.press('KeyX');
+  assert.ok(await page.evaluate(() => !!window.deskPiano.state.split));
+  await page.evaluate(() => { const s = document.querySelector('select[name=split]'); s.value = ''; s.dispatchEvent(new Event('change')); });
   // metronome on and off
   await page.click('#metroBtn');
   await page.waitForFunction(() => document.getElementById('metroBtn').getAttribute('aria-pressed') === 'true');
