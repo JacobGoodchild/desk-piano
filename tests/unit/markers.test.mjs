@@ -60,3 +60,22 @@ test('a misread marker is ignored when fitting the paper', async () => {
   const q = applyH(res.H, L.keysX + (k.x0 + k.x1) / 2, L.keysY + 125);
   assert.ok(Math.hypot(p.x - q.x, p.y - q.y) < 1);
 });
+
+test('finds markers in a mirrored camera image (many webcams mirror)', () => {
+  const L = paperLayout('full');
+  const w = 960, h = 540;
+  const { src, dst } = sceneHomography(L, w, h, { tilt: 0.35, rotate: 0.05 });
+  const mdst = dst.map((p) => ({ x: w - p.x, y: p.y }));
+  const Htrue = fitHomography(src, mdst);
+  const img = renderPaperScene(L, Htrue, w, h);
+  const found = detectMarkers(img, w, h);
+  assert.ok(new Set(found.map((f) => f.id)).size >= L.markers.length - 1, `found ${found.length}`);
+  assert.ok(found.every((f) => f.mirrored));
+  const known = markerCorners(L);
+  const s = [], d = [];
+  for (const f of found) for (let i = 0; i < 4; i++) { s.push(known[f.id][i]); d.push(f.corners[i]); }
+  const H = fitHomography(s, d);
+  const k = L.kb.keyRect(60);
+  const a = applyH(Htrue, L.keysX + (k.x0 + k.x1) / 2, L.keysY + 125), b = applyH(H, L.keysX + (k.x0 + k.x1) / 2, L.keysY + 125);
+  assert.ok(Math.hypot(a.x - b.x, a.y - b.y) < 3);
+});

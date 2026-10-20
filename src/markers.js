@@ -65,7 +65,8 @@ export function markerSVG(id, x, y, size) {
 
 // ---------------------------------------------------------------------------------------
 // Detection. Input: grey Uint8Array (w×h). Output: [{id, corners:[{x,y}×4]}] where corners
-// are in the marker's own order: top-left, top-right, bottom-right, bottom-left (as printed).
+// are in the marker's own order: top-left, top-right, bottom-right, bottom-left (as printed);
+// `mirrored` is true when the camera image is a mirror image.
 
 export function toGrey(rgba, w, h) {
   const g = new Uint8Array(w * h);
@@ -128,7 +129,8 @@ export function detectMarkers(grey, w, h, opts = {}) {
     if (!quad) continue;
     const area = polyArea(quad);
     if (area < minArea || n / area < 0.3 || n / area > 1.05) continue;
-    const m = readMarker(grey, w, h, quad);
+    // also try the quad mirrored (many webcams send a mirror image)
+    const m = readMarker(grey, w, h, quad) || readMarker(grey, w, h, [quad[1], quad[0], quad[3], quad[2]], true);
     if (m) results.push(m);
   }
   return results;
@@ -186,7 +188,7 @@ function quadFromPixels(queue, n, w, cx, cy) {
   return q;
 }
 
-function readMarker(grey, w, h, quad) {
+function readMarker(grey, w, h, quad, mirrored = false) {
   const unit = [{ x: 0, y: 0 }, { x: 6, y: 0 }, { x: 6, y: 6 }, { x: 0, y: 6 }];
   const H = fitHomography(unit, quad);
   if (!H) return null;
@@ -219,7 +221,7 @@ function readMarker(grey, w, h, quad) {
     for (let id = 0; id < MARKER_CODES.length; id++) {
       if (popcount(MARKER_CODES[id] ^ rc) <= 1) {
         const corners = [0, 1, 2, 3].map((i) => quad[(i - k + 4) % 4]);
-        return { id, corners };
+        return { id, corners, mirrored };
       }
     }
     rc = rot(rc);
