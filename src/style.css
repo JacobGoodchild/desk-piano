@@ -54,3 +54,4 @@ body.setup #piano { display: none; }
   #camWrap, body.setup #camWrap { width: 100%; height: auto; max-width: 100%; flex: 0 0 auto; }
   #side { min-width: 0; }
 }
+.setupPanel .diagram { width: 100%; max-width: 360px; display: block; margin: 0 auto 6px; }
