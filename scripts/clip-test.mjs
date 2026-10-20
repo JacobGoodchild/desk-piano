@@ -17,8 +17,8 @@ import { startServer } from '../tests/server.mjs';
 import { OnsetDetector, peakToVelocity } from '../src/onset.js';
 import { StrikeDetector } from '../src/strike.js';
 import { Fusion } from '../src/fusion.js';
-import { paperLayout, markerCorners, paperToKey } from '../src/paper.js';
-import { fitHomography, applyH, invertH } from '../src/homography.js';
+import { paperLayout, paperToKey, fitPaper } from '../src/paper.js';
+import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
 import { HandIds } from '../src/hand-ids.js';
 
@@ -82,7 +82,6 @@ function tapsFromAudio(samples, sensitivity) {
 // with camera results arriving `latency` ms after the frame was captured.
 function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
   const layout = paperLayout(variant);
-  const known = markerCorners(layout);
   let paperInv = null, paperFrames = 0, markerCounts = [];
   const detector = new StrikeDetector();
   const handIds = new HandIds();
@@ -105,10 +104,9 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
     if (e.kind === 'frame') {
       const f = e.f;
       if (f.markers) {
-        const src = [], dst = [];
-        for (const m of f.markers) if (known[m.id]) for (let i = 0; i < 4; i++) { src.push(known[m.id][i]); dst.push(m.corners[i]); }
-        markerCounts.push(new Set(f.markers.map((m) => m.id)).size);
-        if (src.length >= 8) { const H = fitHomography(src, dst); if (H) { paperInv = invertH(H); paperFrames++; } }
+        const res = fitPaper(layout, f.markers);
+        markerCounts.push(res ? res.used.size : 0);
+        if (res && (res.used.size >= 3 || !paperInv)) { paperInv = invertH(res.H); paperFrames++; }
       }
       fusion.onStrikeEvents(detector.update({ t: f.t, hands: handIds.assign(f.hands) }), detector);
     } else {

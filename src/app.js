@@ -5,9 +5,9 @@ import { Piano } from './piano.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { VelocityMapper } from './onset.js';
-import { paperLayout, markerCorners, paperToKey } from './paper.js';
+import { paperLayout, paperToKey, fitPaper } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
-import { fitHomography, applyH, invertH } from './homography.js';
+import { applyH, invertH } from './homography.js';
 import { deskKeyAt } from './desk.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { noteName, isBlack, whiteIndex } from './notes.js';
@@ -209,17 +209,12 @@ function findPaper(video) {
 }
 
 function updatePaperFromMarkers(found, scale = 1) {
-  const known = markerCorners(state.layout);
-  const src = [], dst = [];
-  state.markersSeen = new Set();
-  for (const m of found) {
-    if (!known[m.id]) continue;
-    state.markersSeen.add(m.id);
-    for (let i = 0; i < 4; i++) { src.push(known[m.id][i]); dst.push({ x: m.corners[i].x * scale, y: m.corners[i].y * scale }); }
-  }
-  if (state.markersSeen.size >= 2) {
-    const H = fitHomography(src, dst);
-    if (H) { state.paperH = H; state.paperInv = invertH(H); state.paperSeen = performance.now(); }
+  const res = fitPaper(state.layout, found, scale);
+  state.markersSeen = res ? res.used : new Set();
+  // two markers alone (e.g. both at the back) pin down the front of the keys poorly: only use
+  // them if there's nothing better
+  if (res && (res.used.size >= 3 || !state.paperH)) {
+    state.paperH = res.H; state.paperInv = invertH(res.H); state.paperSeen = performance.now();
   }
   return state.markersSeen.size;
 }

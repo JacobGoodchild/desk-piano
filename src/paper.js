@@ -5,6 +5,7 @@
 import { KeyboardLayout } from './layout.js';
 import { markerSVG } from './markers.js';
 import { noteName, isBlack } from './notes.js';
+import { fitHomography, applyH } from './homography.js';
 
 export const PAGE = { w: 297, h: 210, margin: 10, overlap: 15 };
 export const MARKER_SIZE = 24;
@@ -92,3 +93,40 @@ export function stripSVG(layout, { labels = true } = {}) {
 }
 
 export { isBlack };
+
+// Fit the paper → image homography from detected markers, dropping any marker that disagrees
+// with the others (a misread or a marker-like pattern elsewhere). Returns
+// { H, used: Set(ids), error (px, median corner error) } or null if there's not enough to go on.
+export function fitPaper(layout, found, scale = 1) {
+  const known = markerCorners(layout);
+  let ms = [];
+  const seen = new Set();
+  for (const m of found) {
+    if (!known[m.id] || seen.has(m.id)) continue; // ignore unknown and duplicate ids
+    seen.add(m.id);
+    ms.push({ id: m.id, src: known[m.id], dst: m.corners.map((c) => ({ x: c.x * scale, y: c.y * scale })) });
+  }
+  const fit = (list) => fitHomography(list.flatMap((m) => m.src), list.flatMap((m) => m.dst));
+  const errOf = (H, m) => Math.max(...m.src.map((p, i) => { const q = applyH(H, p.x, p.y); return Math.hypot(q.x - m.dst[i].x, q.y - m.dst[i].y); }));
+  for (let round = 0; round < 3 && ms.length >= 2; round++) {
+    const H = fit(ms);
+    if (!H) return null;
+    const errs = ms.map((m) => errOf(H, m));
+    const sorted = [...errs].sort((a, b) => a - b);
+    const med = sorted[sorted.length >> 1];
+    const size = Math.sqrt(Math.abs(polyArea(ms[0].dst)));
+    const limit = Math.max(3 * med, 0.25 * size, 3);
+    const keep = ms.filter((m, i) => errs[i] <= limit);
+    if (keep.length === ms.length || keep.length < 2) return { H, used: new Set(ms.map((m) => m.id)), error: med };
+    ms = keep;
+  }
+  if (ms.length < 2) return null;
+  const H = fit(ms);
+  return H ? { H, used: new Set(ms.map((m) => m.id)), error: 0 } : null;
+}
+
+function polyArea(q) {
+  let a = 0;
+  for (let i = 0; i < q.length; i++) { const p = q[i], r = q[(i + 1) % q.length]; a += p.x * r.y - r.x * p.y; }
+  return a / 2;
+}

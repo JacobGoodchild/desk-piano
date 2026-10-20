@@ -43,3 +43,20 @@ test('no markers in an empty scene', () => {
   for (let i = 0; i < img.length; i++) img[i] = 100 + ((i * 7919) % 31);
   assert.equal(detectMarkers(img, w, h).length, 0);
 });
+
+test('a misread marker is ignored when fitting the paper', async () => {
+  const { fitPaper } = await import('../../src/paper.js');
+  const L = paperLayout('full');
+  const { src, dst } = sceneHomography(L, 960, 540, {});
+  const Ht = fitHomography(src, dst);
+  const known = markerCorners(L);
+  const found = L.markers.map((m) => ({ id: m.id, corners: known[m.id].map((p) => applyH(Ht, p.x, p.y)) }));
+  found[3] = { id: found[3].id, corners: found[3].corners.map((c) => ({ x: c.x + 120, y: c.y - 60 })) }; // wrong place
+  const res = fitPaper(L, found);
+  assert.ok(!res.used.has(found[3].id), 'bad marker dropped');
+  assert.equal(res.used.size, L.markers.length - 1);
+  const k = L.kb.keyRect(60);
+  const p = applyH(Ht, L.keysX + (k.x0 + k.x1) / 2, L.keysY + 125);
+  const q = applyH(res.H, L.keysX + (k.x0 + k.x1) / 2, L.keysY + 125);
+  assert.ok(Math.hypot(p.x - q.x, p.y - q.y) < 1);
+});
