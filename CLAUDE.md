@@ -180,3 +180,7 @@ done, and the best ideas for next time.
   taps that became notes; clip tester `--sweep`. Marker stress test (synthetic blur + uneven light):
   at 960 px wide (what the app uses) 9–12 of 12 markers found in every case; at 640 px small far
   markers start to drop (5–12). Detection takes ~15–20 ms per 960 px frame in Node.
+- **17:14** Phone portrait layout; tip-height correction (`TIP_OFFSET_MM` = 5 mm, tunable); speakers/
+  headphones and camera changes apply immediately (mic/camera restart, tested); set-up side-view diagram;
+  print-page wording fixes (footer said "camera on THIS side" on the player's edge). All CI runs green;
+  every push to `main` redeploys https://jacobgoodchild.github.io/desk-piano/.
