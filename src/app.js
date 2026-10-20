@@ -509,6 +509,18 @@ function drawOverlay() {
       [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(([u, v], i) => { const p = P(mk.x + u * mk.size, mk.y + v * mk.size); i ? g.lineTo(X(p.x), p.y) : g.moveTo(X(p.x), p.y); });
       g.closePath(); g.stroke();
     }
+    // keys just played light up on the paper for a moment
+    const now = performance.now();
+    for (const sp of state.spans) {
+      if (now - sp.start > 400 || sp.how === 'keyboard' || sp.how === 'screen' || sp.how === 'playback') continue;
+      const k = L.kb.keyRect(sp.midi - settings.transpose - settings.octave * 12);
+      if (!k || k.midi < L.kb.lowMidi || k.midi > L.kb.highMidi) continue;
+      const y1 = k.black ? L.kb.blackLen : L.kb.whiteLen;
+      g.fillStyle = `rgba(79,163,255,${0.55 * (1 - (now - sp.start) / 400)})`;
+      g.beginPath();
+      [[k.x0, 0], [k.x1, 0], [k.x1, y1], [k.x0, y1]].forEach(([x, y], i) => { const p = P(L.keysX + x, L.keysY + y); i ? g.lineTo(X(p.x), p.y) : g.moveTo(X(p.x), p.y); });
+      g.closePath(); g.fill();
+    }
     if (dbg) {
       g.lineWidth = 1; g.strokeStyle = 'rgba(62,207,122,.6)';
       for (const k of L.kb.keys) {
