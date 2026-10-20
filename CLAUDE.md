@@ -259,3 +259,17 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   the camera-only path. Matches Jacob's experience exactly.
 - Also added: volume slider (default 120%, +6 dB vs before), Paper/Desk switch in the header,
   microphone picker in Settings.
+- **20:20** Audio: Jacob's webcam mic hears taps only 15–25 dB above the room noise (taps at −58…−73 dBFS!)
+  and webcam AAC smears the attack over ~10 ms. Tap detector now uses a learnt background floor and a
+  15 ms rise window → middle-C clip: all 4 taps found (was 1).
+- **20:30** Camera findings (private analysis): his whole hand drops with 3–5 fingertips touching the paper
+  on every note, so "which finger" can't come from a landing detector. Fingertip landmark sits ~where
+  the pad touches (key mapping columns are right). Chords (C-E-G) show NO per-finger signal in this
+  footage — probably unsolvable from one low camera; single notes do have a signal.
+- **20:40** New engine `TapFusion` + `TapResolver` (tap-first): on each heard tap, look at the last 250 ms
+  and pick the finger whose downward travel (+ travel in the last 100 ms) most exceeds the hand's median
+  finger; require it to still be moving down just before the tap. Camera-only notes off by default.
+  Clip results with defaults: **43.9% overall** (was 8.5%): middle C 4/4 (+1 extra), Mary simple 12/26
+  correct, chromatic 9/25, hovering 1 false (was 55), resting 2 false (was 11), CEG 0/2 (picks D).
+  Sweep best ≈ 47% (no chords). Waiting 70 ms after the tap for the landing frame matters (46% vs 37%
+  at 35 ms) → will be a "faster ↔ more accurate" setting.

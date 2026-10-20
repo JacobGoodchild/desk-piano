@@ -17,6 +17,7 @@ import { startServer } from '../tests/server.mjs';
 import { OnsetDetector, peakToVelocity } from '../src/onset.js';
 import { StrikeDetector } from '../src/strike.js';
 import { Fusion } from '../src/fusion.js';
+import { TapFusion } from '../src/tap-fusion.js';
 import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from '../src/paper.js';
 import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
@@ -80,23 +81,24 @@ function tapsFromAudio(samples, sensitivity) {
 
 // Replays one clip's frames + taps through the same logic as the app, in time order,
 // with camera results arriving `latency` ms after the frame was captured.
-function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {} }) {
+function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {}, resolverOpts = {}, tipOffset = TIP_OFFSET_MM, engine = 'tap' }) {
   const layout = paperLayout(variant);
   let paperInv = null, paperFrames = 0, markerCounts = [];
   const detector = new StrikeDetector(strikeOpts);
   const handIds = new HandIds();
   const notes = [];
-  const fusion = new Fusion({
+  const handlers = {
     keyFor: (p) => {
       if (!paperInv) return null;
       const q = applyH(paperInv, p.x, p.y);
-      const k = paperToKey(layout, q.x, q.y, TIP_OFFSET_MM);
+      const k = paperToKey(layout, q.x, q.y, tipOffset);
       return k == null ? null : k + transpose + octave * 12;
     },
     play: (midi, vel, info) => notes.push({ midi, vel, how: info.how, t: info.t }),
     stop: () => {},
     opts: fusionOpts,
-  });
+  };
+  const fusion = engine === 'tap' ? new TapFusion({ ...handlers, resolverOpts }) : new Fusion(handlers);
   const events = [];
   for (const f of frames) events.push({ at: f.t + latency, kind: 'frame', f });
   for (const tp of taps) events.push({ at: tp.t + 3, kind: 'tap', tp });
@@ -109,7 +111,9 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
         markerCounts.push(res ? res.used.size : 0);
         if (res && (res.used.size >= 3 || !paperInv)) { paperInv = invertH(res.H); paperFrames++; }
       }
-      fusion.onStrikeEvents(detector.update({ t: f.t, hands: handIds.assign(f.hands) }), detector);
+      const frame = { t: f.t, hands: handIds.assign(f.hands) };
+      if (engine === 'tap') fusion.onFrame(frame);
+      else fusion.onStrikeEvents(detector.update(frame), detector);
     } else {
       fusion.onTap({ t: e.tp.t, velocity: e.tp.velocity }, detector);
     }
@@ -182,7 +186,7 @@ async function main() {
   if (jsonOut && insideRepo(resolve(jsonOut, '..'))) { console.error('REFUSING: --json output must be outside the repository.'); process.exit(2); }
   const variant = opt('variant', 'full');
   const latency = Number(opt('latency', 40));
-  const sensitivity = Number(opt('sensitivity', 0.5));
+  const sensitivity = Number(opt('sensitivity', 0.65));
   const only = opt('only');
   const expected = readExpected(folder);
   const clips = readdirSync(folder).filter((f) => VIDEO_EXT.has(extname(f).toLowerCase())).filter((f) => !only || f === only).sort();
@@ -219,7 +223,7 @@ async function main() {
     const audio = decodeAudio(file);
     const taps = tapsFromAudio(audio, sensitivity);
     analysed.push({ clip, frames, audio, exp });
-    const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)) });
+    const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)), tipOffset: Number(opt('tip-offset', TIP_OFFSET_MM)), engine: opt('engine', 'tap') });
     const groups = groupChords(notes);
     const handFrames = frames.filter((f) => f.hands.length).length;
     const sc = exp ? score(exp, groups) : null;
@@ -262,12 +266,15 @@ async function main() {
 // --sweep: try combinations of the main detection settings on the already-analysed clips (the
 // slow hand tracking is done once) and print the best. Nothing is saved.
 function sweep(analysed, { variant, latency }) {
-  const grid = {
-    sensitivity: [0.3, 0.5, 0.7],
-    downSpeed: [0.8, 1.2, 1.8],
-    minDrop: [0.03, 0.06, 0.1],
-    matchMs: [70, 90, 120],
-    knuckleWeight: [0.3, 0.6],
+  const grid = JSON.parse(opt('grid', 'null')) || {
+    sensitivity: [0.5, 0.65],
+    minTravel: [0.03, 0.06],
+    minLead: [0.02, 0.04, 0.07],
+    chordRatio: [0.7, 0.85, 1.01],
+    afterMs: [35, 70],
+    minLate: [0.0, 0.04, 0.07],
+    maxAfter: [0.04, 0.08, 0.2],
+    lateWeight: [0, 1, 2],
   };
   const combos = [{}];
   for (const [k, vals] of Object.entries(grid)) {
@@ -280,12 +287,12 @@ function sweep(analysed, { variant, latency }) {
   for (const c of combos) {
     let correct = 0, expN = 0, detN = 0, falseNotes = 0;
     for (const a of analysed) {
-      const key = `${a.clip}|${c.sensitivity}`;
-      if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity));
+      const key = `${a.clip}|${c.sensitivity ?? 0.5}`;
+      if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity ?? 0.5));
       const { notes } = replay(a.frames, tapCache.get(key), {
         variant, latency,
-        strikeOpts: { downSpeed: c.downSpeed, minDrop: c.minDrop, knuckleWeight: c.knuckleWeight },
-        fusionOpts: { matchMs: c.matchMs },
+        resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset'].includes(k))),
+        tipOffset: c.tipOffset ?? TIP_OFFSET_MM,
       });
       const groups = groupChords(notes);
       if (!a.exp) continue;
