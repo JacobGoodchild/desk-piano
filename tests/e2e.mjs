@@ -95,6 +95,12 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   assert.equal(played[0][0], 'C4');
   assert.equal(played[1][0], 'C5');
   assert.ok(played[1][1] > played[0][1], 'shift = louder');
+  // metronome on and off
+  await page.click('#metroBtn');
+  await page.waitForFunction(() => document.getElementById('metroBtn').getAttribute('aria-pressed') === 'true');
+  await page.waitForTimeout(800);
+  await page.click('#metroBtn');
+  assert.equal(await page.getAttribute('#metroBtn', 'aria-pressed'), 'false');
   // record → play back → save
   await page.click('#recBtn');
   await page.keyboard.press('KeyD');

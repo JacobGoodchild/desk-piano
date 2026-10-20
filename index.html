@@ -20,6 +20,7 @@
     <button id="modePaper" aria-pressed="true" title="Play on the printed paper keyboard">Paper</button><button id="modeDesk" aria-pressed="false" title="Play on a plain desk – no paper needed">Desk</button>
   </span>
   <label class="vol" title="Volume">🔊 <input id="volume" type="range" min="0" max="2" step="0.05" aria-label="Volume"></label>
+  <button id="metroBtn" aria-pressed="false" title="Metronome (tempo in Settings)">♩</button>
   <button id="recBtn" title="Record what you play">● Rec</button>
   <button id="playBtn" hidden title="Play back the recording">▶ Play back</button>
   <button id="saveBtn" hidden title="Save the recording as a MIDI file">Save .mid</button>
@@ -91,6 +92,8 @@
     <label>Sound through
       <select name="output"><option value="headphones">Headphones (best)</option><option value="speaker">Speakers</option></select>
     </label>
+    <label>Metronome tempo (beats/min) <input name="bpm" type="number" min="30" max="240" step="1"></label>
+    <label>Beats per bar <input name="beatsPerBar" type="number" min="1" max="12" step="1"></label>
     <h3>Keyboard</h3>
     <label>Mode
       <select name="mode"><option value="paper">Paper keyboard</option><option value="desk">Plain desk (no paper)</option></select>

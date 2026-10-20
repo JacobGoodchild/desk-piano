@@ -72,3 +72,5 @@ body.setup #piano { display: none; }
 .micbar div { flex: 1; height: 8px; background: #0c0f15; border-radius: 4px; overflow: hidden; max-width: 260px; }
 .micbar i { display: block; height: 100%; width: 0; background: var(--good); transition: width 60ms linear; }
 .teachInfo { font-size: 13px; color: var(--muted); margin: 6px 0; }
+#metroBtn.beat { box-shadow: 0 0 0 3px var(--accent); }
+#metroBtn.accent { box-shadow: 0 0 0 3px var(--good); }

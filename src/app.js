@@ -5,6 +5,7 @@ import { Piano } from './piano.js';
 import { SYNTHS, INSTRUMENTS } from './synths.js';
 import { makeReverbBus } from './reverb.js';
 import { MidiOut, Recorder } from './midi.js';
+import { Metronome } from './metronome.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
@@ -629,6 +630,7 @@ function applySettings() {
   engines.tap.resolver.o.chordRatio = settings.chords ? 0.9 : 1.01;
   velocityMap.sensitivity = settings.sensitivity;
   if (state.bus) state.bus.setAmount(settings.reverb);
+  if (state.metro) { state.metro.bpm = settings.bpm; state.metro.beats = settings.beatsPerBar; }
   if (state.micNode) state.micNode.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });
   updatePedal();
   drawPiano();
@@ -722,6 +724,21 @@ function bindSettings() {
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
   $('teachBtn').onclick = startTeaching;
+  $('metroBtn').onclick = async () => {
+    await ensureAudio();
+    if (!state.metro) {
+      state.metro = new Metronome(state.ctx, state.ctx.destination, (b) => {
+        // a click is the app's own sound: through speakers the mic hears it (echo protection)
+        for (const e of Object.values(engines)) e.lastPlayT = performance.now();
+        const el = $('metroBtn');
+        el.classList.add(b === 0 ? 'accent' : 'beat');
+        setTimeout(() => el.classList.remove('accent', 'beat'), 100);
+      });
+    }
+    state.metro.bpm = settings.bpm; state.metro.beats = settings.beatsPerBar;
+    if (state.metro.running) state.metro.stop(); else state.metro.start();
+    $('metroBtn').setAttribute('aria-pressed', String(state.metro.running));
+  };
   $('fullBtn').onclick = async () => {
     try {
       if (document.fullscreenElement) { await document.exitFullscreen(); return; }
