@@ -184,3 +184,45 @@ done, and the best ideas for next time.
   headphones and camera changes apply immediately (mic/camera restart, tested); set-up side-view diagram;
   print-page wording fixes (footer said "camera on THIS side" on the player's edge). All CI runs green;
   every push to `main` redeploys https://jacobgoodchild.github.io/desk-piano/.
+- **17:20–17:50** The session's worker was restarted and lost about 35 minutes; nothing was lost (all
+  work was already pushed). Wake-ups at 16:50/17:20/17:50 arrived late but were handled.
+- **17:55** Wrapped up: latest `main` passed CI and is deployed; live site checked.
+
+## End-of-session summary (20 Oct)
+
+**Live:** https://jacobgoodchild.github.io/desk-piano/ (print the keyboard from the "Print keyboard" link).
+
+**What works**
+- Printable life-size keyboard, C3–C6 on 3 A4 sheets (or C4–C6 on 2), with cut/overlap/tape marks,
+  a 10 cm scale check, note names, middle C in red, and 10–12 square markers the camera locks onto.
+- Paper finding: custom marker detector + homography; ignores misread markers; red/green marker
+  outlines on the set-up screen.
+- Hand tracking (MediaPipe, both hands), finger-strike detection, microphone tap detection in an
+  AudioWorklet, and the rules from the brief: tap = when + how loud, camera = which key; chords; no
+  notes from talking/knocks; quiet camera-only notes when a tap is missed; echo protection in speaker
+  mode; notes last until the finger lifts; sustain pedal (Space, button, "always on").
+- Salamander grand piano: 4 velocity layers, crossfaded, damper release sounds, learnt loudness range.
+- Plain desk mode with calibration (middle C, then C5) and recentre (button or R).
+- Set-up screen, settings, debug view (`?debug=1`), computer-keyboard and touch-screen playing,
+  phone landscape/portrait layouts, front camera + mirrored picture by default, screen kept awake.
+
+**How it was tested** (synthetic data only): 23 unit tests (geometry, markers in rendered camera
+scenes, tap detection incl. fast repeats and speech-like sound, strikes + taps → notes/chords/fast runs/
+echo/false taps, hand ids) and 5 browser tests in headless Chromium with a fake camera and microphone
+(incl. a fake camera video of the paper, which the app finds 12/12 markers in). CI runs them on every
+push to `main` and only deploys if they pass. Screenshots taken with the fake feed and checked.
+
+**Measured delay:** tap detection → app ≈ 5 ms. Total tap → sound ≈ 57 ms in headless Chromium
+(most of that is the browser's reported audio output path). On the phone, read the live figure in the
+debug view.
+
+**Not done / unknown**
+- Nothing has been tried with real hands, a real phone, or real taps yet — all thresholds are
+  educated guesses until the clip session.
+- No offline/service-worker caching; no half-pedalling.
+
+**Best next steps**
+1. Clip session: follow CLIPS.md (`node scripts/clip-test.mjs ~/private-clips --verbose`, then `--sweep`).
+2. Try it on the Pixel 7: check frame rate, the tap→sound figure in the debug view, and whether the
+   front camera sees all markers; adjust `TIP_OFFSET_MM` if black/white keys get confused.
+3. If delay feels high, use landings from a 60 fps camera and trust the "descending finger" guess more.
