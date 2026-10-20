@@ -139,7 +139,7 @@ async function startCamera() {
   const video = $('video');
   const constraints = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } };
   if (settings.camera) constraints.deviceId = { exact: settings.camera };
-  else constraints.facingMode = { ideal: 'environment' };
+  else constraints.facingMode = { ideal: 'user' }; // phone at the far side, screen facing you
   const stream = await navigator.mediaDevices.getUserMedia({ video: constraints });
   video.srcObject = stream;
   await video.play();
@@ -297,6 +297,8 @@ function drawOverlay() {
   const g = cv.getContext('2d');
   g.clearRect(0, 0, vw, vh);
   const dbg = settings.debug;
+  // the picture is shown mirrored (like a mirror, so it matches your view); mirror our drawing too
+  const X = (x) => (settings.mirror ? vw - x : x);
   // where the paper should go (guide frame) when it isn't found
   if (!state.paperH && settings.mode === 'paper') {
     g.strokeStyle = 'rgba(255,255,255,.5)'; g.setLineDash([12, 8]); g.lineWidth = 3;
@@ -310,35 +312,35 @@ function drawOverlay() {
     const P = (x, y) => applyH(state.paperH, x, y);
     g.strokeStyle = '#3ecf7a'; g.lineWidth = 3;
     g.beginPath();
-    [[0, 0], [L.width, 0], [L.width, L.height], [0, L.height]].forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); });
+    [[0, 0], [L.width, 0], [L.width, L.height], [0, L.height]].forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(X(p.x), p.y) : g.moveTo(X(p.x), p.y); });
     g.closePath(); g.stroke();
     if (dbg) {
       g.lineWidth = 1; g.strokeStyle = 'rgba(62,207,122,.6)';
       for (const k of L.kb.keys) {
         const y1 = L.keysY + (k.black ? L.kb.blackLen : L.kb.whiteLen);
         const a = P(L.keysX + k.x0, L.keysY), b = P(L.keysX + k.x0, y1);
-        g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke();
+        g.beginPath(); g.moveTo(X(a.x), a.y); g.lineTo(X(b.x), b.y); g.stroke();
       }
     }
   }
   if (settings.mode === 'desk' && settings.desk && settings.desk.c4) {
     g.fillStyle = '#ffcc33';
-    for (const p of [settings.desk.c4, settings.desk.c5].filter(Boolean)) { g.beginPath(); g.arc(p.x, p.y, 8, 0, 7); g.fill(); }
+    for (const p of [settings.desk.c4, settings.desk.c5].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
   }
   for (const hand of state.hands) {
     const pts = hand.points;
     if (dbg) {
       g.strokeStyle = 'rgba(79,163,255,.8)'; g.lineWidth = 2;
-      for (const [a, b] of HAND_CONNECTIONS) { g.beginPath(); g.moveTo(pts[a].x, pts[a].y); g.lineTo(pts[b].x, pts[b].y); g.stroke(); }
+      for (const [a, b] of HAND_CONNECTIONS) { g.beginPath(); g.moveTo(X(pts[a].x), pts[a].y); g.lineTo(X(pts[b].x), pts[b].y); g.stroke(); }
     }
     for (const tip of [4, 8, 12, 16, 20]) {
       const f = strikes.fingers.get(`${hand.label}-${tip}`);
       const p = pts[tip];
       g.fillStyle = f && f.down ? '#ff5050' : f && f.descending ? '#ffcc33' : '#ffffff';
-      g.beginPath(); g.arc(p.x, p.y, f && f.down ? 9 : 6, 0, 7); g.fill();
+      g.beginPath(); g.arc(X(p.x), p.y, f && f.down ? 9 : 6, 0, 7); g.fill();
       if (dbg) {
         const k = keyForPoint(p.x, p.y);
-        if (k != null) { g.fillStyle = '#fff'; g.font = '16px system-ui'; g.textAlign = 'center'; g.fillText(noteName(k), p.x, p.y - 12); }
+        if (k != null) { g.fillStyle = '#fff'; g.font = '16px system-ui'; g.textAlign = 'center'; g.fillText(noteName(k), X(p.x), p.y - 12); }
       }
     }
   }
@@ -405,6 +407,7 @@ function applySettings() {
   state.layout = paperLayout(settings.paperSize);
   $('debug').hidden = !settings.debug;
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
+  $('camWrap').classList.toggle('mirror', !!settings.mirror);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   fusion.speakerMode = settings.output === 'speaker';
   if (state.micNode) state.micNode.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });

@@ -2,7 +2,7 @@
 const KEY = 'deskPiano.settings.v1';
 export const DEFAULTS = {
   mode: 'paper', paperSize: 'full', octave: 0, transpose: 0, sensitivity: 0.5,
-  output: 'headphones', pedalAlways: false, showCamera: true, debug: false, camera: '',
+  output: 'headphones', pedalAlways: false, showCamera: true, mirror: true, debug: false, camera: '',
   desk: null, // plain-desk calibration { c4: {x,y}, c5: {x,y}, w, h }
 };
 export function loadSettings() {

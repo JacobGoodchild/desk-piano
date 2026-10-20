@@ -6,6 +6,8 @@ import { startServer } from './server.mjs';
 import { paperLayout, markerCorners } from '../src/paper.js';
 import { fitHomography, applyH } from '../src/homography.js';
 import { sceneHomography } from './synth.mjs';
+import { makeFakeCameraY4M } from './fake-camera.mjs';
+import { rmSync } from 'node:fs';
 
 const { url, close } = await startServer();
 const browser = await chromium.launch({
@@ -205,6 +207,33 @@ await check('plain desk mode: calibrate on C4 and C5, then play by position', as
   const cal = names.pop();
   assert.deepEqual(names, ['E4', 'G4', 'F#4'], cal);
 });
+
+// The real camera path: Chromium's fake camera plays a synthetic video of the paper.
+{
+  const cam = makeFakeCameraY4M();
+  const b2 = await chromium.launch({ args: ['--no-proxy-server', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-video-capture=${cam.file}`, '--autoplay-policy=no-user-gesture-required'] });
+  const ctx = await b2.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  try {
+    await startApp(page);
+    await page.waitForFunction(() => window.deskPiano.state.markersSeen.size >= 10, null, { timeout: 20000 });
+    // middle C's position in the picture maps back to middle C
+    const L = cam.layout;
+    const r = L.kb.keyRect(60);
+    const p = applyH(cam.H, L.keysX + (r.x0 + r.x1) / 2, L.keysY + 125);
+    const k = await page.evaluate(({ x, y }) => { const s = window.deskPiano.state; return window.deskPiano.keyForPoint(x * s.video.w / 960, y * s.video.h / 540); }, p);
+    assert.equal(k, 60);
+    assert.deepEqual(errors, []);
+    console.log('ok - finds the paper keyboard through the (fake) camera and maps middle C');
+  } catch (e) {
+    failures++;
+    console.log(`not ok - finds the paper keyboard through the (fake) camera\n  ${e.message}`);
+  }
+  await b2.close();
+  rmSync(cam.dir, { recursive: true, force: true });
+}
 
 await browser.close();
 await close();

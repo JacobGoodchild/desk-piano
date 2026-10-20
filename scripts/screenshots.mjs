@@ -3,12 +3,16 @@
 import { chromium } from 'playwright';
 import { mkdirSync } from 'node:fs';
 import { startServer } from '../tests/server.mjs';
+import { makeFakeCameraY4M } from '../tests/fake-camera.mjs';
+import { rmSync } from 'node:fs';
+
+const cam = makeFakeCameraY4M();
 
 const out = new URL('../screenshots/', import.meta.url).pathname;
 mkdirSync(out, { recursive: true });
 const { url, close } = await startServer();
 const browser = await chromium.launch({
-  args: ['--no-proxy-server', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'],
+  args: ['--no-proxy-server', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', `--use-file-for-fake-video-capture=${cam.file}`, '--autoplay-policy=no-user-gesture-required'],
 });
 const shots = [
   { name: 'print-full', path: 'print.html', viewport: { width: 1200, height: 900 }, full: true },
@@ -25,7 +29,8 @@ for (const s of shots) {
   if (s.start) {
     const btn = page.locator('#start');
     if (await btn.isVisible().catch(() => false)) await btn.click();
-    await page.waitForTimeout(3000);
+    await page.waitForFunction(() => window.deskPiano.state.markersSeen.size > 0, null, { timeout: 30000 }).catch(() => {});
+    await page.waitForTimeout(500);
   }
   await page.screenshot({ path: `${out}${s.name}.png`, fullPage: !!s.full });
   console.log('saved', s.name);
@@ -33,3 +38,4 @@ for (const s of shots) {
 }
 await browser.close();
 await close();
+rmSync(cam.dir, { recursive: true, force: true });

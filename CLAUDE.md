@@ -152,10 +152,18 @@ done, and the best ideas for next time.
     (which also moves it down the picture) isn't seen as a strike.
   - Tap detector: high-pass 250 Hz, peak follower; onset when it jumps >3× within 2 ms, >2.5× the 15 ms
     average and >4× the 80 ms background; 45 ms refractory; loudness = peak over the next 3 ms.
-- **16:55** Clip-test script + CLIPS.md done; `--self-test` (synthetic paper video + tap sounds, temp
+- **16:44** Clip-test script + CLIPS.md done; `--self-test` (synthetic paper video + tap sounds, temp
   folder only) passes: paper found in 20/20 analysed frames (12/12 markers), 3 taps heard, 0 notes (no hands).
-- **17:00** Delay measured (`node scripts/measure-latency.mjs`, fake mic playing synthetic taps):
+- **16:46** Delay measured (`node scripts/measure-latency.mjs`, fake mic playing synthetic taps):
   tap detection → main thread median **4.6 ms** (max 5.9). Headless Chromium reports audio base 10 ms +
   output 32 ms + input 10 ms → **~57 ms tap→sound** on the fast path (finger already seen descending).
   On a real phone the output/input numbers will differ; the debug view shows the live values and the
   measured tap→sound average. Fixed a clock-mapping bug (was using the output timestamp for input).
+- **16:55** Browser tests now also drive the *real camera path*: Chromium's fake camera plays a synthetic
+  video of the printed paper (generated into the temp folder) and the app finds 12/12 markers and maps
+  middle C correctly. Screenshots use the same fake feed.
+  - Decision: default camera is the **front** camera on phones (`facingMode: user`), because with the
+    phone on the far side of the paper facing you, that's the only way you can also see the screen.
+    The picture is mirrored by default (setting) so left/right matches your view.
+  - Decision: hands get stable ids by wrist position (MediaPipe's Left/Right label flickers and is
+    mirrored), so a label flip can't cut notes short.
