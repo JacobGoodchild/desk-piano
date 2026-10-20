@@ -158,7 +158,7 @@ function handleTap({ t, peak, floor, velocity }) {
   const vel = velocity ?? velocityMap.map(peak, floor);
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
-  if (state.calib) return; // calibration taps are handled from the camera landing
+  if (state.calib) { calibTaps.push(t); return; } // resolved against the camera in calibrationEvents
   const tap = { t, velocity: vel, peak, floor };
   const played = fusion.onTap(tap, strikes);
   // learn the loudness range only from taps that really were notes (not talking or knocks);
@@ -231,7 +231,7 @@ function handleHandFrame(frame) {
   state.hands = frame.hands;
   state.handsT = frame.t;
   const events = strikes.update(frame); // also drives the fingertip colours and calibration
-  if (state.calib) { calibrationEvents(events); return; }
+  if (state.calib) { engines.tap.resolver.pushFrame(frame); calibrationEvents(events); return; }
   if (fusion === engines.tap) fusion.onFrame(frame);
   else fusion.onStrikeEvents(events, strikes);
   fusion.tick(performance.now());
@@ -271,10 +271,24 @@ function recentre() {
   state.calib = 'recentre';
   showCalib('Recentre: tap <b>middle C</b> again.');
 }
+// Calibration points come from a heard tap + the finger that pressed (tap-first, like playing),
+// or, if the microphone hears nothing, from a clear finger landing.
+const calibTaps = [];
 function calibrationEvents(events) {
-  const land = events.find((e) => e.type === 'land');
-  if (!land) return;
-  const p = { x: land.x, y: land.y };
+  let p = null;
+  const r = engines.tap.resolver;
+  while (calibTaps.length && r.ready(calibTaps[0])) {
+    const picks = r.resolve(calibTaps.shift());
+    if (picks.length) { const best = picks.reduce((a, b) => (b.lead > a.lead ? b : a)); p = { x: best.x, y: best.y }; }
+  }
+  if (!p) {
+    const land = events.find((e) => e.type === 'land');
+    if (land) p = { x: land.x, y: land.y };
+  }
+  if (!p) return;
+  calibrationPoint(p);
+}
+function calibrationPoint(p) {
   if (state.calib === 'c4') { settings.desk = { c4: p }; state.calib = 'c5'; showCalib('Now tap the <b>C above</b> middle C.'); }
   else if (state.calib === 'c5') { settings.desk.c5 = p; finishCalib('Calibrated – play away!'); }
   else if (state.calib === 'recentre') {
