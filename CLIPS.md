@@ -55,6 +55,12 @@ Add `--sweep` to try 486 combinations of the main settings (tap sensitivity, str
 distance, tap/landing match window, knuckle weighting) on the already-analysed clips — the slow hand
 tracking runs only once — and print the 10 best. Use it as a starting point, then confirm by hand.
 
+More options: `--conf 0.3` (MediaPipe confidence thresholds; each value has its own cache),
+`--av-offset 30` (pretend the sound is 30 ms late, to test timing robustness), `--no-sync` (turn
+off the engine's automatic sound/picture timing correction), `--engine classic` (old engine).
+The hand-tracking results are cached in `<clip folder>/.cache/` (outside the repo — never commit
+them); delete that folder to force a fresh analysis.
+
 Options: `--variant full|compact` (which printed keyboard is in the clips), `--latency 40` (simulated
 camera processing delay in ms — the phone is roughly 30–60), `--sensitivity 0.5` (tap sensitivity),
 `--octave N`.

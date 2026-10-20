@@ -201,7 +201,7 @@ async function main() {
     if (!file.startsWith(tmpRoot)) return route.abort();
     return route.fulfill({ body: readFileSync(file), contentType: 'image/jpeg' });
   });
-  await page.goto(url + 'scripts/clip-runner.html');
+  await page.goto(url + `scripts/clip-runner.html?conf=${opt('conf', '0.5')}`);
   await page.waitForFunction(() => window.runnerReady === true, null, { timeout: 60000 });
 
   const results = [];
@@ -212,7 +212,8 @@ async function main() {
     const exp = expected.get(clip);
     // hand tracking is slow: cache its results next to the clips (outside the repo, never committed)
     const cacheDir = join(folder, '.cache');
-    const cacheFile = join(cacheDir, `${clip}.${FRAME_W}.v2.frames.json`);
+    const conf = opt('conf', '0.5');
+    const cacheFile = join(cacheDir, `${clip}.${FRAME_W}.v2${conf === '0.5' ? '' : `.c${conf}`}.frames.json`);
     let fps, frames;
     if (!flag('no-cache') && existsSync(cacheFile) && statSync(cacheFile).mtimeMs > statSync(file).mtimeMs) {
       ({ fps, frames } = JSON.parse(readFileSync(cacheFile, 'utf8')));

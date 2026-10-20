@@ -4,6 +4,7 @@ import { HandLandmarker } from '@mediapipe/tasks-vision';
 import { detectMarkers, toGrey } from '../src/markers.js';
 
 let landmarker = null;
+const conf = Number(new URLSearchParams(location.search).get('conf') || 0.5);
 async function init() {
   if (landmarker) return;
   const fileset = {
@@ -12,7 +13,7 @@ async function init() {
   };
   landmarker = await HandLandmarker.createFromOptions(fileset, {
     baseOptions: { modelAssetPath: new URL('../vendor/models/hand_landmarker.task', import.meta.url).href, delegate: 'CPU' },
-    runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: conf, minHandPresenceConfidence: conf, minTrackingConfidence: conf,
   });
 }
 
