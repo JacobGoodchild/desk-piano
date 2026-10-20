@@ -306,6 +306,12 @@ function findPaper(video) {
 }
 
 function updatePaperFromMarkers(found, scale = 1) {
+  // many webcams already send a mirror image: notice it from the markers so the picture can be
+  // shown the right way round
+  if (found.length >= 2) {
+    const mir = found.filter((m) => m.mirrored).length > found.length / 2;
+    if (mir !== state.cameraMirrored) { state.cameraMirrored = mir; applyMirror(); }
+  }
   const res = fitPaper(state.layout, found, scale);
   state.markersSeen = res ? res.used : new Set();
   // two markers alone (e.g. both at the back) pin down the front of the keys poorly: only use
@@ -328,7 +334,7 @@ function recentre() {
   showCalib('Recentre: tap <b>middle C</b> again.');
 }
 // Calibration points come from a heard tap + the finger that pressed (tap-first, like playing),
-// or, if the microphone hears nothing, from a clear finger landing.
+// or, if there's no microphone, from a clear finger landing.
 const calibTaps = [];
 function calibrationEvents(events) {
   let p = null;
@@ -337,7 +343,7 @@ function calibrationEvents(events) {
     const picks = r.resolve(calibTaps.shift());
     if (picks.length) { const best = picks.reduce((a, b) => (b.lead > a.lead ? b : a)); p = { x: best.x, y: best.y }; }
   }
-  if (!p) {
+  if (!p && (!state.micNode || SIM)) { // no microphone: fall back to a clear finger landing
     const land = events.find((e) => e.type === 'land');
     if (land) p = { x: land.x, y: land.y };
   }
@@ -469,7 +475,7 @@ function drawOverlay() {
   g.clearRect(0, 0, vw, vh);
   const dbg = settings.debug;
   // the picture is shown mirrored (like a mirror, so it matches your view); mirror our drawing too
-  const X = (x) => (settings.mirror ? vw - x : x);
+  const X = (x) => (showMirrored() ? vw - x : x);
   // where the paper should go (guide frame) when it isn't found
   if (!state.paperH && settings.mode === 'paper') {
     g.strokeStyle = 'rgba(255,255,255,.5)'; g.setLineDash([12, 8]); g.lineWidth = 3;
@@ -513,10 +519,13 @@ function drawOverlay() {
       for (const [a, b] of HAND_CONNECTIONS) { g.beginPath(); g.moveTo(X(pts[a].x), pts[a].y); g.lineTo(X(pts[b].x), pts[b].y); g.stroke(); }
     }
     for (const tip of [4, 8, 12, 16, 20]) {
-      const f = strikes.fingers.get(`${hand.label}-${tip}`);
+      const id = `${hand.label}-${tip}`;
+      const f = strikes.fingers.get(id);
       const p = pts[tip];
-      g.fillStyle = f && f.down ? '#ff5050' : f && f.descending ? '#ffcc33' : '#ffffff';
-      g.beginPath(); g.arc(X(p.x), p.y, f && f.down ? 9 : 6, 0, 7); g.fill();
+      // red = this finger is sounding a note (yellow = coming down, classic engine only)
+      const on = fusion === engines.tap ? engines.tap.sounding.has(id) : f && f.down;
+      g.fillStyle = on ? '#ff5050' : fusion !== engines.tap && f && f.descending ? '#ffcc33' : '#ffffff';
+      g.beginPath(); g.arc(X(p.x), p.y, on ? 9 : 6, 0, 7); g.fill();
       if (dbg) {
         const k = keyForPoint(p.x, p.y);
         if (k != null) { g.fillStyle = '#fff'; g.font = '16px system-ui'; g.textAlign = 'center'; g.fillText(noteName(k), X(p.x), p.y - 12); }
@@ -601,7 +610,7 @@ function applySettings() {
   $('modePaper').setAttribute('aria-pressed', String(settings.mode === 'paper'));
   $('modeDesk').setAttribute('aria-pressed', String(settings.mode === 'desk'));
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
-  $('camWrap').classList.toggle('mirror', !!settings.mirror);
+  applyMirror();
   $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   const nextEngine = engines[settings.engine] || engines.tap;
@@ -616,6 +625,11 @@ function applySettings() {
   drawPiano();
   saveSettings(settings);
 }
+
+// The picture is shown like a mirror (matches your view across the desk). If the camera itself
+// already mirrors, don't flip it again.
+function showMirrored() { return !!settings.mirror !== !!state.cameraMirrored; }
+function applyMirror() { $('camWrap').classList.toggle('mirror', showMirrored()); }
 
 function setSetup(on, autoStart = true) {
   document.body.classList.toggle('setup', on);
