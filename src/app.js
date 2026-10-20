@@ -713,6 +713,14 @@ function bindSettings() {
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
   $('teachBtn').onclick = startTeaching;
+  $('fullBtn').onclick = async () => {
+    try {
+      if (document.fullscreenElement) { await document.exitFullscreen(); return; }
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape').catch(() => {});
+    } catch { /* not supported */ }
+  };
+  if (!document.documentElement.requestFullscreen) $('fullBtn').hidden = true;
   $('forgetBtn').onclick = () => { settings.fingerTemplates = null; engines.tap.resolver.templates = null; saveSettings(settings); setStatus('Taught finger patterns forgotten.'); };
 }
 
