@@ -17,7 +17,7 @@ function render() {
     // grey overlap zone at the left of every sheet after the first
     if (i > 0) {
       extra += `<rect x="${p.x0}" y="0" width="${PAGE.overlap}" height="${L.height}" fill="#000" fill-opacity="0.18"/>`;
-      extra += `<text x="${p.x0 + PAGE.overlap / 2}" y="${L.height / 2}" font-size="4" fill="#333" text-anchor="middle" transform="rotate(-90 ${p.x0 + PAGE.overlap / 2} ${L.height / 2})" font-family="sans-serif">OVERLAP – sheet ${i} goes on top here, tape</text>`;
+      extra += `<text x="${p.x0 + PAGE.overlap / 2}" y="${L.height / 2}" font-size="4" fill="#333" text-anchor="middle" transform="rotate(-90 ${p.x0 + PAGE.overlap / 2} ${L.height / 2})" font-family="sans-serif">OVERLAP · sheet ${i} on top · tape</text>`;
     }
     if (i < n - 1) {
       extra += `<line x1="${p.x1}" y1="-8" x2="${p.x1}" y2="${L.height + 4}" stroke="#000" stroke-width="0.4" stroke-dasharray="3 2"/>`;
@@ -28,7 +28,7 @@ function render() {
         <clipPath id="c${i}"><rect x="${p.x0}" y="-20" width="${p.x1 - p.x0}" height="${L.height + 40}"/></clipPath>
         <g clip-path="url(#c${i})">${strip}${extra}</g>
       </g>
-      <text x="${PAGE.margin}" y="${PAGE.h - 4}" font-size="4" font-family="sans-serif" fill="#444">Desk Piano – ${L.variant.label} – sheet ${i + 1} of ${n} – camera goes on THIS side (far side from you); you sit on the side with the note names.</text>
+      <text x="${PAGE.margin}" y="${PAGE.h - 4}" font-size="4" font-family="sans-serif" fill="#444">Desk Piano – ${L.variant.label} – sheet ${i + 1} of ${n} – you sit on this side (note names); the camera goes on the far side, beyond the square markers.</text>
       ${i === 0 ? `<g transform="translate(${PAGE.margin + 40} 8)"><rect width="100" height="2" fill="#000"/><text x="50" y="-1.5" font-size="3.5" text-anchor="middle" font-family="sans-serif">this bar should measure exactly 10 cm</text></g>` : ''}
     </svg>`;
     const div = document.createElement('div');
