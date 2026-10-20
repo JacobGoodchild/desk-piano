@@ -273,3 +273,10 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   correct, chromatic 9/25, hovering 1 false (was 55), resting 2 false (was 11), CEG 0/2 (picks D).
   Sweep best ≈ 47% (no chords). Waiting 70 ms after the tap for the landing frame matters (46% vs 37%
   at 35 ms) → will be a "faster ↔ more accurate" setting.
+- **20:30** (times above ran ~15 min fast) Engine refinements, each checked on clips: compare against
+  the 2nd-least-moved finger (typicalRank 1), one note per hand per tap by default (chords optional:
+  they cost ~7 points on these clips because the C-E-G clip has no per-finger signal), repeated-note
+  fallback (0.6 s) → **49.1%**. Tried and rejected (no gain or worse): ring-finger→middle credit,
+  landmark smoothing, other look-back windows. Second hand only joins a tap if it moved ≥60% as
+  decisively. Desk-mode calibration now tap-first too. App wired to the new engine (settings: engine,
+  response accurate/fast, chords within a hand). In `?sim=1` test mode the fake mic's beeps are ignored.
