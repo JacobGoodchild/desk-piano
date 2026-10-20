@@ -269,9 +269,18 @@ function processVideoFrame(t) {
   }
 }
 
+// How long a tap waits for camera frames after it: two frames ("accurate") or one ("fast"). Tuned
+// at 30 frames/s (70 ms vs 35 ms); a 60 frames/s camera halves the wait.
+function adaptWait() {
+  const f = fps();
+  const frameMs = f > 5 ? 1000 / f : 33;
+  engines.tap.resolver.o.afterMs = Math.max(25, Math.min(90, (settings.response === 'fast' ? 1 : 2) * frameMs + 4));
+}
+
 function handleHandFrame(frame) {
   state.frameTimes.push(performance.now());
   if (state.frameTimes.length > 30) state.frameTimes.shift();
+  if (state.frameTimes.length % 15 === 0) adaptWait();
   state.hands = frame.hands;
   state.handsT = frame.t;
   const events = strikes.update(frame); // also drives the fingertip colours and calibration
@@ -616,7 +625,7 @@ function applySettings() {
   const nextEngine = engines[settings.engine] || engines.tap;
   if (nextEngine !== fusion) { fusion.allOff(); fusion = nextEngine; }
   for (const e of Object.values(engines)) e.speakerMode = settings.output === 'speaker';
-  engines.tap.resolver.o.afterMs = settings.response === 'fast' ? 35 : 70;
+  adaptWait();
   engines.tap.resolver.o.chordRatio = settings.chords ? 0.9 : 1.01;
   velocityMap.sensitivity = settings.sensitivity;
   if (state.bus) state.bus.setAmount(settings.reverb);
