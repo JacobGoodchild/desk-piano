@@ -293,3 +293,9 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **21:00** Features: room reverb (generated impulse, dry path untouched so no delay; default 20%);
   Record / Play back / Save .mid (standard MIDI file, download only); MIDI output to devices/apps via
   Web MIDI (only asks for MIDI access when "Find devices" is pressed). Tests: 32 unit + 5 browser.
+- **21:15** Tried thumb-side tie-break for near-equal fingers: no gain → reverted. Tried a by-eye
+  transcription of Mary from frames: not possible at this resolution (fingers all look down).
+  New feature **"Teach my fingers"** (Set-up): tap 3× with each finger; the app learns this player's
+  finger-coupling pattern (e.g. ring dragged along by middle) and picks the finger whose pattern best
+  matches each tap (cosine similarity). Synthetic test: untaught → wrong (ring) key; taught → right key.
+  Can't be scored on the current clips (no teaching clip) — ask Jacob to record one (see CLIPS.md).
