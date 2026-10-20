@@ -22,11 +22,12 @@ export class Piano {
   constructor(ctx, destination) {
     this.ctx = ctx;
     this.out = ctx.createGain();
-    this.out.gain.value = 0.55;
+    this.out.gain.value = 0.6 * 0.5; // ×0.5 here, ×2 inside the shaper curve: headroom up to 2.0
     // gentle soft-clipper so big chords don't crackle (no added delay, unlike a compressor)
     const shaper = ctx.createWaveShaper();
     const curve = new Float32Array(1025);
-    for (let i = 0; i < curve.length; i++) { const x = (i / 512 - 1) * 1.5; curve[i] = Math.tanh(x); }
+    // linear up to 0.6, then rounds off smoothly towards 1 (input range ±2)
+    for (let i = 0; i < curve.length; i++) { const x = (i / 512 - 1) * 2; curve[i] = Math.abs(x) < 0.6 ? x : Math.sign(x) * (0.6 + 0.4 * Math.tanh((Math.abs(x) - 0.6) / 0.4)); }
     shaper.curve = curve;
     this.out.connect(shaper).connect(destination || ctx.destination);
     this.buffers = new Map(); // `${midi}-${v}` → AudioBuffer
@@ -78,7 +79,7 @@ export class Piano {
     const span = LAYERS[hi].at - (hi === lo ? 0 : LAYERS[lo].at);
     const mix = hi === lo ? 1 : Math.min(1, Math.max(0, (vel - LAYERS[lo].at) / span));
     // overall loudness follows velocity a little on top of the recorded layers
-    const amp = 0.35 + 0.65 * Math.pow(vel, 1.2);
+    const amp = 0.18 + 0.82 * Math.pow(vel, 1.5);
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(amp, t);
     gain.connect(this.out);
