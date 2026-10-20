@@ -90,6 +90,7 @@ async function startAudio() {
   state.ctx = new AC({ latencyHint: 'interactive' });
   await state.ctx.resume();
   state.piano = new Piano(state.ctx);
+  state.piano.setVolume(settings.volume);
   updatePedal();
   setStatus('Loading piano sound…');
   await state.piano.load('samples/piano/', (p) => setStatus(`Loading piano sound… ${Math.round(p * 100)}%`));
@@ -99,7 +100,7 @@ async function startMic() {
   stopMic();
   const speaker = settings.output === 'speaker';
   const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: speaker, noiseSuppression: false, autoGainControl: false, channelCount: 1, latency: 0 },
+    audio: { ...(settings.mic ? { deviceId: { exact: settings.mic } } : {}), echoCancellation: speaker, noiseSuppression: false, autoGainControl: false, channelCount: 1, latency: 0 },
   });
   state.micStream = stream;
   const track = stream.getAudioTracks()[0];
@@ -429,6 +430,8 @@ function setStatus(s) { $('status').textContent = s; }
 function applySettings() {
   state.layout = paperLayout(settings.paperSize);
   $('debug').hidden = !settings.debug;
+  $('modePaper').setAttribute('aria-pressed', String(settings.mode === 'paper'));
+  $('modeDesk').setAttribute('aria-pressed', String(settings.mode === 'desk'));
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
   $('camWrap').classList.toggle('mirror', !!settings.mirror);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
@@ -454,20 +457,42 @@ function bindSettings() {
     if (!el.name || !(el.name in settings)) continue;
     if (el.type === 'checkbox') el.checked = !!settings[el.name]; else el.value = settings[el.name];
     el.addEventListener('change', () => {
-      const prevOutput = settings.output, prevCam = settings.camera;
+      const prevOutput = settings.output, prevCam = settings.camera, prevMic = settings.mic;
       settings[el.name] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value;
       applySettings();
       if (el.name === 'mode' && settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
-      if (settings.output !== prevOutput && state.started) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
+      if ((settings.output !== prevOutput || settings.mic !== prevMic) && state.started) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
       if (settings.camera !== prevCam && state.started) startCamera().catch((e) => setStatus(`Camera: ${e.message}`));
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
+  // quick controls on the main screen
+  const setMode = (m) => {
+    settings.mode = m;
+    form.elements.mode.value = m;
+    applySettings();
+    if (m === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
+  };
+  $('modePaper').onclick = () => setMode('paper');
+  $('modeDesk').onclick = () => setMode('desk');
+  $('volume').value = settings.volume;
+  $('volume').addEventListener('input', () => {
+    settings.volume = Number($('volume').value);
+    if (state.piano) state.piano.setVolume(settings.volume);
+    saveSettings(settings);
+  });
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
 }
 
 async function listCameras() {
+  try {
+    const msel = $('settings').querySelector('select[name=mic]');
+    const mics = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+    while (msel.options.length > 1) msel.remove(1);
+    mics.forEach((d, i) => msel.add(new Option(d.label || `Microphone ${i + 1}`, d.deviceId)));
+    msel.value = settings.mic;
+  } catch { /* ignore */ }
   try {
     const sel = $('settings').querySelector('select[name=camera]');
     const devs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');

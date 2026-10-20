@@ -9,7 +9,7 @@
 // inside the repo, writes temporary frames only to the system temp folder (deleted afterwards),
 // prints only note names and numbers, and never writes anything into the repo.
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readdirSync, readFileSync, rmSync, existsSync, writeFileSync, realpathSync, statSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync, existsSync, writeFileSync, realpathSync, statSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, extname, basename, sep } from 'node:path';
 import { chromium } from 'playwright';
@@ -206,7 +206,16 @@ async function main() {
   for (const clip of clips) {
     const file = join(folder, clip);
     const exp = expected.get(clip);
-    const { fps, frames } = await analyseClip(page, url, file, tmpRoot);
+    // hand tracking is slow: cache its results next to the clips (outside the repo, never committed)
+    const cacheDir = join(folder, '.cache');
+    const cacheFile = join(cacheDir, `${clip}.${FRAME_W}.frames.json`);
+    let fps, frames;
+    if (!flag('no-cache') && existsSync(cacheFile) && statSync(cacheFile).mtimeMs > statSync(file).mtimeMs) {
+      ({ fps, frames } = JSON.parse(readFileSync(cacheFile, 'utf8')));
+    } else {
+      ({ fps, frames } = await analyseClip(page, url, file, tmpRoot));
+      if (!selfTest) { mkdirSync(cacheDir, { recursive: true }); writeFileSync(cacheFile, JSON.stringify({ fps, frames })); }
+    }
     const audio = decodeAudio(file);
     const taps = tapsFromAudio(audio, sensitivity);
     analysed.push({ clip, frames, audio, exp });

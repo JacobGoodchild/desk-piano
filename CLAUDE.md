@@ -253,3 +253,9 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **19:55** Clips copied to `~/private-clips/`. Found his webcam video is **mirrored**: marker detector
   found 0/12 markers as-is, 12/12 when flipped → detector now also reads mirrored markers (test added).
 - **19:57** Clip tester bug: MediaPipe timestamps restarted per batch → fixed (global clock).
+- **20:05 BASELINE** (`clip-test`, defaults): overall **8.5%** (10 correct of 19 expected, 118 detected).
+  Per clip: hovering 55 false chords; resting 11 false; middle C ×4 18% (11 detected); CEG ×2 0% (9
+  detected); Mary simple 25% (32 detected). Taps heard per clip: 0–2 (!). Almost every note came from
+  the camera-only path. Matches Jacob's experience exactly.
+- Also added: volume slider (default 120%, +6 dB vs before), Paper/Desk switch in the header,
+  microphone picker in Settings.

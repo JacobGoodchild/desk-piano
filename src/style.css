@@ -55,3 +55,11 @@ body.setup #piano { display: none; }
   #side { min-width: 0; }
 }
 .setupPanel .diagram { width: 100%; max-width: 360px; display: block; margin: 0 auto 6px; }
+
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; }
+.seg button:first-child { border-radius: 8px 0 0 8px; }
+.seg button:last-child { border-radius: 0 8px 8px 0; border-left: 0; }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vol { display: inline-flex; align-items: center; gap: 4px; }
+.vol input { width: 90px; }
