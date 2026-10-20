@@ -51,6 +51,10 @@ node scripts/clip-test.mjs ~/private-clips --only chords.mp4 --verbose
 node scripts/clip-test.mjs ~/private-clips --json ~/private-clips/results-before.json
 ```
 
+Add `--sweep` to try 486 combinations of the main settings (tap sensitivity, strike speed and
+distance, tap/landing match window, knuckle weighting) on the already-analysed clips — the slow hand
+tracking runs only once — and print the 10 best. Use it as a starting point, then confirm by hand.
+
 Options: `--variant full|compact` (which printed keyboard is in the clips), `--latency 40` (simulated
 camera processing delay in ms — the phone is roughly 30–60), `--sensitivity 0.5` (tap sensitivity),
 `--octave N`.

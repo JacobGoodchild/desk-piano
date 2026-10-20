@@ -80,10 +80,10 @@ function tapsFromAudio(samples, sensitivity) {
 
 // Replays one clip's frames + taps through the same logic as the app, in time order,
 // with camera results arriving `latency` ms after the frame was captured.
-function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
+function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {} }) {
   const layout = paperLayout(variant);
   let paperInv = null, paperFrames = 0, markerCounts = [];
-  const detector = new StrikeDetector();
+  const detector = new StrikeDetector(strikeOpts);
   const handIds = new HandIds();
   const notes = [];
   const fusion = new Fusion({
@@ -95,6 +95,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
     },
     play: (midi, vel, info) => notes.push({ midi, vel, how: info.how, t: info.t }),
     stop: () => {},
+    opts: fusionOpts,
   });
   const events = [];
   for (const f of frames) events.push({ at: f.t + latency, kind: 'frame', f });
@@ -200,12 +201,15 @@ async function main() {
   await page.waitForFunction(() => window.runnerReady === true, null, { timeout: 60000 });
 
   const results = [];
+  const analysed = []; // kept in memory only, for --sweep
   let totalCorrect = 0, totalExpected = 0, totalDetected = 0;
   for (const clip of clips) {
     const file = join(folder, clip);
     const exp = expected.get(clip);
     const { fps, frames } = await analyseClip(page, url, file, tmpRoot);
-    const taps = tapsFromAudio(decodeAudio(file), sensitivity);
+    const audio = decodeAudio(file);
+    const taps = tapsFromAudio(audio, sensitivity);
+    analysed.push({ clip, frames, audio, exp });
     const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)) });
     const groups = groupChords(notes);
     const handFrames = frames.filter((f) => f.hands.length).length;
@@ -233,6 +237,7 @@ async function main() {
   }
   const overall = totalExpected || totalDetected ? totalCorrect / Math.max(totalExpected, totalDetected) : 1;
   console.log(`\nOVERALL: ${totalCorrect} correct of ${totalExpected} expected (${totalDetected} detected) → ${(overall * 100).toFixed(1)}%`);
+  if (flag('sweep')) sweep(analysed, { variant, latency });
   if (jsonOut) writeFileSync(resolve(jsonOut), JSON.stringify({ when: new Date().toISOString(), variant, latency, sensitivity, overall, results }, null, 2));
   await browser.close();
   await close();
@@ -243,6 +248,47 @@ async function main() {
     console.log(ok ? '\nSELF-TEST PASSED (paper found, taps heard, no hands → no notes)' : '\nSELF-TEST FAILED');
     process.exit(ok ? 0 : 1);
   }
+}
+
+// --sweep: try combinations of the main detection settings on the already-analysed clips (the
+// slow hand tracking is done once) and print the best. Nothing is saved.
+function sweep(analysed, { variant, latency }) {
+  const grid = {
+    sensitivity: [0.3, 0.5, 0.7],
+    downSpeed: [0.8, 1.2, 1.8],
+    minDrop: [0.03, 0.06, 0.1],
+    matchMs: [70, 90, 120],
+    knuckleWeight: [0.3, 0.6],
+  };
+  const combos = [{}];
+  for (const [k, vals] of Object.entries(grid)) {
+    const next = [];
+    for (const c of combos) for (const v of vals) next.push({ ...c, [k]: v });
+    combos.splice(0, combos.length, ...next);
+  }
+  const tapCache = new Map();
+  const rows = [];
+  for (const c of combos) {
+    let correct = 0, expN = 0, detN = 0, falseNotes = 0;
+    for (const a of analysed) {
+      const key = `${a.clip}|${c.sensitivity}`;
+      if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity));
+      const { notes } = replay(a.frames, tapCache.get(key), {
+        variant, latency,
+        strikeOpts: { downSpeed: c.downSpeed, minDrop: c.minDrop, knuckleWeight: c.knuckleWeight },
+        fusionOpts: { matchMs: c.matchMs },
+      });
+      const groups = groupChords(notes);
+      if (!a.exp) continue;
+      const sc = score(a.exp, groups);
+      correct += sc.correct; expN += a.exp.length; detN += groups.length;
+      if (!a.exp.length) falseNotes += groups.length;
+    }
+    rows.push({ ...c, accuracy: expN || detN ? correct / Math.max(expN, detN) : 1, falseNotes });
+  }
+  rows.sort((a, b) => b.accuracy - a.accuracy || a.falseNotes - b.falseNotes);
+  console.log(`\nSWEEP (${combos.length} combinations) – best 10:`);
+  for (const r of rows.slice(0, 10)) console.log(`  ${(r.accuracy * 100).toFixed(1)}%  notes in no-play clips: ${r.falseNotes}  ` + Object.entries(r).filter(([k]) => !['accuracy', 'falseNotes'].includes(k)).map(([k, v]) => `${k}=${v}`).join(' '));
 }
 
 // Synthetic clip for --self-test: the rendered paper (no hands) with tap sounds. Written only to
