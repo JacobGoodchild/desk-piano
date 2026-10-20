@@ -42,12 +42,14 @@ export class Piano {
     // load the mid layer first so something is playable quickly
     const order = [1, 3, 0, 2].map((i) => LAYERS[i]);
     for (const L of order) for (const m of sampleMidis()) jobs.push({ m, v: L.v });
+    for (const m of sampleMidis()) jobs.push({ m, rel: true });
     let done = 0;
-    const fetchOne = async ({ m, v }) => {
-      const res = await fetch(baseUrl + encodeURIComponent(fileName(m, v)));
-      if (!res.ok) throw new Error(`sample ${fileName(m, v)}: ${res.status}`);
+    const fetchOne = async ({ m, v, rel }) => {
+      const name = rel ? `rel${m}.mp3` : fileName(m, v);
+      const res = await fetch(baseUrl + encodeURIComponent(name));
+      if (!res.ok) throw new Error(`sample ${name}: ${res.status}`);
       const buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
-      this.buffers.set(`${m}-${v}`, buf);
+      this.buffers.set(rel ? `rel-${m}` : `${m}-${v}`, buf);
       done++;
       if (onProgress) onProgress(done / jobs.length);
     };
@@ -98,7 +100,7 @@ export class Piano {
       sources.push(src);
       if (lo === hi) break;
     }
-    const voice = { midi, gain, sources, held: true, start: t, released: false };
+    const voice = { midi, gain, sources, held: true, start: t, released: false, vel };
     if (!this.voices.has(midi)) this.voices.set(midi, []);
     this.voices.get(midi).push(voice);
     sources[0] && (sources[0].onended = () => this._forget(voice));
@@ -128,8 +130,24 @@ export class Piano {
       v.held = false;
       v.gain.gain.cancelScheduledValues(t);
       v.gain.gain.setTargetAtTime(0, t, tc);
+      if (!force) this._releaseSound(midi, v.vel, t);
       for (const s of v.sources) { try { s.stop(t + tc * 8); } catch { /* not started */ } }
     }
+  }
+
+  // the soft "thump" of the damper landing back on the strings (recorded release samples)
+  _releaseSound(midi, vel, t) {
+    const sm = this._nearestSample(midi);
+    const buf = this.buffers.get(`rel-${sm}`);
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = Math.pow(2, (midi - sm) / 12);
+    const g = this.ctx.createGain();
+    g.gain.value = 0.02 + 0.06 * vel; // the recordings are normalised loud; real damper noise is subtle
+    src.connect(g).connect(this.out);
+    src.start(t);
+    src.onended = () => { try { g.disconnect(); } catch { /* gone */ } };
   }
 
   noteOff(midi) {
@@ -148,6 +166,7 @@ export class Piano {
           v.released = true;
           v.gain.gain.cancelScheduledValues(t);
           v.gain.gain.setTargetAtTime(0, t, this.release * 1.4);
+          this._releaseSound(midi, v.vel * 0.6, t);
           for (const s of v.sources) { try { s.stop(t + 1.2); } catch { /* ignore */ } }
         }
       }
