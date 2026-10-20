@@ -39,8 +39,14 @@
       <div id="camMsg" class="camMsg">Camera off</div>
     </div>
     <div id="side">
+      <div id="calib" class="calib" hidden></div>
       <div id="setupPanel" class="setupPanel" hidden>
         <h2>Set-up</h2>
+        <div class="setupButtons">
+          <button id="setupDone" class="primary">Done – start playing</button>
+          <button id="teachBtn">Teach my fingers</button> <button id="forgetBtn" title="Forget taught finger patterns">Forget</button>
+          <button id="checkBtn" title="Play a short exercise and see how many notes the app gets right">Check accuracy</button>
+        </div>
         <svg class="diagram" viewBox="0 0 320 110" role="img" aria-label="Side view: you sit on one side, the paper keyboard lies flat on the desk, the phone stands at the far side tilted down at your hands">
           <line x1="10" y1="92" x2="310" y2="92" stroke="#8a6a4a" stroke-width="4"/>
           <rect x="95" y="86" width="140" height="4" fill="#fff"/>
@@ -58,17 +64,13 @@
           <li>Move it until the whole paper is inside the frame and every marker is ticked (missing ones are outlined red).</li>
           <li>The microphone must hear your taps: keep it close to the paper. If your webcam is up high, choose the laptop's or phone's own microphone in Settings → Devices. Tap firmly with the finger pad; the green <b>Mic</b> bar should jump.</li>
           <li>Rest both hands on the keys: both should be found. Then tap a few notes.</li>
-          <li>No paper? Choose “Plain desk” in Settings, then tap middle C and the C above to calibrate.</li>
+          <li>No paper? Press <b>Desk</b> in the top bar, then tap middle C and the C above to calibrate.</li>
         </ol>
-        <p class="teachInfo">Optional: <b>teach the app your fingers</b> (about 30 seconds). Rest a hand on the keys and tap three times with each finger in turn, keeping the other fingers relaxed. The app learns how your fingers move together so it picks the right one.</p>
-        <button id="teachBtn">Teach my fingers</button> <button id="forgetBtn">Forget</button>
-        <button id="checkBtn" title="Play a short exercise and see how many notes the app gets right">Check accuracy</button>
-        <button id="setupDone" class="primary">Done – start playing</button>
+        <p class="teachInfo"><b>Teach my fingers</b> (about 30 seconds): rest a hand on the keys and tap three times with each finger in turn, other fingers relaxed — the app learns how your fingers move together. <b>Check accuracy</b>: play C D E F G F E D C and see how many notes it gets right.</p>
       </div>
       <div id="hint" class="hint">🎧 Headphones recommended – the microphone listens for your taps, so the piano sound from speakers can confuse it.</div>
       <div id="checks" class="checks"></div>
       <div class="micbar" title="Microphone level – taps should make it jump"><span>Mic</span><div><i id="micLevel"></i></div></div>
-      <div id="calib" class="calib" hidden></div>
       <div id="debug" class="debug" hidden>
         <canvas id="meter" width="300" height="60"></canvas>
         <pre id="debugText"></pre>

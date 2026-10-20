@@ -52,7 +52,9 @@ dialog a { color: var(--accent); }
 .setupPanel ol { margin: 0 0 8px; padding-left: 20px; }
 .setupPanel a { color: var(--accent); }
 body.setup #camWrap { max-width: 72%; }
-body.setup #piano { display: none; }
+body.setup #piano, body.setup #roll { display: none; }
+.setupButtons { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.setupPanel ol { font-size: 13px; }
 @media (orientation: portrait) and (max-width: 700px) {
   #stage { flex-direction: column; overflow: auto; }
   #camWrap, body.setup #camWrap { width: 100%; height: auto; max-width: 100%; flex: 0 0 auto; }
