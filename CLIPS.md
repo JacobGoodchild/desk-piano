@@ -67,6 +67,34 @@ expected notes (edit distance) and reports **correct / wrong / missed / extra** 
 times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `land+tap`,
 `tap+corrected`, `camera-only`).
 
+## What we learnt from the first clips (Oct 2026)
+
+- Jacob's webcam sends a **mirrored** image (the marker detector handles that now).
+- The webcam microphone hears taps only ~15–25 dB above the room noise and smears them over ~10 ms;
+  the tap detector now works relative to the learnt background noise.
+- He plays with the whole hand dropping onto the paper: 3–5 fingertips touch on every note, so a
+  "which finger landed" detector fails. The default engine is now **tap-first** (`src/tap-resolver.js`
+  + `src/tap-fusion.js`): on each tap it picks the finger that moved down most compared with the
+  hand's other fingers, and must still be moving down just before the tap.
+- Chords: in the C-E-G clip no finger stands out, so chords within a hand are **off by default**.
+
+## Clips that would help most next time
+
+1. **Teach-my-fingers clip** — `fingers-right.mp4`: right hand resting on C D E F G, tap each finger
+   3 times in order (thumb, index, middle, ring, little), pause between. Notes file line:
+   `fingers-right.mp4: C4 C4 C4 D4 D4 D4 E4 E4 E4 F4 F4 F4 G4 G4 G4`. Same for the left hand.
+2. Slow, single-note scales (C major up and down) in each hand.
+3. Chords held for a moment (C-E-G, then F-A-C) with the hand starting clearly lifted.
+4. A clip filmed from higher up (looking down more steeply at the fingers), and one with the
+   microphone close to the desk, to compare.
+
+## Engine settings to tune (in `RESOLVER_DEFAULTS`)
+
+`lookbackMs`, `afterMs` (70 = accurate, 35 = fast), `minTravel`, `minLead`, `minLate`, `maxAfter`,
+`lateWeight`, `typicalRank`, `chordRatio`, `handRatio`, `repeatMs`. Use
+`--sweep --grid '{"minLead":[0.02,0.04],"afterMs":[35,70]}'` to try specific values. The old
+landing-based engine is still available with `--engine classic`.
+
 ## Tuning loop
 
 1. Run all clips once and **log the accuracy per clip (before)** in the CLAUDE.md progress log.
@@ -76,9 +104,8 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
    - *Hands seen in few frames*: lighting/angle; MediaPipe confidence thresholds.
    - *Taps heard ≠ notes played*: tap detector (`src/onset.js` — `sensitivity`, `ratio`, the 2 ms rise
      test, refractory time). Count taps vs. expected notes.
-   - *Missed notes with taps heard*: strike detection (`src/strike.js` — `downSpeed`, `minDrop`,
-     `stopRatio`, `knuckleWeight`) or fusion windows (`src/fusion.js` — `matchMs`, `pendingMs`,
-     `descendLookMs`).
+   - *Missed notes with taps heard*: the tap resolver's gates (`minTravel`, `minLate`, `maxAfter`,
+     `minLead`) — or, with `--engine classic`, the strike detector (`src/strike.js`).
    - *Wrong notes (neighbouring key)*: key mapping — the fingertip landmark sits above the contact
      point; `TIP_OFFSET_MM` in `src/paper.js` (default 5 mm towards the camera) corrects for that.
      Black↔white mix-ups → tune it; sideways mix-ups → check the predicted touch-down point.
