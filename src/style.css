@@ -42,3 +42,10 @@ dialog a { color: var(--accent); }
   .keyhelp { display: none; }
   #piano { height: 34vh; }
 }
+
+.setupPanel { background: #22304a; border: 1px solid #3a5a8c; border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.setupPanel h2 { margin: 0 0 4px; font-size: 17px; }
+.setupPanel ol { margin: 0 0 8px; padding-left: 20px; }
+.setupPanel a { color: var(--accent); }
+body.setup #camWrap { max-width: 72%; }
+body.setup #piano { display: none; }

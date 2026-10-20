@@ -30,6 +30,17 @@
       <div id="camMsg" class="camMsg">Camera off</div>
     </div>
     <div id="side">
+      <div id="setupPanel" class="setupPanel" hidden>
+        <h2>Set-up</h2>
+        <ol>
+          <li>Print the <a href="print.html" target="_blank" rel="noopener">paper keyboard</a> at 100% and tape it to the desk.</li>
+          <li>Put the phone (front camera, screen facing you, landscape) or webcam on the <b>far side</b> of the paper, facing you, tilted down about 45° — a stand or a pile of books.</li>
+          <li>Move it until the whole paper is inside the frame and every marker is ticked (missing ones are outlined red).</li>
+          <li>Rest both hands on the keys: both should be found. Then tap a few notes.</li>
+          <li>No paper? Choose “Plain desk” in Settings, then tap middle C and the C above to calibrate.</li>
+        </ol>
+        <button id="setupDone" class="primary">Done – start playing</button>
+      </div>
       <div id="hint" class="hint">🎧 Headphones recommended – the microphone listens for your taps, so the piano sound from speakers can confuse it.</div>
       <div id="checks" class="checks"></div>
       <div id="calib" class="calib" hidden></div>
@@ -67,19 +78,7 @@
   </form>
 </dialog>
 
-<dialog id="setup">
-  <form method="dialog">
-    <h2>Set-up</h2>
-    <ol>
-      <li>Print the <a href="print.html" target="_blank" rel="noopener">paper keyboard</a> at 100% and tape it to the desk.</li>
-      <li>Put the phone (front camera, screen facing you) or webcam on the <b>far side</b> of the paper, facing you, tilted down about 45° (a stand or a pile of books). Landscape works best.</li>
-      <li>Move it until the whole paper is inside the frame and every black square marker is ticked below.</li>
-      <li>Put both hands on the keys: both should be found. Then tap a few notes.</li>
-      <li>No paper? Choose “Plain desk” in Settings and follow the calibration (tap middle C, then the C above).</li>
-    </ol>
-    <div class="buttons"><button value="close" class="primary">OK</button></div>
-  </form>
-</dialog>
+
 
 <script type="module" src="src/app.js"></script>
 </body>

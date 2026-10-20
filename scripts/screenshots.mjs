@@ -18,6 +18,7 @@ const shots = [
   { name: 'print-full', path: 'print.html', viewport: { width: 1200, height: 900 }, full: true },
   { name: 'print-compact', path: 'print.html?size=compact', viewport: { width: 1200, height: 900 }, full: true },
   { name: 'app-laptop', path: 'index.html?debug=1', viewport: { width: 1280, height: 800 }, start: true },
+  { name: 'app-setup', path: 'index.html', viewport: { width: 1280, height: 800 }, start: true, setup: true },
   { name: 'app-phone', path: 'index.html', viewport: { width: 915, height: 412 }, start: true, mobile: true },
 ];
 for (const s of shots) {
@@ -31,6 +32,9 @@ for (const s of shots) {
     if (await btn.isVisible().catch(() => false)) await btn.click();
     await page.waitForFunction(() => window.deskPiano.state.markersSeen.size > 0, null, { timeout: 30000 }).catch(() => {});
     await page.waitForTimeout(500);
+    if (s.setup && !(await page.isVisible('#setupPanel'))) await page.click('#setupBtn');
+    if (!s.setup && (await page.isVisible('#setupPanel'))) await page.click('#setupDone');
+    await page.waitForTimeout(300);
   }
   await page.screenshot({ path: `${out}${s.name}.png`, fullPage: !!s.full });
   console.log('saved', s.name);

@@ -159,7 +159,7 @@ done, and the best ideas for next time.
   output 32 ms + input 10 ms → **~57 ms tap→sound** on the fast path (finger already seen descending).
   On a real phone the output/input numbers will differ; the debug view shows the live values and the
   measured tap→sound average. Fixed a clock-mapping bug (was using the output timestamp for input).
-- **16:55** Browser tests now also drive the *real camera path*: Chromium's fake camera plays a synthetic
+- **16:50** Browser tests now also drive the *real camera path*: Chromium's fake camera plays a synthetic
   video of the printed paper (generated into the temp folder) and the app finds 12/12 markers and maps
   middle C correctly. Screenshots use the same fake feed.
   - Decision: default camera is the **front** camera on phones (`facingMode: user`), because with the

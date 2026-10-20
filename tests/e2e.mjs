@@ -44,8 +44,9 @@ await check('page loads, starts with fake camera + mic, set-up and settings work
   assert.match(checks, /Piano sound loaded/);
   assert.match(checks, /Microphone listening/);
   await page.click('#setupBtn');
-  assert.ok(await page.isVisible('#setup'));
-  await page.click('#setup button[value=close]');
+  assert.ok(await page.isVisible('#setupPanel'));
+  await page.click('#setupDone');
+  assert.ok(!(await page.isVisible('#setupPanel')));
   await page.click('#settingsBtn');
   await page.selectOption('select[name=output]', 'speaker');
   await page.check('input[name=debug]');

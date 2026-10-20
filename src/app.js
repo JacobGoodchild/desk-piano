@@ -317,6 +317,14 @@ function drawOverlay() {
     g.beginPath();
     [[0, 0], [L.width, 0], [L.width, L.height], [0, L.height]].forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(X(p.x), p.y) : g.moveTo(X(p.x), p.y); });
     g.closePath(); g.stroke();
+    // every marker: green if the camera sees it, red if not (helps aim the camera)
+    for (const mk of L.markers) {
+      const seen = state.markersSeen.has(mk.id);
+      g.strokeStyle = seen ? '#3ecf7a' : '#ff4040'; g.lineWidth = seen ? 2 : 4;
+      g.beginPath();
+      [[0, 0], [1, 0], [1, 1], [0, 1]].forEach(([u, v], i) => { const p = P(mk.x + u * mk.size, mk.y + v * mk.size); i ? g.lineTo(X(p.x), p.y) : g.moveTo(X(p.x), p.y); });
+      g.closePath(); g.stroke();
+    }
     if (dbg) {
       g.lineWidth = 1; g.strokeStyle = 'rgba(62,207,122,.6)';
       for (const k of L.kb.keys) {
@@ -420,6 +428,14 @@ function applySettings() {
   saveSettings(settings);
 }
 
+function setSetup(on, autoStart = true) {
+  document.body.classList.toggle('setup', on);
+  $('setupPanel').hidden = !on;
+  $('setupBtn').setAttribute('aria-pressed', String(on));
+  if (on && autoStart && !state.started) start();
+  requestAnimationFrame(drawPiano);
+}
+
 function bindSettings() {
   const form = $('settings').querySelector('form');
   for (const el of form.elements) {
@@ -434,7 +450,8 @@ function bindSettings() {
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
-  $('setupBtn').onclick = () => $('setup').showModal();
+  $('setupBtn').onclick = () => setSetup(true);
+  $('setupDone').onclick = () => setSetup(false);
 }
 
 async function listCameras() {
@@ -497,6 +514,7 @@ function ensureAudio() {
 }
 
 async function start() {
+  if ($('start').disabled) return;
   $('start').disabled = true;
   await ensureAudio();
   const problems = [];
@@ -518,6 +536,7 @@ async function keepAwake() {
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.started) keepAwake(); });
 
 $('start').onclick = start;
+if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings(settings); setSetup(true, false); }
 bindSettings();
 bindKeys();
 applySettings();
