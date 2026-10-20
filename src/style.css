@@ -49,3 +49,8 @@ dialog a { color: var(--accent); }
 .setupPanel a { color: var(--accent); }
 body.setup #camWrap { max-width: 72%; }
 body.setup #piano { display: none; }
+@media (orientation: portrait) and (max-width: 700px) {
+  #stage { flex-direction: column; overflow: auto; }
+  #camWrap, body.setup #camWrap { width: 100%; height: auto; max-width: 100%; flex: 0 0 auto; }
+  #side { min-width: 0; }
+}

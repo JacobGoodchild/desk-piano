@@ -20,6 +20,7 @@ const shots = [
   { name: 'app-laptop', path: 'index.html?debug=1', viewport: { width: 1280, height: 800 }, start: true },
   { name: 'app-setup', path: 'index.html', viewport: { width: 1280, height: 800 }, start: true, setup: true },
   { name: 'app-phone', path: 'index.html', viewport: { width: 915, height: 412 }, start: true, mobile: true },
+  { name: 'app-phone-portrait', path: 'index.html', viewport: { width: 412, height: 915 }, start: true, mobile: true },
 ];
 for (const s of shots) {
   const ctx = await browser.newContext({ viewport: s.viewport, isMobile: !!s.mobile, hasTouch: !!s.mobile, permissions: ['camera', 'microphone'] });
