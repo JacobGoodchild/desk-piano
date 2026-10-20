@@ -309,3 +309,9 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **21:55** Offline support (`sw.js`): samples + vendor cache-first (bump `CACHE` in sw.js if they ever
   change), app code network-first. Browser test: reload offline → page and piano still work. Fixed: a
   speakers/headphones change was ignored until the hand tracker had finished loading.
+- **22:10** Self-review of app.js found/fixed: double mirroring for webcams that already mirror (now
+  auto-detected from the markers); fingertip dots now red while that finger sounds (tap engine); desk
+  calibration only falls back to landings when there's no mic; notes also end when a finger slides
+  sideways off its key; loud spike on the first notes of every instrument (output gain started at 1
+  and glided down) — fixed, and all 5 sounds level-matched to the piano within 1 dB
+  (`scripts/measure-instruments.mjs`). Added a full-screen button (locks phones to landscape).
