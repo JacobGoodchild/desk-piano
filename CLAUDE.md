@@ -280,3 +280,8 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   landmark smoothing, other look-back windows. Second hand only joins a tap if it moved ≥60% as
   decisively. Desk-mode calibration now tap-first too. App wired to the new engine (settings: engine,
   response accurate/fast, chords within a hand). In `?sim=1` test mode the fake mic's beeps are ignored.
+- **20:45** Live end-to-end check: fed the middle-C clip into the real app through Chromium's fake
+  camera+mic (converted copies in /tmp only, only note names read back). Headless has no GPU: GPU
+  tracking ran ~775 ms/frame (1 fps) → all taps dropped; with CPU tracking 8–10 fps → app played
+  **C4 ×12 over ~3 loops, nothing else**. Added: auto-switch to CPU tracking if GPU is slow
+  (`?delegate=cpu|gpu`), frames/s + ms/frame in debug view, marker detection in a Web Worker.
