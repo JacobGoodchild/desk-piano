@@ -599,6 +599,12 @@ function updateChecks() {
     tick(f >= 15, f >= 15 ? `Hand tracking ${Math.round(f)} frames/s` : `Hand tracking slow (${Math.round(f)} frames/s) – close other apps or use a faster device`);
   }
   tick(state.hands.length >= 2, `Hands found: ${state.hands.length} of 2`);
+  // hands busy for a while but no taps heard → the mic is probably too far away or too insensitive
+  const now = performance.now();
+  if (state.hands.length) { if (!state.handsSince) state.handsSince = now; } else state.handsSince = 0;
+  if (state.micNode && state.handsSince && now - state.handsSince > 10000 && (lastTap == null || lastTap > 10)) {
+    rows.push('<span class="no">!</span><span>I can see your hands but can’t hear any taps. Tap more firmly, move the microphone closer to the paper (or pick another one in Settings → Devices), or raise Tap sensitivity.</span>');
+  }
   if (settings.mode === 'paper') tick(state.markersSeen.size === state.layout.markers.length, `Paper markers: ${state.markersSeen.size} of ${state.layout.markers.length}`);
   else tick(!!(settings.desk && settings.desk.c5), 'Desk calibrated <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>');
   const html = rows.join('');
