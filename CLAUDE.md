@@ -317,3 +317,8 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   (`scripts/measure-instruments.mjs`). Added a full-screen button (locks phones to landscape).
 - *(Note: the overnight entries labelled 20:20–22:10 were written from estimated times that ran up to
   ~1 h fast; real clock for all of them was ~19:55–21:06. From here on times are read from `date`.)*
+- **21:15** Tap wait now adapts to the camera's frame rate (2 frames accurate / 1 frame fast → 60 fps
+  cameras get half the delay). Metronome added (clicks count as the app's own sound for echo
+  protection). README rewritten for players. Re-tried "play clear strikes the mic missed" inside the
+  tap engine (virtual taps from camera landings, stricter lead 2–8×): always worse — 12–21 false
+  notes in hover/rest clips, accuracy 38–45% → removed. The microphone must decide WHEN.
