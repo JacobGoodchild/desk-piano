@@ -1,8 +1,8 @@
 // Finger-strike detection from hand landmarks over time.
-// Input each video frame: { t (ms), hands: [{ label: 'Left'|'Right', points: [{x,y}] ×21 (pixels) }] }
+// Input each video frame: { t (ms), hands: [{ label: stable hand id, points: [{x,y}] ×21 (pixels) }] }
 // A fingertip moving "down" toward the desk moves DOWN the image (larger y) when the camera
 // faces the player from across the desk, tilted down. Speeds are measured in hand-sizes per
-// second (hand size = wrist → middle-finger knuckle), so they don't depend on camera distance.
+// second (hand size ≈ 0.8 × the knuckle span), so they don't depend on camera distance.
 export const TIPS = [4, 8, 12, 16, 20];
 const MCP = { 4: 2, 8: 5, 12: 9, 16: 13, 20: 17 };
 
@@ -29,7 +29,11 @@ export class StrikeDetector {
     this.lastT = frame.t;
     for (const hand of frame.hands) {
       const P = hand.points;
-      const size = Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y) || 1;
+      // hand size: the knuckle span (index→little finger) faces the camera and isn't foreshortened
+      // like the wrist→knuckle length is when fingers point towards the camera
+      const span = Math.hypot(P[17].x - P[5].x, P[17].y - P[5].y);
+      const wm = Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y);
+      const size = (span > 0.4 * wm ? span * 0.8 : wm) || 1;
       for (const tip of TIPS) {
         const id = `${hand.label}-${tip}`;
         seen.add(id);

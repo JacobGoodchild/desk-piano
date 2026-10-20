@@ -167,10 +167,10 @@ done, and the best ideas for next time.
     The picture is mirrored by default (setting) so left/right matches your view.
   - Decision: hands get stable ids by wrist position (MediaPipe's Left/Right label flickers and is
     mirrored), so a label flip can't cut notes short.
-- **17:00** Set-up screen (big preview, steps, per-marker red/green outlines, opens on first visit);
+- **16:56** Set-up screen (big preview, steps, per-marker red/green outlines, opens on first visit);
   learnt loudness range (`VelocityMapper`: after ~8 taps your own softest→pp, hardest→ff); screen wake
   lock; paper re-detected every 10th frame once found (saves phone CPU); fast-run fusion fix (synthetic
   runs at 10–14 notes/s all correct). Live site checked in headless Chromium: loads, no console errors.
-- **17:03** Sound levels (`node scripts/measure-sound.mjs`, offline render): single C4 pp −50 dB rms,
+- **16:58** Sound levels (`node scripts/measure-sound.mjs`, offline render): single C4 pp −50 dB rms,
   mf −39, ff −26 (≈24 dB range); 10-note ff chord peaks 0.99 through a soft-knee limiter with 2× headroom
   (no hard clipping, no added delay — a DynamicsCompressor would add ~6 ms look-ahead).
