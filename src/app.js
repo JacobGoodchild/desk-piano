@@ -70,7 +70,7 @@ function noteOn(midi, vel, info = {}) {
   // tap → sound delay: time since the tap was heard + the audio output path
   if (info.t != null && state.ctx && info.how && info.how.startsWith('tap')) {
     const out = ((state.ctx.baseLatency || 0) + (state.ctx.outputLatency || 0)) * 1000;
-    const lat = performance.now() - info.t + out + (state.inputLatencyMs || 0);
+    const lat = performance.now() - info.t + out; // info.t already allows for the input delay
     state.lastLatency = lat;
     state.latencies.push(lat);
     if (state.latencies.length > 50) state.latencies.shift();
@@ -126,12 +126,13 @@ async function startMic() {
 }
 
 function handleTap({ t, peak, velocity }) {
-  let vel = velocity;
-  if (vel == null) { vel = velocityMap.map(peak); velocityMap.add(peak); }
+  const vel = velocity ?? velocityMap.map(peak);
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.calib) return; // calibration taps are handled from the camera landing
-  fusion.onTap({ t, velocity: vel }, strikes);
+  const played = fusion.onTap({ t, velocity: vel }, strikes);
+  // learn the loudness range only from taps that really were notes (not talking or knocks)
+  if (played && peak != null) velocityMap.add(peak);
 }
 
 // ---------------------------------------------------------------- camera & hands
