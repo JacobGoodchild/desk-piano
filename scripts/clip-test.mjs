@@ -208,7 +208,7 @@ async function main() {
     const exp = expected.get(clip);
     // hand tracking is slow: cache its results next to the clips (outside the repo, never committed)
     const cacheDir = join(folder, '.cache');
-    const cacheFile = join(cacheDir, `${clip}.${FRAME_W}.frames.json`);
+    const cacheFile = join(cacheDir, `${clip}.${FRAME_W}.v2.frames.json`);
     let fps, frames;
     if (!flag('no-cache') && existsSync(cacheFile) && statSync(cacheFile).mtimeMs > statSync(file).mtimeMs) {
       ({ fps, frames } = JSON.parse(readFileSync(cacheFile, 'utf8')));

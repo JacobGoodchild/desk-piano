@@ -29,7 +29,10 @@ window.analyseFrames = async (urls, fps, markerEvery = 3) => {
     const w = img.naturalWidth, h = img.naturalHeight;
     mpClock += 1000 / fps;
     const res = landmarker.detectForVideo(img, mpClock);
-    const hands = (res.landmarks || []).map((lm) => ({ points: lm.map((p) => ({ x: p.x * w, y: p.y * h })) }));
+    const hands = (res.landmarks || []).map((lm, k) => ({
+      points: lm.map((p) => ({ x: p.x * w, y: p.y * h, z: p.z * w })),
+      world: (res.worldLandmarks && res.worldLandmarks[k] || []).map((p) => ({ x: p.x, y: p.y, z: p.z })), // metres, hand-centred 3D
+    }));
     let markers = null;
     if (i % markerEvery === 0) {
       canvas.width = w; canvas.height = h;

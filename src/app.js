@@ -2,6 +2,7 @@
 // fusion of the two → piano sound. Everything runs on this device; no audio or video is
 // stored or sent anywhere.
 import { Piano } from './piano.js';
+import { SYNTHS, INSTRUMENTS } from './synths.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { VelocityMapper } from './onset.js';
@@ -57,7 +58,7 @@ function pedalDown() { return settings.pedalAlways || state.pedalKey || state.pe
 function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
-  if (state.piano) state.piano.setSustain(on);
+  if (state.inst) state.inst.setSustain(on);
 }
 
 function noteOn(midi, vel, info = {}) {
@@ -66,7 +67,7 @@ function noteOn(midi, vel, info = {}) {
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
   if (state.played.length > 500) state.played.shift();
-  if (state.piano && state.piano.loaded !== undefined) state.piano.noteOn(midi, vel);
+  if (state.inst) state.inst.noteOn(midi, vel);
   // tap → sound delay: time since the tap was heard + the audio output path
   if (info.t != null && state.ctx && info.how && info.how.startsWith('tap')) {
     const out = ((state.ctx.baseLatency || 0) + (state.ctx.outputLatency || 0)) * 1000;
@@ -80,17 +81,29 @@ function noteOn(midi, vel, info = {}) {
 function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
   if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
-  if (state.piano) state.piano.noteOff(midi);
+  if (state.inst) state.inst.noteOff(midi);
   drawPiano();
 }
 
 // ---------------------------------------------------------------- audio
+const synthCache = {};
+function selectInstrument(id) {
+  if (!state.ctx) return;
+  const prev = state.inst;
+  if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx));
+  else state.inst = state.piano;
+  if (prev && prev !== state.inst) prev.allOff();
+  state.inst.setVolume(settings.volume);
+  state.inst.setSustain(pedalDown());
+}
+
 async function startAudio() {
   const AC = window.AudioContext || window.webkitAudioContext;
   state.ctx = new AC({ latencyHint: 'interactive' });
   await state.ctx.resume();
   state.piano = new Piano(state.ctx);
   state.piano.setVolume(settings.volume);
+  selectInstrument(settings.instrument);
   updatePedal();
   setStatus('Loading piano sound…');
   await state.piano.load('samples/piano/', (p) => setStatus(`Loading piano sound… ${Math.round(p * 100)}%`));
@@ -430,6 +443,7 @@ function setStatus(s) { $('status').textContent = s; }
 function applySettings() {
   state.layout = paperLayout(settings.paperSize);
   $('debug').hidden = !settings.debug;
+  selectInstrument(settings.instrument);
   $('modePaper').setAttribute('aria-pressed', String(settings.mode === 'paper'));
   $('modeDesk').setAttribute('aria-pressed', String(settings.mode === 'desk'));
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
@@ -453,6 +467,7 @@ function setSetup(on, autoStart = true) {
 
 function bindSettings() {
   const form = $('settings').querySelector('form');
+  for (const [id, label] of Object.entries(INSTRUMENTS)) form.elements.instrument.add(new Option(label, id));
   for (const el of form.elements) {
     if (!el.name || !(el.name in settings)) continue;
     if (el.type === 'checkbox') el.checked = !!settings[el.name]; else el.value = settings[el.name];
@@ -478,7 +493,7 @@ function bindSettings() {
   $('volume').value = settings.volume;
   $('volume').addEventListener('input', () => {
     settings.volume = Number($('volume').value);
-    if (state.piano) state.piano.setVolume(settings.volume);
+    if (state.inst) state.inst.setVolume(settings.volume);
     saveSettings(settings);
   });
   $('setupBtn').onclick = () => setSetup(true);
