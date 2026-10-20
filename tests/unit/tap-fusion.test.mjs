@@ -1,0 +1,75 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { TapFusion } from '../../src/tap-fusion.js';
+import { fakeHand } from '../synth.mjs';
+
+// keys: 40 px columns from x=0 → midi 60 + column
+function setup(resolverOpts = {}) {
+  const played = [], stopped = [];
+  const fusion = new TapFusion({
+    keyFor: (p) => 60 + Math.floor(p.x / 40),
+    play: (m, v, info) => played.push({ m, v, t: info.t }),
+    stop: (m) => stopped.push(m),
+    resolverOpts,
+  });
+  return { fusion, played, stopped };
+}
+function run(ctx, { to = 900, liftFn, taps = [], base = { x: 210, y: 300 }, wobble = 0 }) {
+  const q = [...taps];
+  for (let t = 0; t <= to; t += 33) {
+    while (q.length && q[0].t <= t) ctx.fusion.onTap(q.shift());
+    const lifts = liftFn(t);
+    if (wobble) for (const k of Object.keys(lifts)) lifts[k] += wobble * Math.sin(t / 37 + Number(k));
+    ctx.fusion.onFrame({ t, hands: [fakeHand('A', base, lifts)] });
+    ctx.fusion.tick(t);
+  }
+  ctx.fusion.tick(to + 1000);
+}
+const press = (tips, at, hold = 200) => (t) => {
+  const lifts = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+  for (const tip of tips) {
+    if (t >= at - 100 && t < at) lifts[tip] = 30 * ((at - t) / 100);
+    else if (t >= at && t < at + hold) lifts[tip] = 0;
+  }
+  return lifts;
+};
+
+test('tap + one finger pressing plays that finger once, lifts end it', () => {
+  const ctx = setup();
+  run(ctx, { liftFn: press([8], 300), taps: [{ t: 300, velocity: 0.7 }] });
+  assert.equal(ctx.played.length, 1, JSON.stringify(ctx.played));
+  assert.equal(ctx.played[0].v, 0.7);
+  assert.deepEqual(ctx.stopped, [ctx.played[0].m]);
+});
+
+test('tap while the hand hovers still (or wobbles a little) plays nothing', () => {
+  const ctx = setup();
+  run(ctx, { liftFn: () => ({ 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 }), taps: [{ t: 300, velocity: 0.7 }, { t: 600, velocity: 0.7 }], wobble: 2 });
+  assert.equal(ctx.played.length, 0);
+});
+
+test('tap while the whole hand moves down together plays at most one note', () => {
+  const ctx = setup();
+  const all = (t) => { const v = t < 200 ? 30 : t < 300 ? 30 * (300 - t) / 100 : 0; return { 4: v, 8: v, 12: v, 16: v, 20: v }; };
+  run(ctx, { liftFn: all, taps: [{ t: 300, velocity: 0.7 }] });
+  assert.ok(ctx.played.length <= 1, JSON.stringify(ctx.played));
+});
+
+test('chords when allowed: three fingers pressing together', () => {
+  const ctx = setup({ chordRatio: 0.9 });
+  run(ctx, { liftFn: press([4, 12, 20], 300), taps: [{ t: 300, velocity: 0.6 }] });
+  assert.equal(new Set(ctx.played.map((p) => p.m)).size, 3, JSON.stringify(ctx.played));
+});
+
+test('a melody of single notes, each tap played once in order', () => {
+  const ctx = setup();
+  const fingers = [4, 8, 12, 16, 20, 16, 12, 8];
+  const liftFn = (t) => {
+    const l = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+    fingers.forEach((tip, i) => { l[tip] = Math.min(l[tip], press([tip], 300 + i * 200, 120)(t)[tip]); });
+    return l;
+  };
+  run(ctx, { to: 300 + fingers.length * 200 + 300, liftFn, taps: fingers.map((_, i) => ({ t: 300 + i * 200, velocity: 0.6 })) });
+  const cols = fingers.map((tip) => 60 + Math.floor((210 - (tip / 4 - 1 - 2) * 90 * 0.32) / 40)); // hand 'A': thumb on the right
+  assert.deepEqual(ctx.played.map((p) => p.m), cols, JSON.stringify(ctx.played));
+});

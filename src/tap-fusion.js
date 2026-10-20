@@ -72,7 +72,7 @@ export class TapFusion {
         this.stats.notes++;
         this.log.push({ t: tap.t, midi, vel: tap.velocity, how: 'tap', fingerId: p.id });
         if (this.log.length > 200) this.log.shift();
-        this.play(midi, tap.velocity, { fingerId: p.id, how: 'tap', t: tap.t });
+        this.play(midi, tap.velocity, { fingerId: p.id, how: 'tap', t: tap.t, tap });
         played++;
       }
       if (!played) this.stats.tapsRejected++;

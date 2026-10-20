@@ -11,11 +11,12 @@ export const RESOLVER_DEFAULTS = {
   // scored ~46%, 35 ms ~37% — it's the 'faster ↔ more accurate' setting
   minTravel: 0.03, // a pressing finger must come down at least this far (hand-sizes)
   minLead: 0.03, // ...and this much more than the hand's typical finger
-  chordRatio: 0.9, // other fingers join as a chord if they moved at least this fraction as much
+  chordRatio: 1.01, // > 1 = one note per hand per tap; 0.9 allows chords (setting) // other fingers join as a chord if they moved at least this fraction as much
   lateMs: 100, // a real press is still moving down in the last ~100 ms before the tap...
   minLate: 0.04, // ...by at least this much (hand-sizes)
   maxAfter: 0.2, // ...and has stopped by the frame after the tap (no further travel than this)
   lateWeight: 1, // score = travel + lateWeight × late
+  typicalRank: 1, // compare against this finger in travel order (0 = least moved, 2 = median)
   liftDist: 0.12, // a sounding finger is lifted when it rises this far above where it landed
   historyMs: 1200,
 };
@@ -62,7 +63,7 @@ export class TapResolver {
         return { tip, travel, late, after, score: travel + o.lateWeight * late };
       });
       const sorted = fingers.map((x) => x.score).sort((a, b) => a - b);
-      const typical = sorted[2]; // median finger of this hand
+      const typical = sorted[o.typicalRank]; // a 'typical' non-pressing finger of this hand
       const ok = (f) => f.travel >= o.minTravel && f.late >= o.minLate && f.after <= o.maxAfter;
       const cands = fingers.filter(ok);
       if (!cands.length) continue;

@@ -5,6 +5,7 @@ import { Piano } from './piano.js';
 import { SYNTHS, INSTRUMENTS } from './synths.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
+import { TapFusion } from './tap-fusion.js';
 import { VelocityMapper } from './onset.js';
 import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
@@ -38,11 +39,15 @@ const state = {
 
 const strikes = new StrikeDetector();
 const velocityMap = new VelocityMapper(settings.sensitivity);
-const fusion = new Fusion({
+const handlers = {
   keyFor: (f) => keyForPoint(f.x, f.y),
   play: (midi, vel, info) => noteOn(midi, vel, info),
   stop: (midi) => noteOff(midi),
-});
+};
+// Two note engines: 'tap' (default; tap-first, tuned on real clips) and 'classic' (landing-based,
+// can also play strikes without a tap).
+const engines = { tap: new TapFusion(handlers), classic: new Fusion(handlers) };
+let fusion = engines[settings.engine] || engines.tap;
 
 // ---------------------------------------------------------------- keys & notes
 function shiftNote(m) { return m == null ? null : m + settings.transpose + settings.octave * 12; }
@@ -66,6 +71,7 @@ function noteOn(midi, vel, info = {}) {
   state.active.set(midi, (state.active.get(midi) || 0) + 1);
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
+  if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   if (state.inst) state.inst.noteOn(midi, vel);
   // tap → sound delay: time since the tap was heard + the audio output path
@@ -134,11 +140,12 @@ async function startMic() {
       // how long the tap took to reach the main thread (worklet block + message hop)
       state.tapMsgDelays.push((d.now - d.time) * 1000);
       if (state.tapMsgDelays.length > 50) state.tapMsgDelays.shift();
-      handleTap({ t: t - state.inputLatencyMs, peak: d.peak, floor: d.floor });
+      // in ?sim test mode taps are injected; ignore the (fake) microphone's beeps
+      if (!SIM) handleTap({ t: t - state.inputLatencyMs, peak: d.peak, floor: d.floor });
     }
   };
   state.micNode = node;
-  fusion.speakerMode = speaker;
+  for (const e of Object.values(engines)) e.speakerMode = speaker;
 }
 
 function stopMic() {
@@ -152,8 +159,10 @@ function handleTap({ t, peak, floor, velocity }) {
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.calib) return; // calibration taps are handled from the camera landing
-  const played = fusion.onTap({ t, velocity: vel }, strikes);
-  // learn the loudness range only from taps that really were notes (not talking or knocks)
+  const tap = { t, velocity: vel, peak, floor };
+  const played = fusion.onTap(tap, strikes);
+  // learn the loudness range only from taps that really were notes (not talking or knocks);
+  // the tap engine decides a moment later, so it's learnt in noteOn
   if (played && peak != null) velocityMap.add(peak, floor);
 }
 
@@ -221,9 +230,10 @@ function processVideoFrame(t) {
 function handleHandFrame(frame) {
   state.hands = frame.hands;
   state.handsT = frame.t;
-  const events = strikes.update(frame);
+  const events = strikes.update(frame); // also drives the fingertip colours and calibration
   if (state.calib) { calibrationEvents(events); return; }
-  fusion.onStrikeEvents(events, strikes);
+  if (fusion === engines.tap) fusion.onFrame(frame);
+  else fusion.onStrikeEvents(events, strikes);
   fusion.tick(performance.now());
 }
 
@@ -402,7 +412,7 @@ function drawDebug() {
   $('debugText').textContent = [
     `audio out: base ${fmt(state.ctx && state.ctx.baseLatency * 1000)} ms, output ${fmt(state.ctx && state.ctx.outputLatency * 1000)} ms, input ${fmt(state.inputLatencyMs)} ms`,
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
-    `taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, camera-only ${fusion.stats.cameraOnly}, notes ${fusion.stats.notes}`,
+    `engine ${settings.engine}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
     `paper markers: ${[...state.markersSeen].join(',') || 'none'}`,
     `fingers: ${fingers.join('  ')}`,
     `last notes: ${state.played.slice(-8).map((p) => `${p.name}(${p.vel},${p.how})`).join(' ')}`,
@@ -449,7 +459,11 @@ function applySettings() {
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
   $('camWrap').classList.toggle('mirror', !!settings.mirror);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
-  fusion.speakerMode = settings.output === 'speaker';
+  const nextEngine = engines[settings.engine] || engines.tap;
+  if (nextEngine !== fusion) { fusion.allOff(); fusion = nextEngine; }
+  for (const e of Object.values(engines)) e.speakerMode = settings.output === 'speaker';
+  engines.tap.resolver.o.afterMs = settings.response === 'fast' ? 35 : 70;
+  engines.tap.resolver.o.chordRatio = settings.chords ? 0.9 : 1.01;
   velocityMap.sensitivity = settings.sensitivity;
   if (state.micNode) state.micNode.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });
   updatePedal();
@@ -598,7 +612,7 @@ requestAnimationFrame(loop);
 
 // Test/debug hooks (synthetic data only).
 window.deskPiano = {
-  state, settings, fusion, strikes,
+  state, settings, get fusion() { return fusion; }, engines, strikes,
   ensureAudio,
   injectHandFrame: (frame) => handleHandFrame(frame),
   injectTap: (tap) => handleTap(tap),

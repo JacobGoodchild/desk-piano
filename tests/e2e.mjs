@@ -99,6 +99,8 @@ await check('taps + finger strikes on the paper play the right notes, chords and
   await startApp(page, '?sim=1');
   const result = await page.evaluate(async ({ markers, plan, W, H }) => {
     const dp = window.deskPiano;
+    dp.settings.chords = true; // the plan includes a chord
+    dp.applySettings();
     dp.setVideoSize(W, H);
     dp.injectMarkers(markers);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -136,7 +138,7 @@ await check('taps + finger strikes on the paper play the right notes, chords and
       }
       await sleep(250);
     }
-    return dp.state.played.map((p) => ({ name: p.name, vel: p.vel, how: p.how }));
+    return dp.state.played.map((p) => ({ name: p.name, vel: p.vel, how: p.how, t: Math.round(p.t), f: dp.fusion.log.find((l) => Math.abs(l.t - p.t) < 1)?.fingerId }));
   }, {
     markers, W, H,
     plan: [

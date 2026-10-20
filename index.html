@@ -86,7 +86,14 @@
       <select name="output"><option value="headphones">Headphones (best)</option><option value="speaker">Speakers</option></select>
     </label>
     <label class="row"><input name="pedalAlways" type="checkbox"> Pedal always on</label>
-    <label class="row"><input name="cameraOnly" type="checkbox"> Also play finger strikes the microphone didn't hear (can cause false notes)</label>
+    <label>Note detection
+      <select name="engine"><option value="tap">Tap-first (recommended)</option><option value="classic">Classic (finger landings)</option></select>
+    </label>
+    <label>Response
+      <select name="response"><option value="accurate">More accurate (≈70 ms later)</option><option value="fast">Faster (less accurate)</option></select>
+    </label>
+    <label class="row"><input name="chords" type="checkbox"> Allow chords within one hand (can add extra notes)</label>
+    <label class="row"><input name="cameraOnly" type="checkbox"> Classic only: also play finger strikes the microphone didn't hear</label>
     <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
     <label class="row"><input name="mirror" type="checkbox"> Mirror camera picture</label>
     <label class="row"><input name="debug" type="checkbox"> Debug view</label>
