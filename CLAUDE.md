@@ -333,3 +333,6 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **21:25** "Check accuracy" exercise on the set-up screen (play C D E F G F E D C → "N of 9 right" + tips).
   Settings now carry a version: newly tuned defaults (tap sensitivity 0.65, volume) replace values saved
   yesterday, personal choices are kept. Set-up screen re-laid out (buttons on top, prompts first).
+- **21:26** More sounds: bright piano (same samples + treble lift, no download), vibraphone, music box
+  (all level-matched within 1 dB); "Layer with" setting plays two sounds together (layer at 60%).
+  Live end-to-end re-check on the middle-C video: still only C4 played.
