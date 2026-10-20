@@ -95,6 +95,14 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   assert.equal(played[0][0], 'C4');
   assert.equal(played[1][0], 'C5');
   assert.ok(played[1][1] > played[0][1], 'shift = louder');
+  // every sound plays without errors
+  const ids = await page.evaluate(() => [...document.querySelector('select[name=instrument]').options].map((o) => o.value));
+  assert.ok(ids.length >= 7, ids.join());
+  for (const id of ids) {
+    await page.evaluate((v) => { const s = document.querySelector('select[name=instrument]'); s.value = v; s.dispatchEvent(new Event('change')); }, id);
+    await page.keyboard.down('KeyG'); await page.waitForTimeout(120); await page.keyboard.up('KeyG');
+  }
+  await page.evaluate(() => { const s = document.querySelector('select[name=instrument]'); s.value = 'piano'; s.dispatchEvent(new Event('change')); });
   // metronome on and off
   await page.click('#metroBtn');
   await page.waitForFunction(() => document.getElementById('metroBtn').getAttribute('aria-pressed') === 'true');

@@ -131,11 +131,53 @@ export class Strings extends SynthBase {
   }
 }
 
+// Vibraphone: metal bars (sine + bell partial) with a gentle motor tremolo, long ring.
+export class Vibraphone extends SynthBase {
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.115; this.setVolume(1, true); this.releaseTime = 0.25; }
+  makeVoice(midi, vel, t) {
+    const ctx = this.ctx, f = mtof(midi);
+    const amp = ctx.createGain(); amp.connect(this.out);
+    const trem = ctx.createGain(); trem.connect(amp);
+    const lfo = ctx.createOscillator(); lfo.frequency.value = 5.5;
+    const lg = ctx.createGain(); lg.gain.value = 0.25; lfo.connect(lg).connect(trem.gain);
+    trem.gain.value = 0.75;
+    const nodes = [lfo];
+    for (const [mult, lvl, decay] of [[1, 1, 2.5], [4, 0.25 * vel, 0.4], [10, 0.08 * vel, 0.15]]) {
+      const o = ctx.createOscillator(); o.frequency.value = f * mult;
+      const g = ctx.createGain(); g.gain.setValueAtTime(lvl, t); g.gain.setTargetAtTime(0, t + 0.01, decay);
+      o.connect(g).connect(trem); o.start(t); nodes.push(o);
+    }
+    lfo.start(t);
+    amp.gain.setValueAtTime(0, t); amp.gain.linearRampToValueAtTime(0.15 + 0.55 * vel, t + 0.002);
+    return { amp, nodes };
+  }
+}
+
+// Music box: tiny plucked steel comb — bright, short, sweet.
+export class MusicBox extends SynthBase {
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.13; this.setVolume(1, true); this.releaseTime = 0.4; }
+  makeVoice(midi, vel, t) {
+    const ctx = this.ctx, f = mtof(midi + 12);
+    const amp = ctx.createGain(); amp.connect(this.out);
+    const nodes = [];
+    for (const [mult, lvl, decay] of [[1, 1, 0.9], [2.76, 0.35, 0.3], [5.4, 0.12, 0.12]]) {
+      const o = ctx.createOscillator(); o.frequency.value = f * mult;
+      const g = ctx.createGain(); g.gain.setValueAtTime(lvl, t); g.gain.setTargetAtTime(0, t, decay);
+      o.connect(g).connect(amp); o.start(t); nodes.push(o);
+    }
+    amp.gain.setValueAtTime(0, t); amp.gain.linearRampToValueAtTime(0.2 + 0.4 * vel, t + 0.001);
+    return { amp, nodes };
+  }
+}
+
 export const INSTRUMENTS = {
   piano: 'Grand piano',
+  bright: 'Bright piano',
   epiano: 'Electric piano',
   organ: 'Organ',
   harpsichord: 'Harpsichord',
   strings: 'Strings',
+  vibes: 'Vibraphone',
+  musicbox: 'Music box',
 };
-export const SYNTHS = { epiano: ElectricPiano, organ: Organ, harpsichord: Harpsichord, strings: Strings };
+export const SYNTHS = { epiano: ElectricPiano, organ: Organ, harpsichord: Harpsichord, strings: Strings, vibes: Vibraphone, musicbox: MusicBox };

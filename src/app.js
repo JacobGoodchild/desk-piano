@@ -115,10 +115,25 @@ function selectInstrument(id) {
   if (!state.ctx) return;
   const prev = state.inst;
   if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
+  else if (id === 'bright') state.inst = synthCache.bright || (synthCache.bright = brightPiano());
   else state.inst = state.piano;
   if (prev && prev !== state.inst) prev.allOff();
   state.inst.setVolume(settings.volume, prev !== state.inst);
   state.inst.setSustain(pedalDown());
+}
+
+// The grand piano's own samples through a treble lift and a touch of presence: a brighter,
+// more "pop" piano with no extra download.
+function brightPiano() {
+  const shelf = state.ctx.createBiquadFilter();
+  shelf.type = 'highshelf'; shelf.frequency.value = 2500; shelf.gain.value = 7;
+  const presence = state.ctx.createBiquadFilter();
+  presence.type = 'peaking'; presence.frequency.value = 1200; presence.Q.value = 0.8; presence.gain.value = 3;
+  shelf.connect(presence).connect(state.bus.input);
+  const p = new Piano(state.ctx, shelf);
+  p.buffers = state.piano.buffers; // share the already-loaded samples
+  p.loaded = true;
+  return p;
 }
 
 async function startAudio() {
