@@ -299,3 +299,7 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   finger-coupling pattern (e.g. ring dragged along by middle) and picks the finger whose pattern best
   matches each tap (cosine similarity). Synthetic test: untaught → wrong (ring) key; taught → right key.
   Can't be scored on the current clips (no teaching clip) — ask Jacob to record one (see CLIPS.md).
+- **21:30** Note trail above the keyboard; Loudness setting (tap strength / fixed level); paper position
+  kept 20 s when markers are hidden; debug shows per-finger scores at the last tap; Settings grouped
+  into sections. Checked "decide at 35 ms vs 70 ms" agreement on clips: only 74% → no early-play-then-
+  correct trick (would swap a quarter of notes audibly).
