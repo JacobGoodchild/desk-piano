@@ -62,9 +62,13 @@ export function markerCorners(layout) {
   return out;
 }
 
+// The tracked fingertip point is a few mm above the paper; seen from the camera (across the desk,
+// looking down) it projects a little towards the player. Pull it back by this much.
+export const TIP_OFFSET_MM = 5;
+
 // paper coords → key under that point (or null)
-export function paperToKey(layout, x, y) {
-  return layout.kb.keyAt(x - layout.keysX, y - layout.keysY);
+export function paperToKey(layout, x, y, tipOffset = 0) {
+  return layout.kb.keyAt(x - layout.keysX, y - layout.keysY - tipOffset);
 }
 
 // The whole strip as SVG content (mm units). Used by the print page and synthetic scenes.

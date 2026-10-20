@@ -17,7 +17,7 @@ import { startServer } from '../tests/server.mjs';
 import { OnsetDetector, peakToVelocity } from '../src/onset.js';
 import { StrikeDetector } from '../src/strike.js';
 import { Fusion } from '../src/fusion.js';
-import { paperLayout, paperToKey, fitPaper } from '../src/paper.js';
+import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from '../src/paper.js';
 import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
 import { HandIds } from '../src/hand-ids.js';
@@ -90,7 +90,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     keyFor: (p) => {
       if (!paperInv) return null;
       const q = applyH(paperInv, p.x, p.y);
-      const k = paperToKey(layout, q.x, q.y);
+      const k = paperToKey(layout, q.x, q.y, TIP_OFFSET_MM);
       return k == null ? null : k + transpose + octave * 12;
     },
     play: (midi, vel, info) => notes.push({ midi, vel, how: info.how, t: info.t }),

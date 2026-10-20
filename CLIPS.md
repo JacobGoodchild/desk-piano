@@ -79,8 +79,9 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
    - *Missed notes with taps heard*: strike detection (`src/strike.js` — `downSpeed`, `minDrop`,
      `stopRatio`, `knuckleWeight`) or fusion windows (`src/fusion.js` — `matchMs`, `pendingMs`,
      `descendLookMs`).
-   - *Wrong notes (neighbouring key)*: key mapping — fingertip landmark sits above/behind the contact
-     point; try an offset towards the player in `keyFor`, or use the predicted touch-down point more/less.
+   - *Wrong notes (neighbouring key)*: key mapping — the fingertip landmark sits above the contact
+     point; `TIP_OFFSET_MM` in `src/paper.js` (default 5 mm towards the camera) corrects for that.
+     Black↔white mix-ups → tune it; sideways mix-ups → check the predicted touch-down point.
      Black/white confusion → the depth (y) offset.
    - *Extra notes*: echo/false taps (`echoMs`), camera-only threshold (`cameraOnlyMs`, `minDrop`),
      lift detection (`liftDist`) causing re-triggers.

@@ -5,7 +5,7 @@ import { Piano } from './piano.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { VelocityMapper } from './onset.js';
-import { paperLayout, paperToKey, fitPaper } from './paper.js';
+import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
 import { applyH, invertH } from './homography.js';
 import { deskKeyAt } from './desk.js';
@@ -50,7 +50,7 @@ function keyForPoint(x, y) {
   if (settings.mode === 'desk') return shiftNote(deskKeyAt(settings.desk, x, y));
   if (!state.paperInv) return null;
   const p = applyH(state.paperInv, x, y);
-  return shiftNote(paperToKey(state.layout, p.x, p.y));
+  return shiftNote(paperToKey(state.layout, p.x, p.y, TIP_OFFSET_MM));
 }
 
 function pedalDown() { return settings.pedalAlways || state.pedalKey || state.pedalButton; }
