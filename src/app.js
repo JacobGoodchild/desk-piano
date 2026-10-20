@@ -172,15 +172,20 @@ async function startCamera() {
   else { const loop = () => { processVideoFrame(performance.now()); requestAnimationFrame(loop); }; loop(); }
 }
 
-let frameCount = 0;
+let frameCount = 0, lastTs = 0;
 const detCanvas = document.createElement('canvas');
 function processVideoFrame(t) {
   const video = $('video');
   frameCount++;
+  if (video.videoWidth && video.videoWidth !== state.video.w) state.video = { w: video.videoWidth, h: video.videoHeight }; // phone rotated
   // look for the paper often until found, then every 10th frame (it rarely moves)
   if (settings.mode === 'paper' && frameCount % (state.markersSeen.size >= 4 ? 10 : 3) === 0) findPaper(video);
   if (landmarker && !SIM) {
-    const res = landmarker.detectForVideo(video, t);
+    // MediaPipe needs strictly increasing timestamps; camera timestamps can repeat
+    t = Math.max(t, lastTs + 0.1);
+    lastTs = t;
+    let res;
+    try { res = landmarker.detectForVideo(video, t); } catch (err) { console.warn('hand tracking frame skipped', err); return; }
     const hands = handIds.assign((res.landmarks || []).map((lm) => ({
       points: lm.map((p) => ({ x: p.x * state.video.w, y: p.y * state.video.h })),
     })));
