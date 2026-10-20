@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151a24">
+<title>Desk Piano</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23fff'/%3E%3Crect x='4' y='0' width='3' height='9' fill='%23000'/%3E%3Crect x='10' y='0' width='3' height='9' fill='%23000'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="src/style.css">
+<script type="importmap">
+{ "imports": { "@mediapipe/tasks-vision": "./vendor/mediapipe/vision_bundle.mjs" } }
+</script>
+</head>
+<body>
+<header>
+  <h1>Desk Piano</h1>
+  <button id="start" class="primary">▶ Start</button>
+  <button id="pedal" aria-pressed="false" title="Sustain pedal (Space)">Pedal</button>
+  <button id="setupBtn">Set-up</button>
+  <button id="settingsBtn">Settings</button>
+  <a href="print.html" target="_blank" rel="noopener">Print keyboard</a>
+  <span id="status" class="status">Press Start. Camera and microphone stay on this device – nothing is recorded or uploaded.</span>
+</header>
+
+<main>
+  <section id="stage">
+    <div id="camWrap">
+      <video id="video" playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div id="camMsg" class="camMsg">Camera off</div>
+    </div>
+    <div id="side">
+      <div id="hint" class="hint">🎧 Headphones recommended – the microphone listens for your taps, so the piano sound from speakers can confuse it.</div>
+      <div id="checks" class="checks"></div>
+      <div id="calib" class="calib" hidden></div>
+      <div id="debug" class="debug" hidden>
+        <canvas id="meter" width="300" height="60"></canvas>
+        <pre id="debugText"></pre>
+      </div>
+      <div class="keyhelp">Computer keys: <kbd>A</kbd>–<kbd>;</kbd> play C4–E5 (W E T Y U O P = black keys), <kbd>Z</kbd>/<kbd>X</kbd> octave, <kbd>Shift</kbd> = loud, <kbd>Ctrl</kbd> = soft, <kbd>Space</kbd> = pedal.</div>
+    </div>
+  </section>
+  <canvas id="piano" aria-label="Piano keyboard showing the notes being played"></canvas>
+</main>
+
+<dialog id="settings">
+  <form method="dialog">
+    <h2>Settings</h2>
+    <label>Mode
+      <select name="mode"><option value="paper">Paper keyboard</option><option value="desk">Plain desk (no paper)</option></select>
+    </label>
+    <label>Paper size
+      <select name="paperSize"><option value="full">3 octaves C3–C6</option><option value="compact">2 octaves C4–C6</option></select>
+    </label>
+    <label>Octave shift <input name="octave" type="number" min="-2" max="2" step="1"></label>
+    <label>Transpose (semitones) <input name="transpose" type="number" min="-11" max="11" step="1"></label>
+    <label>Tap sensitivity <input name="sensitivity" type="range" min="0" max="1" step="0.05"></label>
+    <label>Sound through
+      <select name="output"><option value="headphones">Headphones (best)</option><option value="speaker">Speakers</option></select>
+    </label>
+    <label class="row"><input name="pedalAlways" type="checkbox"> Pedal always on</label>
+    <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
+    <label class="row"><input name="debug" type="checkbox"> Debug view</label>
+    <label>Camera <select name="camera"><option value="">Default (back camera on phones)</option></select></label>
+    <div class="buttons"><button value="close" class="primary">Done</button></div>
+  </form>
+</dialog>
+
+<dialog id="setup">
+  <form method="dialog">
+    <h2>Set-up</h2>
+    <ol>
+      <li>Print the <a href="print.html" target="_blank" rel="noopener">paper keyboard</a> at 100% and tape it to the desk.</li>
+      <li>Put the phone or webcam on the <b>far side</b> of the paper, facing you, tilted down about 45° (a stand or a pile of books).</li>
+      <li>Move it until the whole paper is inside the frame and every black square marker is ticked below.</li>
+      <li>Put both hands on the keys: both should be found. Then tap a few notes.</li>
+      <li>No paper? Choose “Plain desk” in Settings and follow the calibration (tap middle C, then the C above).</li>
+    </ol>
+    <div class="buttons"><button value="close" class="primary">OK</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>

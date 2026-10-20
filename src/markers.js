@@ -218,7 +218,7 @@ function readMarker(grey, w, h, quad) {
   for (let k = 0; k < 4; k++) {
     for (let id = 0; id < MARKER_CODES.length; id++) {
       if (popcount(MARKER_CODES[id] ^ rc) <= 1) {
-        const corners = [0, 1, 2, 3].map((i) => quad[(i + k) % 4]);
+        const corners = [0, 1, 2, 3].map((i) => quad[(i - k + 4) % 4]);
         return { id, corners };
       }
     }

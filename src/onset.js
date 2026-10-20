@@ -1,0 +1,73 @@
+// Fast tap ("tok") onset detector. Pure JS so it runs in the AudioWorklet, in Node tests and in
+// the clip-test script. Feed it blocks of samples; it returns onsets with their sample position
+// and peak level (used for loudness/velocity).
+export class OnsetDetector {
+  constructor(sampleRate, opts = {}) {
+    this.sr = sampleRate;
+    this.setOptions(opts);
+    this.hpPrevX = 0; this.hpPrevY = 0;
+    this.fast = 0; this.mid = 0; this.slow = 0;
+    this.pos = 0; // absolute sample index of next sample
+    this.lastOnset = -1e12;
+    this.pending = null; // onset waiting for its peak window
+    this.levelMax = 0;
+  }
+
+  setOptions({ sensitivity = 0.5, refractoryMs = 45, peakMs = 3, ratio = 4 } = {}) {
+    // sensitivity 0..1 → minimum level from about -34 dBFS (0) down to -70 dBFS (1)
+    this.minLevel = Math.pow(10, (-34 - 36 * sensitivity) / 20);
+    this.refractory = Math.round((refractoryMs / 1000) * this.sr);
+    this.peakLen = Math.round((peakMs / 1000) * this.sr);
+    this.ratio = ratio;
+    const hpHz = 250;
+    const rc = 1 / (2 * Math.PI * hpHz);
+    this.hpA = rc / (rc + 1 / this.sr);
+    this.dFast = Math.exp(-1 / (0.02 * this.sr));
+    this.ring = new Float32Array(Math.max(8, Math.round(0.002 * this.sr))); // fast envelope 2 ms ago
+    this.ringPos = 0;
+    this.kMid = 1 - Math.exp(-1 / (0.015 * this.sr));
+    this.kSlow = 1 - Math.exp(-1 / (0.08 * this.sr));
+  }
+
+  process(block) {
+    const out = [];
+    for (let i = 0; i < block.length; i++) {
+      const x = block[i];
+      const y = this.hpA * (this.hpPrevY + x - this.hpPrevX);
+      this.hpPrevX = x; this.hpPrevY = y;
+      const a = Math.abs(y);
+      this.fast = a > this.fast ? a : this.fast * this.dFast; // peak follower
+      if (a > this.levelMax) this.levelMax = a;
+      const n = this.pos;
+      if (this.pending) {
+        if (a > this.pending.peak) this.pending.peak = a;
+        if (n - this.pending.sample >= this.peakLen) { out.push(this.pending); this.pending = null; }
+      } else if (n - this.lastOnset > this.refractory && this.fast > this.minLevel && this.fast > this.slow * this.ratio && this.fast > this.mid * 2.5 && this.fast > this.ring[this.ringPos] * 3) {
+        // a tap rises within ~1 ms; speech and music swell much more slowly
+        this.pending = { sample: n, peak: a };
+        this.lastOnset = n;
+      }
+      // the slow (background) envelope rises slowly and is held up just after an onset so
+      // the tail of one tap doesn't look like a new one
+      const k = n - this.lastOnset < this.refractory ? this.kSlow * 4 : this.kSlow;
+      this.slow += (this.fast - this.slow) * k;
+      this.mid += (this.fast - this.mid) * this.kMid;
+      this.ring[this.ringPos] = this.fast;
+      this.ringPos = (this.ringPos + 1) % this.ring.length;
+      this.pos++;
+    }
+    return out;
+  }
+
+  // peak level since last call (for meters)
+  takeLevel() { const l = this.levelMax; this.levelMax = 0; return l; }
+}
+
+// Loudness of a tap (linear peak) → piano velocity 0..1.
+export function peakToVelocity(peak, sensitivity = 0.5) {
+  const db = 20 * Math.log10(Math.max(peak, 1e-6));
+  const lo = -36 - 24 * sensitivity; // quietest tap that still counts
+  const hi = -6 - 10 * sensitivity; // loudest
+  const v = (db - lo) / (hi - lo);
+  return Math.min(1, Math.max(0.08, 0.08 + 0.92 * v));
+}
