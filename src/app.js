@@ -114,7 +114,7 @@ function selectInstrument(id) {
   if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
   else state.inst = state.piano;
   if (prev && prev !== state.inst) prev.allOff();
-  state.inst.setVolume(settings.volume);
+  state.inst.setVolume(settings.volume, prev !== state.inst);
   state.inst.setSustain(pedalDown());
 }
 
@@ -125,7 +125,7 @@ async function startAudio() {
   state.bus = makeReverbBus(state.ctx);
   state.bus.setAmount(settings.reverb);
   state.piano = new Piano(state.ctx, state.bus.input);
-  state.piano.setVolume(settings.volume);
+  state.piano.setVolume(settings.volume, true);
   selectInstrument(settings.instrument);
   updatePedal();
   setStatus('Loading piano sound…');

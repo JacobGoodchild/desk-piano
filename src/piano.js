@@ -22,7 +22,7 @@ export class Piano {
   constructor(ctx, destination) {
     this.ctx = ctx;
     this.out = ctx.createGain();
-    this.setVolume(1);
+    this.setVolume(1, true);
     // gentle soft-clipper so big chords don't crackle (no added delay, unlike a compressor)
     const shaper = ctx.createWaveShaper();
     const curve = new Float32Array(1025);
@@ -39,9 +39,9 @@ export class Piano {
 
   // volume 0..2 (1 = normal). The output gain is halved here and doubled inside the shaper curve,
   // which gives the soft limiter headroom up to 2.0.
-  setVolume(v) {
+  setVolume(v, immediate = false) {
     this.volume = v;
-    this.out.gain.setTargetAtTime(0.5 * v, this.ctx.currentTime, 0.02);
+    if (immediate) { this.out.gain.cancelScheduledValues(0); this.out.gain.value = 0.5 * v; } else this.out.gain.setTargetAtTime(0.5 * v, this.ctx.currentTime, 0.02);
   }
 
   async load(baseUrl = 'samples/piano/', onProgress) {

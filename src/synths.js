@@ -15,9 +15,14 @@ class SynthBase {
     this.voices = new Map();
     this.sustain = false;
     this.loaded = true;
-    this.setVolume(1);
+    this.setVolume(1, true);
   }
-  setVolume(v) { this.volume = v; this.out.gain.setTargetAtTime(0.5 * v, this.ctx.currentTime, 0.02); }
+  // trim: per-instrument level so every sound is about as loud as the grand piano
+  setVolume(v, immediate = false) {
+    this.volume = v;
+    const g = 0.5 * v * (this.trim || 1);
+    if (immediate) { this.out.gain.cancelScheduledValues(0); this.out.gain.value = g; } else this.out.gain.setTargetAtTime(g, this.ctx.currentTime, 0.02);
+  }
   async load() { this.loaded = true; }
   noteOn(midi, velocity = 0.6) {
     const t = this.ctx.currentTime;
@@ -54,7 +59,7 @@ class SynthBase {
 
 // Electric piano: two-operator FM, bright bell-like attack that mellows, long decay.
 export class ElectricPiano extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.releaseTime = 0.08; }
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.17; this.setVolume(1, true); this.releaseTime = 0.08; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain();
@@ -77,7 +82,7 @@ export class ElectricPiano extends SynthBase {
 
 // Drawbar organ: sine partials (16', 8', 4', 2 2/3', 2'), constant level while held, key click.
 export class Organ extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.releaseTime = 0.03; }
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.38; this.setVolume(1, true); this.releaseTime = 0.03; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain(); amp.connect(this.out);
@@ -96,7 +101,7 @@ export class Organ extends SynthBase {
 
 // Harpsichord: bright plucked sawtooth through a closing filter.
 export class Harpsichord extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.releaseTime = 0.05; }
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.28; this.setVolume(1, true); this.releaseTime = 0.05; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain(); amp.connect(this.out);
@@ -113,7 +118,7 @@ export class Harpsichord extends SynthBase {
 
 // String pad: detuned sawtooths, soft attack, warm filter that opens with velocity.
 export class Strings extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.releaseTime = 0.35; }
+  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.95; this.setVolume(1, true); this.releaseTime = 0.35; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain(); amp.connect(this.out);
