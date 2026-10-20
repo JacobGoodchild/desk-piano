@@ -97,3 +97,22 @@ test('a sequence of notes (scale) at a moderate speed', () => {
   assert.deepEqual(notes, [...notes].sort((a, b) => a - b), 'ascending');
   assert.ok(ctx.played.every((p) => p.how !== 'camera-only'));
 });
+
+test('fast run: 10 notes per second, alternating fingers, all detected in order', () => {
+  const ctx = setup();
+  const fingers = [4, 8, 12, 16, 20, 16, 12, 8, 4, 8, 12, 16];
+  const gap = 100;
+  const liftFn = (t) => {
+    const lifts = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+    fingers.forEach((tip, i) => {
+      const at = 300 + i * gap;
+      // quick strike: down over 66 ms, held 60 ms, up again
+      if (t >= at - 66 && t < at) lifts[tip] = Math.min(lifts[tip], 30 * ((at - t) / 66));
+      else if (t >= at && t < at + 60) lifts[tip] = 0;
+    });
+    return lifts;
+  };
+  runFrames(ctx, { to: 300 + fingers.length * gap + 300, liftFn, taps: fingers.map((_, i) => ({ t: 300 + i * gap, velocity: 0.6 })) });
+  const expected = fingers.map((tip) => 60 + Math.floor((210 + (tip / 4 - 1 - 2) * 90 * 0.32) / 40));
+  assert.deepEqual(ctx.played.map((p) => p.m), expected, JSON.stringify(ctx.played));
+});

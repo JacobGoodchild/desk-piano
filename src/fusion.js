@@ -6,6 +6,7 @@
 //  - the note lasts until the camera sees that finger lift (or the sustain pedal holds it).
 export const FUSION_DEFAULTS = {
   matchMs: 90, // a tap and a landing this close in time belong together
+  chordMs: 55, // other fingers of a chord must land this close to a tap that already played
   pendingMs: 120, // how long a tap waits for the camera to confirm a landing
   cameraOnlyMs: 100, // how long a landing waits for a tap before playing on its own
   descendLookMs: 80, // a finger seen descending this recently can be played straight away
@@ -83,7 +84,14 @@ export class Fusion {
           }
           continue;
         }
-        const tap = this.pendingTaps.find((p) => Math.abs(p.t - ev.t) <= this.o.matchMs);
+        // the closest tap in time; a tap that already played something only accepts chord-mates
+        // landing very close to it (so in fast runs it doesn't steal the next note's landing)
+        let tap = null;
+        for (const p of this.pendingTaps) {
+          const d = Math.abs(p.t - ev.t);
+          const limit = p.played ? this.o.chordMs : this.o.matchMs;
+          if (d <= limit && (!tap || d < Math.abs(tap.t - ev.t))) tap = p;
+        }
         if (tap) {
           if (this._start(ev.id, midi, tap.velocity, ev.t, 'land+tap')) tap.played++;
         } else {
