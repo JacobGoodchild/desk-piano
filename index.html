@@ -79,8 +79,18 @@
 <dialog id="settings">
   <form method="dialog">
     <h2>Settings</h2>
+    <h3>Sound</h3>
     <label>Sound <select name="instrument"></select></label>
     <label>Room reverb <input name="reverb" type="range" min="0" max="1" step="0.05"></label>
+    <label>Loudness
+      <select name="dynamics"><option value="taps">From how hard you tap</option><option value="fixed">Fixed (use the level below)</option></select>
+    </label>
+    <label>Fixed loudness <input name="fixedVelocity" type="range" min="0.1" max="1" step="0.05"></label>
+    <label class="row"><input name="pedalAlways" type="checkbox"> Pedal always on</label>
+    <label>Sound through
+      <select name="output"><option value="headphones">Headphones (best)</option><option value="speaker">Speakers</option></select>
+    </label>
+    <h3>Keyboard</h3>
     <label>Mode
       <select name="mode"><option value="paper">Paper keyboard</option><option value="desk">Plain desk (no paper)</option></select>
     </label>
@@ -89,15 +99,8 @@
     </label>
     <label>Octave shift <input name="octave" type="number" min="-2" max="2" step="1"></label>
     <label>Transpose (semitones) <input name="transpose" type="number" min="-11" max="11" step="1"></label>
-    <label>Loudness
-      <select name="dynamics"><option value="taps">From how hard you tap</option><option value="fixed">Fixed (use the level below)</option></select>
-    </label>
-    <label>Fixed loudness <input name="fixedVelocity" type="range" min="0.1" max="1" step="0.05"></label>
+    <h3>How notes are detected</h3>
     <label>Tap sensitivity <input name="sensitivity" type="range" min="0" max="1" step="0.05"></label>
-    <label>Sound through
-      <select name="output"><option value="headphones">Headphones (best)</option><option value="speaker">Speakers</option></select>
-    </label>
-    <label class="row"><input name="pedalAlways" type="checkbox"> Pedal always on</label>
     <label>Note detection
       <select name="engine"><option value="tap">Tap-first (recommended)</option><option value="classic">Classic (finger landings)</option></select>
     </label>
@@ -106,13 +109,15 @@
     </label>
     <label class="row"><input name="chords" type="checkbox"> Allow chords within one hand (can add extra notes)</label>
     <label class="row"><input name="cameraOnly" type="checkbox"> Classic only: also play finger strikes the microphone didn't hear</label>
+    <h3>Screen</h3>
     <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
     <label class="row"><input name="mirror" type="checkbox"> Mirror camera picture</label>
     <label class="row"><input name="showRoll" type="checkbox"> Show note trail above the keyboard</label>
     <label class="row"><input name="debug" type="checkbox"> Debug view</label>
-    <label>MIDI output <span><select name="midiOut"><option value="">Off</option></select> <button type="button" id="midiEnable">Find devices</button></span></label>
+    <h3>Devices</h3>
     <label>Microphone <select name="mic"><option value="">Default</option></select></label>
     <label>Camera <select name="camera"><option value="">Default (front camera on phones, so you can see the screen)</option></select></label>
+    <label>MIDI output <span><select name="midiOut"><option value="">Off</option></select> <button type="button" id="midiEnable">Find devices</button></span></label>
     <div class="buttons"><button value="close" class="primary">Done</button></div>
   </form>
 </dialog>
