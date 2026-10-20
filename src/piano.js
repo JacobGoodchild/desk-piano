@@ -144,7 +144,7 @@ export class Piano {
     src.buffer = buf;
     src.playbackRate.value = Math.pow(2, (midi - sm) / 12);
     const g = this.ctx.createGain();
-    g.gain.value = 0.02 + 0.06 * vel; // the recordings are normalised loud; real damper noise is subtle
+    g.gain.value = 0.01 + 0.03 * vel; // the recordings are normalised loud; real damper noise is subtle
     src.connect(g).connect(this.out);
     src.start(t);
     src.onended = () => { try { g.disconnect(); } catch { /* gone */ } };
