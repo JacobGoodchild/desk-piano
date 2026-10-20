@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk Piano – printable keyboard</title>
+<link rel="icon" href="data:,">
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  html, body { margin: 0; background: #ddd; font-family: system-ui, sans-serif; }
+  .controls { padding: 12px 16px; background: #1d2330; color: #fff; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .controls a { color: #9cf; }
+  .controls button, .controls select { font-size: 15px; padding: 6px 10px; }
+  .help { max-width: 900px; padding: 8px 16px; font-size: 14px; color: #222; }
+  .sheet { width: 297mm; height: 210mm; background: #fff; margin: 10px auto; position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .sheet svg { position: absolute; left: 0; top: 0; width: 297mm; height: 210mm; }
+  @media print {
+    body { background: #fff; }
+    .controls, .help { display: none; }
+    .sheet { margin: 0; box-shadow: none; page-break-after: always; break-after: page; }
+  }
+</style>
+</head>
+<body>
+<div class="controls">
+  <strong>Printable paper keyboard</strong>
+  <label>Size <select id="variant"></select></label>
+  <button id="print">Print</button>
+  <a href="./">← back to the piano</a>
+</div>
+<div class="help">
+  Print at <b>100% / “Actual size”</b> (turn off “Fit to page”), A4 landscape. Check the 10 cm ruler on sheet 1.
+  Cut each sheet along its dashed <b>✂ cut</b> line on the right, lay it over the grey <b>overlap</b> strip of the next
+  sheet so the key lines continue, and tape it. Tape the strip to the desk. Keep the black square markers uncovered
+  and visible to the camera.
+</div>
+<div id="sheets"></div>
+<script type="module" src="src/print-page.js"></script>
+</body>
+</html>
