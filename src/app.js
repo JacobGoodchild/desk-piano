@@ -3,6 +3,7 @@
 // stored or sent anywhere.
 import { Piano } from './piano.js';
 import { SYNTHS, INSTRUMENTS } from './synths.js';
+import { makeReverbBus } from './reverb.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
@@ -96,7 +97,7 @@ const synthCache = {};
 function selectInstrument(id) {
   if (!state.ctx) return;
   const prev = state.inst;
-  if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx));
+  if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
   else state.inst = state.piano;
   if (prev && prev !== state.inst) prev.allOff();
   state.inst.setVolume(settings.volume);
@@ -107,7 +108,9 @@ async function startAudio() {
   const AC = window.AudioContext || window.webkitAudioContext;
   state.ctx = new AC({ latencyHint: 'interactive' });
   await state.ctx.resume();
-  state.piano = new Piano(state.ctx);
+  state.bus = makeReverbBus(state.ctx);
+  state.bus.setAmount(settings.reverb);
+  state.piano = new Piano(state.ctx, state.bus.input);
   state.piano.setVolume(settings.volume);
   selectInstrument(settings.instrument);
   updatePedal();
@@ -526,6 +529,7 @@ function applySettings() {
   engines.tap.resolver.o.afterMs = settings.response === 'fast' ? 35 : 70;
   engines.tap.resolver.o.chordRatio = settings.chords ? 0.9 : 1.01;
   velocityMap.sensitivity = settings.sensitivity;
+  if (state.bus) state.bus.setAmount(settings.reverb);
   if (state.micNode) state.micNode.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });
   updatePedal();
   drawPiano();
