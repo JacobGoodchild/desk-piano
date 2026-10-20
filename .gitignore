@@ -1,0 +1,13 @@
+# Privacy: never commit screenshots, test output, or any clip material
+screenshots/
+test-output/
+test-results/
+clip-output/
+private-clips/
+*.mp4
+*.mov
+*.webm
+*.wav
+*.y4m
+node_modules/
+.DS_Store
