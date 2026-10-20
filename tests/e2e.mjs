@@ -52,6 +52,9 @@ await check('page loads, starts with fake camera + mic, set-up and settings work
   await page.check('input[name=debug]');
   await page.click('#settings button[value=close]');
   assert.equal(await page.evaluate(() => window.deskPiano.settings.output), 'speaker');
+  // the microphone restarts with echo cancellation on, without a reload
+  await page.waitForFunction(() => window.deskPiano.state.micNode && window.deskPiano.state.micStream.getAudioTracks()[0].getSettings().echoCancellation === true, null, { timeout: 10000 });
+  assert.equal(await page.evaluate(() => window.deskPiano.fusion.speakerMode), true);
   assert.ok(await page.isVisible('#debug'));
 });
 

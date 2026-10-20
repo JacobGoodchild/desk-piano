@@ -96,14 +96,16 @@ async function startAudio() {
 }
 
 async function startMic() {
+  stopMic();
   const speaker = settings.output === 'speaker';
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: speaker, noiseSuppression: false, autoGainControl: false, channelCount: 1, latency: 0 },
   });
+  state.micStream = stream;
   const track = stream.getAudioTracks()[0];
   const st = track.getSettings ? track.getSettings() : {};
   state.inputLatencyMs = st.latency ? st.latency * 1000 : 0;
-  await state.ctx.audioWorklet.addModule('src/tap-worklet.js');
+  if (!state.workletLoaded) { await state.ctx.audioWorklet.addModule('src/tap-worklet.js'); state.workletLoaded = true; }
   const src = state.ctx.createMediaStreamSource(stream);
   const node = new AudioWorkletNode(state.ctx, 'tap-detector', { numberOfInputs: 1, numberOfOutputs: 0 });
   src.connect(node);
@@ -125,6 +127,12 @@ async function startMic() {
   fusion.speakerMode = speaker;
 }
 
+function stopMic() {
+  if (state.micStream) state.micStream.getTracks().forEach((t) => t.stop());
+  if (state.micNode) { try { state.micNode.disconnect(); } catch { /* ignore */ } state.micNode.port.onmessage = null; }
+  state.micStream = null; state.micNode = null;
+}
+
 function handleTap({ t, peak, velocity }) {
   const vel = velocity ?? velocityMap.map(peak);
   state.tapMarks.push({ t, vel });
@@ -144,12 +152,13 @@ async function startCamera() {
   if (settings.camera) constraints.deviceId = { exact: settings.camera };
   else constraints.facingMode = { ideal: 'user' }; // phone at the far side, screen facing you
   const stream = await navigator.mediaDevices.getUserMedia({ video: constraints });
+  if (video.srcObject) video.srcObject.getTracks().forEach((t) => t.stop());
   video.srcObject = stream;
   await video.play();
   state.video = { w: video.videoWidth, h: video.videoHeight };
   $('camMsg').textContent = '';
   listCameras();
-  if (!SIM) {
+  if (!SIM && !landmarker) {
     try {
       setStatus('Loading hand tracker…');
       const { HandLandmarker } = await import('@mediapipe/tasks-vision');
@@ -164,6 +173,8 @@ async function startCamera() {
       setStatus('Hand tracker could not start on this device – computer-keyboard play still works.');
     }
   }
+  if (state.cameraLoop) return;
+  state.cameraLoop = true;
   const onFrame = (now, meta) => {
     processVideoFrame(meta && meta.captureTime ? meta.captureTime : now);
     video.requestVideoFrameCallback(onFrame);
@@ -447,7 +458,8 @@ function bindSettings() {
       settings[el.name] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value;
       applySettings();
       if (el.name === 'mode' && settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
-      if ((settings.output !== prevOutput || settings.camera !== prevCam) && state.started) setStatus('Reload the page to apply the new microphone/camera choice.');
+      if (settings.output !== prevOutput && state.started) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
+      if (settings.camera !== prevCam && state.started) startCamera().catch((e) => setStatus(`Camera: ${e.message}`));
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
