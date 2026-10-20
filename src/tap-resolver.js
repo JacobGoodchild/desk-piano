@@ -16,7 +16,9 @@ export const RESOLVER_DEFAULTS = {
   minLate: 0.04, // ...by at least this much (hand-sizes)
   maxAfter: 0.2, // ...and has stopped by the frame after the tap (no further travel than this)
   lateWeight: 1, // score = travel + lateWeight × late
-  typicalRank: 1, // compare against this finger in travel order (0 = least moved, 2 = median)
+  typicalRank: 1,
+  repeatMs: 600, // repeated-note fallback window (0 = off)
+  repeatLateFactor: 0, // ...the finger must not be rising (tuned on clips) // compare against this finger in travel order (0 = least moved, 2 = median)
   liftDist: 0.12, // a sounding finger is lifted when it rises this far above where it landed
   historyMs: 1200,
 };
@@ -25,6 +27,7 @@ export class TapResolver {
   constructor(opts = {}) {
     this.o = { ...RESOLVER_DEFAULTS, ...opts };
     this.frames = []; // {t, hands:[{label, points}]}
+    this.lastPick = new Map(); // hand → { tip, t } of its last played finger
   }
 
   pushFrame(frame) {
@@ -66,7 +69,18 @@ export class TapResolver {
       const typical = sorted[o.typicalRank]; // a 'typical' non-pressing finger of this hand
       const ok = (f) => f.travel >= o.minTravel && f.late >= o.minLate && f.after <= o.maxAfter;
       const cands = fingers.filter(ok);
-      if (!cands.length) continue;
+      if (!cands.length) {
+        // Repeated notes: the same finger often presses again without lifting far, so it barely
+        // moves. If the finger that played last (recently) dipped again, repeat it.
+        const prev = this.lastPick.get(hand.label);
+        if (o.repeatMs && prev && t - prev.t <= o.repeatMs) {
+          const f = fingers.find((x) => x.tip === prev.tip);
+          if (f && f.late >= o.minLate * o.repeatLateFactor && f.after <= o.maxAfter) {
+            picks.push({ id: `${hand.label}-${f.tip}`, hand: hand.label, tip: f.tip, x: P[f.tip].x, y: P[f.tip].y, travel: f.travel, lead: 0, size, repeat: true });
+          }
+        }
+        continue;
+      }
       const best = cands.reduce((a, b) => (b.score > a.score ? b : a));
       const bestLead = best.score - typical;
       if (bestLead < o.minLead) continue;
@@ -77,6 +91,7 @@ export class TapResolver {
         }
       }
     }
+    for (const p of picks) this.lastPick.set(p.hand, { tip: p.tip, t });
     return picks;
   }
 

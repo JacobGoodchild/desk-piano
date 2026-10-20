@@ -287,8 +287,8 @@ function sweep(analysed, { variant, latency }) {
   for (const c of combos) {
     let correct = 0, expN = 0, detN = 0, falseNotes = 0;
     for (const a of analysed) {
-      const key = `${a.clip}|${c.sensitivity ?? 0.5}`;
-      if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity ?? 0.5));
+      const key = `${a.clip}|${c.sensitivity ?? 0.65}`;
+      if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity ?? 0.65));
       const { notes } = replay(a.frames, tapCache.get(key), {
         variant, latency,
         resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset'].includes(k))),
