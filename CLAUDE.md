@@ -226,3 +226,30 @@ debug view.
 2. Try it on the Pixel 7: check frame rate, the tap→sound figure in the debug view, and whether the
    front camera sees all markers; adjust `TIP_OFFSET_MM` if black/white keys get confused.
 3. If delay feels high, use landings from a 60 fps camera and trust the "descending finger" guess more.
+
+---
+
+# Overnight run (20 Oct 19:53 → 21 Oct 06:40 UK)
+
+## What Jacob asked for (from chat)
+Work all night until **06:40 UK**, improving, using his real clips (stored ONLY in `~/private-clips/`,
+outside the repo — never commit/publish/screenshot them or anything extracted from them; aggregate
+accuracy numbers only in this log). If nothing left, add features (e.g. other keyboard sounds like
+electric piano/organ). His feedback from trying it:
+1. Hovering hands over the paper trigger lots of keys at once → must not.
+2. It sometimes tracks the wrong finger → should be the finger actually pressing.
+3. Webcam was high up so the mic barely heard taps → (mic choice, adapt to quiet taps).
+4. Sound too quiet → louder + volume control.
+5. "Missing desk mode" → it exists in Settings but is too hidden → make it obvious on the main screen.
+He printed the 3-sheet keyboard. Clips (expected notes in `~/private-clips/notes.txt`):
+hovering (none), resting hands (none), middle C ×4, C-E-G chord ×2, Mary Had a Little Lamb simple
+(E D C D E E E D D D E G G "pretty much") and complex, part of Pirates of the Caribbean, chromatic
+scale two octaves with thumb-under. (He uploaded the hovering clip twice — identical file.)
+
+## Wake-ups
+`send_later` every 30 min from 20:20 to 06:20 UK (rate-limited, scheduled in batches) + final wrap-up.
+
+## Log
+- **19:55** Clips copied to `~/private-clips/`. Found his webcam video is **mirrored**: marker detector
+  found 0/12 markers as-is, 12/12 when flipped → detector now also reads mirrored markers (test added).
+- **19:57** Clip tester bug: MediaPipe timestamps restarted per batch → fixed (global clock).

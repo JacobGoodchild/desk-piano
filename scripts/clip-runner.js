@@ -17,6 +17,7 @@ async function init() {
 }
 
 const canvas = document.createElement('canvas');
+let mpClock = 0; // MediaPipe needs strictly increasing timestamps across batches and clips
 window.analyseFrames = async (urls, fps, markerEvery = 3) => {
   await init();
   const out = [];
@@ -26,7 +27,8 @@ window.analyseFrames = async (urls, fps, markerEvery = 3) => {
     await img.decode();
     const t = (i * 1000) / fps;
     const w = img.naturalWidth, h = img.naturalHeight;
-    const res = landmarker.detectForVideo(img, t + 1);
+    mpClock += 1000 / fps;
+    const res = landmarker.detectForVideo(img, mpClock);
     const hands = (res.landmarks || []).map((lm) => ({ points: lm.map((p) => ({ x: p.x * w, y: p.y * h })) }));
     let markers = null;
     if (i % markerEvery === 0) {
