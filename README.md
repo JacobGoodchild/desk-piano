@@ -1,15 +1,51 @@
 # Desk Piano
 
 Play the piano on a **printed paper keyboard** taped to your desk. A camera watches your hands to see
-*which* keys your fingers land on; the microphone hears the "tok" of each tap to know *when* and *how
-loud*. The app plays a real grand piano sound (Salamander Grand Piano).
+*which* finger pressed; the microphone hears the "tok" of each tap to know *when* and *how loud*. The
+app plays a real grand piano (Salamander Grand Piano) — or an electric piano, organ, harpsichord or
+strings.
 
 - **Play it:** https://jacobgoodchild.github.io/desk-piano/
 - **Print the keyboard:** https://jacobgoodchild.github.io/desk-piano/print.html (A4 landscape, 100% scale)
 
 Everything runs in your browser. Camera and microphone are analysed on the device and never recorded,
-saved or uploaded.
+saved or uploaded. After the first visit it also works offline.
 
-Developer notes: no build step — plain ES modules. `npm test` runs unit tests (Node) and browser tests
-(headless Chromium with a fake camera and microphone, synthetic data only). See `CLAUDE.md` for the
-brief and progress log, `CLIPS.md` for testing against real recordings, `CREDITS.md` for licences.
+## Quick start
+
+1. Print the keyboard (3 sheets, or 2 for the smaller C4–C6 version), cut along the dashed lines,
+   tape the sheets together and tape them to the desk.
+2. Put a phone (front camera, screen facing you, landscape) or a webcam on the **far side** of the
+   paper, facing you, tilted down at your hands. Headphones are best.
+3. Press **Start**. The set-up screen ticks off: piano loaded, microphone hearing taps, camera,
+   hand-tracking speed, both hands, and every paper marker (missing ones are outlined red).
+4. Optional but recommended: **Teach my fingers** (set-up screen) — tap 3 times with each finger.
+5. Play. Tap firmly enough that the mic hears it (watch the green "Mic" bar).
+
+No paper? Press **Desk** in the top bar and tap middle C, then the C above, to calibrate.
+
+## Controls
+
+- **Pedal** button or **Space** = sustain pedal (Settings: "Pedal always on").
+- **● Rec** records what you play; **▶ Play back**; **Save .mid** downloads a MIDI file.
+- Volume slider, **⛶** full screen (locks phones to landscape).
+- Computer keys **A–;** play C4–E5 (W E T Y U O P = black keys), **Z / X** octave, Shift = loud,
+  Ctrl = soft. You can also tap the on-screen keys.
+- Settings: sound and reverb, loudness from taps or fixed, keyboard range / octave / transpose,
+  tap sensitivity, "faster ↔ more accurate", chords within one hand, camera/microphone choice,
+  MIDI output to a real keyboard/synth/app, note trail, debug view (also `?debug=1`).
+
+## How it decides which note
+
+When the microphone hears a tap, the app looks at the last quarter-second of hand tracking and picks
+the finger that came down more than the rest of that hand — so hovering or resting hands don't play,
+and moving your whole hand doesn't play a chord. "Teach my fingers" learns how your fingers move
+together (e.g. the ring finger is dragged along by the middle finger) and uses that to pick the right
+one. See `CLAUDE.md` (progress log) for the measurements behind these choices.
+
+## Developer notes
+
+No build step — plain ES modules. `npm test` runs unit tests (Node) and browser tests (headless
+Chromium with a fake camera and microphone, synthetic data only). `scripts/clip-test.mjs` scores the
+detection against real recordings kept **outside** the repo (see `CLIPS.md` for the rules).
+`CREDITS.md` lists every third-party asset and its licence.
