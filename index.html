@@ -72,6 +72,7 @@
       <div class="keyhelp">Computer keys: <kbd>A</kbd>–<kbd>;</kbd> play C4–E5 (W E T Y U O P = black keys), <kbd>Z</kbd>/<kbd>X</kbd> octave, <kbd>Shift</kbd> = loud, <kbd>Ctrl</kbd> = soft, <kbd>Space</kbd> = pedal, <kbd>R</kbd> = recentre (plain desk).</div>
     </div>
   </section>
+  <canvas id="roll" aria-hidden="true"></canvas>
   <canvas id="piano" aria-label="Piano keyboard showing the notes being played"></canvas>
 </main>
 
@@ -103,6 +104,7 @@
     <label class="row"><input name="cameraOnly" type="checkbox"> Classic only: also play finger strikes the microphone didn't hear</label>
     <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
     <label class="row"><input name="mirror" type="checkbox"> Mirror camera picture</label>
+    <label class="row"><input name="showRoll" type="checkbox"> Show note trail above the keyboard</label>
     <label class="row"><input name="debug" type="checkbox"> Debug view</label>
     <label>MIDI output <span><select name="midiOut"><option value="">Off</option></select> <button type="button" id="midiEnable">Find devices</button></span></label>
     <label>Microphone <select name="mic"><option value="">Default</option></select></label>

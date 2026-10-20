@@ -31,6 +31,7 @@ const state = {
   paperH: null, paperInv: null, paperSeen: 0, markersSeen: new Set(),
   hands: [], handsT: 0,
   micLevel: 0, micHistory: [], tapMarks: [],
+  spans: [], // note trail: { midi, start, end, vel }
   latencies: [], lastLatency: null, tapMsgDelays: [], frameTimes: [], trackMs: 0,
   played: [], // log for tests/debug: {midi, vel, how, t}
   active: new Map(), // midi → count of sources holding it (for the on-screen keyboard)
@@ -76,6 +77,8 @@ function updatePedal() {
 function noteOn(midi, vel, info = {}) {
   if (midi == null || midi < 21 || midi > 108) return;
   state.active.set(midi, (state.active.get(midi) || 0) + 1);
+  state.spans.push({ midi, start: performance.now(), end: null, vel, how: info.how || 'keyboard' });
+  if (state.spans.length > 300) state.spans.shift();
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
@@ -96,6 +99,7 @@ function noteOn(midi, vel, info = {}) {
 function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
   if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
+  for (let i = state.spans.length - 1; i >= 0; i--) if (state.spans[i].midi === midi && state.spans[i].end == null) { state.spans[i].end = performance.now(); break; }
   if (state.inst) state.inst.noteOff(midi);
   midiOut.noteOff(midi);
   recorder.add('off', midi);
@@ -392,6 +396,34 @@ function teachStep() {
 }
 
 // ---------------------------------------------------------------- drawing
+// Note trail: the last few seconds of notes rise up from the keyboard (brighter = louder).
+const ROLL_MS = 3000;
+function drawRoll() {
+  const cv = $('roll');
+  if (!settings.showRoll || !state.pianoGeom) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#0b0e14'; g.fillRect(0, 0, W, H);
+  const { low, high, w0, kw } = state.pianoGeom;
+  const now = performance.now();
+  for (const sp of state.spans) {
+    if (sp.midi < low || sp.midi > high) continue;
+    const end = sp.end ?? now;
+    if (now - end > ROLL_MS) continue;
+    const y0 = H - ((now - sp.start) / ROLL_MS) * H, y1 = H - ((now - end) / ROLL_MS) * H;
+    const black = isBlack(sp.midi);
+    const x = black ? (whiteIndex(sp.midi) - w0 + 1) * kw - kw * 0.3 : (whiteIndex(sp.midi) - w0) * kw + 2;
+    const w = black ? kw * 0.6 : kw - 4;
+    const light = 45 + Math.round(35 * sp.vel);
+    g.fillStyle = sp.how === 'playback' ? `hsl(280 70% ${light}%)` : `hsl(210 90% ${light}%)`;
+    g.fillRect(x, Math.max(0, y0), w, Math.max(2, y1 - Math.max(0, y0)));
+  }
+}
+
 function drawPiano() {
   const cv = $('piano');
   const dpr = window.devicePixelRatio || 1;
@@ -551,6 +583,7 @@ function loop() {
   drawOverlay();
   if (settings.debug) drawDebug();
   updateChecks();
+  drawRoll();
   // mic level bar: dB relative to the background noise, so quiet far-away mics still show taps
   const lv = state.micLevel || 0, fl = state.micFloor || 1e-4;
   $('micLevel').style.width = `${Math.max(0, Math.min(100, (20 * Math.log10(Math.max(lv, 1e-9) / fl)) * 3))}%`;
@@ -568,6 +601,7 @@ function applySettings() {
   $('modeDesk').setAttribute('aria-pressed', String(settings.mode === 'desk'));
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
   $('camWrap').classList.toggle('mirror', !!settings.mirror);
+  $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   const nextEngine = engines[settings.engine] || engines.tap;
   if (nextEngine !== fusion) { fusion.allOff(); fusion = nextEngine; }
