@@ -5,22 +5,24 @@
 // finger moves more than its neighbours. Several fingers clearly moving more = a chord.
 export const TIPS = [4, 8, 12, 16, 20];
 
+// Defaults tuned on Jacob's first real clips (see CLAUDE.md overnight log).
 export const RESOLVER_DEFAULTS = {
   lookbackMs: 250, // how far back to look for the finger's highest point before the tap
-  afterMs: 70, // also use frames up to this long after the tap (the landing frame); tuned on real clips: 70 ms
-  // scored ~46%, 35 ms ~37% — it's the 'faster ↔ more accurate' setting
+  afterMs: 70, // also use frames up to this long after the tap (the landing frame). 70 ms scored
+  // ~46% on the clips, 35 ms ~37% — this is the "faster ↔ more accurate" setting
   minTravel: 0.03, // a pressing finger must come down at least this far (hand-sizes)
   minLead: 0.03, // ...and this much more than the hand's typical finger
-  chordRatio: 1.01, // > 1 = one note per hand per tap; 0.9 allows chords (setting) // other fingers join as a chord if they moved at least this fraction as much
+  chordRatio: 1.01, // other fingers join as a chord if they moved at least this fraction as much;
+  // > 1 = one note per hand per tap (default), 0.9 when chords are switched on in Settings
   lateMs: 100, // a real press is still moving down in the last ~100 ms before the tap...
   minLate: 0.04, // ...by at least this much (hand-sizes)
   maxAfter: 0.2, // ...and has stopped by the frame after the tap (no further travel than this)
-  lateWeight: 1, // score = travel + lateWeight × late
-  typicalRank: 1,
-  zWeight: 1, // weight of MediaPipe's depth change (experimental)
+  lateWeight: 1, // score = travel + lateWeight × late (+ zWeight × depth change)
+  typicalRank: 1, // compare against this finger in travel order (0 = least moved, 2 = median)
+  zWeight: 1, // weight of MediaPipe's fingertip depth change (helped the chromatic clip)
   handRatio: 0.6, // second hand joins a tap only if its best finger led by this fraction of the first's
-  repeatMs: 600, // repeated-note fallback window (0 = off)
-  repeatLateFactor: 0, // ...the finger must not be rising (tuned on clips) // compare against this finger in travel order (0 = least moved, 2 = median)
+  repeatMs: 600, // repeated notes: replay the last finger within this window (0 = off)...
+  repeatLateFactor: 0, // ...as long as that finger isn't rising
   liftDist: 0.12, // a sounding finger is lifted when it rises this far above where it landed
   slideDist: 0.35, // ...or slides sideways this far (hand-sizes; ~a key width)
   historyMs: 1200,
