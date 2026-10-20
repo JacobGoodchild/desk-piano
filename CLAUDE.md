@@ -303,3 +303,6 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   kept 20 s when markers are hidden; debug shows per-finger scores at the last tap; Settings grouped
   into sections. Checked "decide at 35 ms vs 70 ms" agreement on clips: only 74% → no early-play-then-
   correct trick (would swap a quarter of notes audibly).
+- **21:40** Added MediaPipe's fingertip depth change to the finger score (zWeight 1): overall
+  **54.4%** (from 49.1%) — gain is all in the chromatic clip (9→12 correct); Mary unchanged; hovering +1
+  false note (2 total). Weight 0.5 was worse than 0 and 1, so treat as tentative; re-check on new clips.
