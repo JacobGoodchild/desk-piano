@@ -78,10 +78,12 @@ function updatePedal() {
 function noteOn(midi, vel, info = {}) {
   if (midi == null || midi < 21 || midi > 108) return;
   state.active.set(midi, (state.active.get(midi) || 0) + 1);
+  state.lastNoteT = performance.now();
   state.spans.push({ midi, start: performance.now(), end: null, vel, how: info.how || 'keyboard' });
   if (state.spans.length > 300) state.spans.shift();
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
+  if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   if (state.inst) state.inst.noteOn(midi, vel);
@@ -411,6 +413,32 @@ function teachStep() {
   }
 }
 
+// ---------------------------------------------------------------- accuracy check
+// Play a short known exercise; the app compares what it heard with what was asked.
+const CHECK_NOTES = [60, 62, 64, 65, 67, 65, 64, 62, 60];
+function startCheck() {
+  if (!state.started) { setStatus('Press Start first.'); return; }
+  state.check = { got: [], t0: performance.now() };
+  showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; });
+}
+function checkNote(midi) {
+  const c = state.check;
+  c.got.push(midi);
+  if (c.got.length >= CHECK_NOTES.length + 3) finishCheck();
+}
+function finishCheck() {
+  const c = state.check; state.check = null;
+  const correct = alignCorrect(CHECK_NOTES, c.got);
+  const extra = Math.max(0, c.got.length - correct);
+  showCalib(`Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}. ${correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.'}`);
+}
+// number of notes matched in order (longest common subsequence)
+function alignCorrect(a, b) {
+  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+  return dp[a.length][b.length];
+}
+
 // ---------------------------------------------------------------- drawing
 // Note trail: the last few seconds of notes rise up from the keyboard (brighter = louder).
 const ROLL_MS = 3000;
@@ -618,6 +646,8 @@ function updateChecks() {
 
 function loop() {
   fusion.tick(performance.now());
+  // the accuracy check ends after 4 s without a new note
+  if (state.check && state.check.got.length && performance.now() - state.lastNoteT > 4000) finishCheck();
   if (state.paperH && performance.now() - state.paperSeen > 20000) { state.paperH = null; state.paperInv = null; }
   drawOverlay();
   if (settings.debug) drawDebug();
@@ -743,6 +773,7 @@ function bindSettings() {
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
   $('teachBtn').onclick = startTeaching;
+  $('checkBtn').onclick = startCheck;
   $('metroBtn').onclick = async () => {
     await ensureAudio();
     if (!state.metro) {
@@ -879,6 +910,6 @@ window.deskPiano = {
   injectMarkers: (found) => updatePaperFromMarkers(found, 1),
   setVideoSize: (w, h) => { state.video = { w, h }; },
   keyForPoint,
-  startCalibration, recentre, startTeaching,
+  startCalibration, recentre, startTeaching, startCheck,
   applySettings,
 };

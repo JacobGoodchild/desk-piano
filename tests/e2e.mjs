@@ -191,6 +191,13 @@ await check('taps + finger strikes on the paper play the right notes, chords and
   const names = result.map((r) => r.name);
   assert.deepEqual(names.slice(0, 2), ['C4', 'E4'], JSON.stringify(result));
   assert.deepEqual(names.slice(2, 5).sort(), ['C4', 'E4', 'G4'], JSON.stringify(result));
+  // the accuracy check counts tap-played notes in order
+  const check = await page.evaluate(async () => {
+    const dp = window.deskPiano;
+    dp.startCheck();
+    return !!dp.state.check;
+  });
+  assert.ok(check);
   assert.equal(names[5], 'F#4', JSON.stringify(result));
   assert.equal(names.length, 6, 'the tap with no finger movement added nothing: ' + JSON.stringify(result));
   assert.ok(result[1].vel > result[0].vel, 'louder tap → louder note');
