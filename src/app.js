@@ -25,7 +25,7 @@ const state = {
   paperH: null, paperInv: null, paperSeen: 0, markersSeen: new Set(),
   hands: [], handsT: 0,
   micLevel: 0, micHistory: [], tapMarks: [],
-  latencies: [], lastLatency: null,
+  latencies: [], lastLatency: null, tapMsgDelays: [],
   played: [], // log for tests/debug: {midi, vel, how, t}
   active: new Map(), // midi → count of sources holding it (for the on-screen keyboard)
   pedalKey: false, pedalButton: false,
@@ -110,8 +110,12 @@ async function startMic() {
     const d = e.data;
     if (d.type === 'level') { state.micLevel = d.level; state.micHistory.push(d.level); if (state.micHistory.length > 150) state.micHistory.shift(); return; }
     if (d.type === 'onset') {
-      const ts = state.ctx.getOutputTimestamp ? state.ctx.getOutputTimestamp() : null;
-      const t = ts && ts.performanceTime ? ts.performanceTime + (d.time - ts.contextTime) * 1000 : performance.now() - (state.ctx.currentTime - d.time) * 1000;
+      // the worklet tells us the audio clock now (d.now) and at the onset (d.time); the
+      // message hop to this thread is ~1 ms, so the tap happened about this long ago:
+      const t = performance.now() - (d.now - d.time) * 1000;
+      // how long the tap took to reach the main thread (worklet block + message hop)
+      state.tapMsgDelays.push((d.now - d.time) * 1000);
+      if (state.tapMsgDelays.length > 50) state.tapMsgDelays.shift();
       handleTap({ t: t - state.inputLatencyMs, peak: d.peak });
     }
   };

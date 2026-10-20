@@ -152,3 +152,10 @@ done, and the best ideas for next time.
     (which also moves it down the picture) isn't seen as a strike.
   - Tap detector: high-pass 250 Hz, peak follower; onset when it jumps >3× within 2 ms, >2.5× the 15 ms
     average and >4× the 80 ms background; 45 ms refractory; loudness = peak over the next 3 ms.
+- **16:55** Clip-test script + CLIPS.md done; `--self-test` (synthetic paper video + tap sounds, temp
+  folder only) passes: paper found in 20/20 analysed frames (12/12 markers), 3 taps heard, 0 notes (no hands).
+- **17:00** Delay measured (`node scripts/measure-latency.mjs`, fake mic playing synthetic taps):
+  tap detection → main thread median **4.6 ms** (max 5.9). Headless Chromium reports audio base 10 ms +
+  output 32 ms + input 10 ms → **~57 ms tap→sound** on the fast path (finger already seen descending).
+  On a real phone the output/input numbers will differ; the debug view shows the live values and the
+  measured tap→sound average. Fixed a clock-mapping bug (was using the output timestamp for input).
