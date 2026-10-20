@@ -285,3 +285,8 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   tracking ran ~775 ms/frame (1 fps) → all taps dropped; with CPU tracking 8–10 fps → app played
   **C4 ×12 over ~3 loops, nothing else**. Added: auto-switch to CPU tracking if GPU is slow
   (`?delegate=cpu|gpu`), frames/s + ms/frame in debug view, marker detection in a Web Worker.
+- **20:50** Tried measuring finger travel in paper millimetres (via the homography) instead of image
+  pixels: much worse (32% vs 49%) → reverted. Set-up checks now show "Microphone hears taps (last N s
+  ago)" + a mic level bar (relative to room noise) and hand-tracking frames/s with a warning <15.
+  Accuracy is plateauing at ~49% on these clips; part of the ceiling is my guessed transcriptions
+  (Mary simple has ~26 taps, so I scored it against the full verse; Pirates/Mary complex unscored).
