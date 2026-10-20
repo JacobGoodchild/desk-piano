@@ -37,7 +37,7 @@ test('fast repeated notes (12 per second) are all detected', () => {
 
 test('louder taps give higher velocity', () => {
   const amps = [0.01, 0.05, 0.2, 0.6];
-  const on = run(place(1.2, amps.map((a, i) => ({ at: 0.1 + i * 0.25, sound: tapSound(SR, a) }))));
+  const on = run(place(1.5, amps.map((a, i) => ({ at: 0.4 + i * 0.25, sound: tapSound(SR, a) })))); // after the ~0.2 s settling
   assert.equal(on.length, 4);
   const v = on.map((o) => peakToVelocity(o.peak));
   for (let i = 1; i < v.length; i++) assert.ok(v[i] > v[i - 1], `velocity rises ${v.join(', ')}`);

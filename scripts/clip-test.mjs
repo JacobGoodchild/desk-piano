@@ -73,7 +73,7 @@ function tapsFromAudio(samples, sensitivity) {
   const det = new OnsetDetector(SR, { sensitivity });
   const taps = [];
   for (let i = 0; i < samples.length; i += 128) {
-    for (const o of det.process(samples.subarray(i, i + 128))) taps.push({ t: (o.sample / SR) * 1000, peak: o.peak, velocity: peakToVelocity(o.peak, sensitivity) });
+    for (const o of det.process(samples.subarray(i, i + 128))) taps.push({ t: (o.sample / SR) * 1000, peak: o.peak, floor: o.floor, velocity: peakToVelocity(o.peak, sensitivity, o.floor) });
   }
   return taps;
 }

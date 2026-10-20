@@ -121,7 +121,7 @@ async function startMic() {
       // how long the tap took to reach the main thread (worklet block + message hop)
       state.tapMsgDelays.push((d.now - d.time) * 1000);
       if (state.tapMsgDelays.length > 50) state.tapMsgDelays.shift();
-      handleTap({ t: t - state.inputLatencyMs, peak: d.peak });
+      handleTap({ t: t - state.inputLatencyMs, peak: d.peak, floor: d.floor });
     }
   };
   state.micNode = node;
@@ -134,14 +134,14 @@ function stopMic() {
   state.micStream = null; state.micNode = null;
 }
 
-function handleTap({ t, peak, velocity }) {
-  const vel = velocity ?? velocityMap.map(peak);
+function handleTap({ t, peak, floor, velocity }) {
+  const vel = velocity ?? velocityMap.map(peak, floor);
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.calib) return; // calibration taps are handled from the camera landing
   const played = fusion.onTap({ t, velocity: vel }, strikes);
   // learn the loudness range only from taps that really were notes (not talking or knocks)
-  if (played && peak != null) velocityMap.add(peak);
+  if (played && peak != null) velocityMap.add(peak, floor);
 }
 
 // ---------------------------------------------------------------- camera & hands
