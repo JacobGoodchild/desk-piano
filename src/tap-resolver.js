@@ -67,6 +67,7 @@ export class TapResolver {
         const after = hTap ? (P[tip].y - hTap.points[tip].y) / size : 0;
         return { tip, travel, late, after, score: travel + o.lateWeight * late };
       });
+      this.lastScores = { t, hand: hand.label, fingers: fingers.map((f) => ({ tip: f.tip, score: +f.score.toFixed(2), late: +f.late.toFixed(2) })) };
       const sorted = fingers.map((x) => x.score).sort((a, b) => a - b);
       const typical = sorted[o.typicalRank]; // a 'typical' non-pressing finger of this hand
       const ok = (f) => f.travel >= o.minTravel && f.late >= o.minLate && f.after <= o.maxAfter;

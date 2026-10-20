@@ -547,6 +547,7 @@ function drawDebug() {
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
     `engine ${settings.engine}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
     `paper markers: ${[...state.markersSeen].join(',') || 'none'}`,
+    `last tap, finger scores (thumb→little): ${(() => { const ls = engines.tap.resolver.lastScores; return ls ? ls.fingers.map((f) => f.score).join(' ') : '–'; })()}`,
     `fingers: ${fingers.join('  ')}`,
     `last notes: ${state.played.slice(-8).map((p) => `${p.name}(${p.vel},${p.how})`).join(' ')}`,
   ].join('\n');
@@ -579,7 +580,7 @@ function updateChecks() {
 
 function loop() {
   fusion.tick(performance.now());
-  if (state.paperH && performance.now() - state.paperSeen > 4000) { state.paperH = null; state.paperInv = null; }
+  if (state.paperH && performance.now() - state.paperSeen > 20000) { state.paperH = null; state.paperInv = null; }
   drawOverlay();
   if (settings.debug) drawDebug();
   updateChecks();
