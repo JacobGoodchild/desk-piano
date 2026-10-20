@@ -17,6 +17,7 @@ export const RESOLVER_DEFAULTS = {
   maxAfter: 0.2, // ...and has stopped by the frame after the tap (no further travel than this)
   lateWeight: 1, // score = travel + lateWeight × late
   typicalRank: 1,
+  handRatio: 0.6, // second hand joins a tap only if its best finger led by this fraction of the first's
   repeatMs: 600, // repeated-note fallback window (0 = off)
   repeatLateFactor: 0, // ...the finger must not be rising (tuned on clips) // compare against this finger in travel order (0 = least moved, 2 = median)
   liftDist: 0.12, // a sounding finger is lifted when it rises this far above where it landed
@@ -91,8 +92,14 @@ export class TapResolver {
         }
       }
     }
-    for (const p of picks) this.lastPick.set(p.hand, { tip: p.tip, t });
-    return picks;
+    // One tap usually comes from one hand. The other hand only joins if its finger moved
+    // nearly as decisively (both hands striking together).
+    const bestByHand = new Map();
+    for (const p of picks) bestByHand.set(p.hand, Math.max(bestByHand.get(p.hand) ?? -Infinity, p.lead));
+    const top = Math.max(-Infinity, ...bestByHand.values());
+    const kept = picks.filter((p) => bestByHand.size < 2 || bestByHand.get(p.hand) >= top * o.handRatio);
+    for (const p of kept) this.lastPick.set(p.hand, { tip: p.tip, t });
+    return kept;
   }
 
   // Has this finger lifted since it landed at landY? (image y, larger = lower)

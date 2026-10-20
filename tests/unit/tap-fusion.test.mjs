@@ -73,3 +73,15 @@ test('a melody of single notes, each tap played once in order', () => {
   const cols = fingers.map((tip) => 60 + Math.floor((210 - (tip / 4 - 1 - 2) * 90 * 0.32) / 40)); // hand 'A': thumb on the right
   assert.deepEqual(ctx.played.map((p) => p.m), cols, JSON.stringify(ctx.played));
 });
+
+test('two hands: only the hand that pressed plays (the other wobbles slightly)', () => {
+  const ctx = setup();
+  for (let t = 0; t <= 800; t += 33) {
+    if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+    const still = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+    for (const k of Object.keys(still)) still[k] += 3 * Math.sin(t / 29 + Number(k)); // a restless resting hand
+    ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, press([8], 300)(t)), fakeHand('B', { x: 600, y: 300 }, still)] });
+    ctx.fusion.tick(t);
+  }
+  assert.equal(ctx.played.length, 1, JSON.stringify(ctx.played));
+});
