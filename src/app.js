@@ -172,7 +172,7 @@ function stopMic() {
 }
 
 function handleTap({ t, peak, floor, velocity }) {
-  const vel = velocity ?? velocityMap.map(peak, floor);
+  const vel = velocity ?? (settings.dynamics === 'fixed' ? settings.fixedVelocity : velocityMap.map(peak, floor));
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.teach) { state.teach.taps.push(t); return; } // teaching: no notes
