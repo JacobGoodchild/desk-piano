@@ -330,3 +330,6 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   to about −32/+31 ms within ~250 notes and stays within ±10 ms when there's no offset. Shown in the
   debug view. Also: played keys light up on the camera picture; edge-case tests; "can see hands but
   can't hear taps" hint; mic-placement advice in set-up.
+- **21:25** "Check accuracy" exercise on the set-up screen (play C D E F G F E D C → "N of 9 right" + tips).
+  Settings now carry a version: newly tuned defaults (tap sensitivity 0.65, volume) replace values saved
+  yesterday, personal choices are kept. Set-up screen re-laid out (buttons on top, prompts first).
