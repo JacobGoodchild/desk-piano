@@ -290,3 +290,6 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   ago)" + a mic level bar (relative to room noise) and hand-tracking frames/s with a warning <15.
   Accuracy is plateauing at ~49% on these clips; part of the ceiling is my guessed transcriptions
   (Mary simple has ~26 taps, so I scored it against the full verse; Pirates/Mary complex unscored).
+- **21:00** Features: room reverb (generated impulse, dry path untouched so no delay; default 20%);
+  Record / Play back / Save .mid (standard MIDI file, download only); MIDI output to devices/apps via
+  Web MIDI (only asks for MIDI access when "Find devices" is pressed). Tests: 32 unit + 5 browser.
