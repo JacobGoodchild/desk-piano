@@ -322,3 +322,11 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   protection). README rewritten for players. Re-tried "play clear strikes the mic missed" inside the
   tap engine (virtual taps from camera landings, stricter lead 2–8×): always worse — 12–21 false
   notes in hover/rest clips, accuracy 38–45% → removed. The microphone must decide WHEN.
+- **21:30** Found that accuracy is very sensitive to sound/picture timing: shifting the clips' taps by
+  ±15 ms costs 4–10 points, ±60 ms halves accuracy. The clips are in sync, but the live app's mic and
+  camera have separate, unknown delays. Added **auto-sync**: on the clips the pressing finger stops
+  ~17 ms before the tap is heard; the engine measures this gap live (median of 25 notes) and nudges a
+  timing correction. Replaying all clips in a row with a deliberate +40/−40 ms offset, it converges
+  to about −32/+31 ms within ~250 notes and stays within ±10 ms when there's no offset. Shown in the
+  debug view. Also: played keys light up on the camera picture; edge-case tests; "can see hands but
+  can't hear taps" hint; mic-placement advice in set-up.
