@@ -17,6 +17,7 @@ export const RESOLVER_DEFAULTS = {
   maxAfter: 0.2, // ...and has stopped by the frame after the tap (no further travel than this)
   lateWeight: 1, // score = travel + lateWeight × late
   typicalRank: 1,
+  zWeight: 1, // weight of MediaPipe's depth change (experimental)
   handRatio: 0.6, // second hand joins a tap only if its best finger led by this fraction of the first's
   repeatMs: 600, // repeated-note fallback window (0 = off)
   repeatLateFactor: 0, // ...the finger must not be rising (tuned on clips) // compare against this finger in travel order (0 = least moved, 2 = median)
@@ -65,7 +66,10 @@ export class TapResolver {
         const travel = (P[tip].y - minY) / size;
         const late = hTap && hBefore ? (hTap.points[tip].y - hBefore.points[tip].y) / size : travel;
         const after = hTap ? (P[tip].y - hTap.points[tip].y) / size : 0;
-        return { tip, travel, late, after, score: travel + o.lateWeight * late };
+        // optional: change in MediaPipe's estimated depth over the same window (+ = away from camera)
+        let dz = 0;
+        if (o.zWeight && hBefore && P[tip].z != null && hBefore.points[tip].z != null) dz = (P[tip].z - hBefore.points[tip].z) / size;
+        return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz };
       });
       this.lastScores = { t, hand: hand.label, fingers: fingers.map((f) => ({ tip: f.tip, score: +f.score.toFixed(2), late: +f.late.toFixed(2) })) };
       const sorted = fingers.map((x) => x.score).sort((a, b) => a - b);
