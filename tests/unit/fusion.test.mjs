@@ -67,8 +67,14 @@ test('a tap with no finger moving (talking, knocks) plays nothing', () => {
   assert.equal(ctx.fusion.stats.tapsRejected, 2);
 });
 
-test('a clear finger strike the microphone missed still plays, quieter', () => {
+test('by default, a finger strike with no tap plays nothing (hovering hands)', () => {
   const ctx = setup();
+  runFrames(ctx, { liftFn: press([12], 300), taps: [] });
+  assert.equal(ctx.played.length, 0);
+});
+
+test('with the camera-only option, a clear finger strike the microphone missed still plays, quieter', () => {
+  const ctx = setup({ cameraOnly: true });
   runFrames(ctx, { liftFn: press([12], 300), taps: [] });
   assert.equal(ctx.played.length, 1);
   assert.equal(ctx.played[0].how, 'camera-only');

@@ -14,7 +14,7 @@ export class OnsetDetector {
     this.levelMax = 0;
   }
 
-  setOptions({ sensitivity = 0.5, refractoryMs = 45, peakMs = 3, ratio = 4 } = {}) {
+  setOptions({ sensitivity = 0.5, refractoryMs = 45, peakMs = 3, ratio = 2.5, riseMs = 15, riseRatio = 3, midRatio = 1.8 } = {}) {
     // A tap must stand out from the room's background noise by this much: sensitivity 0..1 →
     // 22 dB (0) down to 8 dB (1). Microphones far from the desk hear taps only ~15-25 dB above
     // the background, so a fixed level doesn't work.
@@ -29,8 +29,12 @@ export class OnsetDetector {
     const rc = 1 / (2 * Math.PI * hpHz);
     this.hpA = rc / (rc + 1 / this.sr);
     this.dFast = Math.exp(-1 / (0.02 * this.sr));
-    this.ring = new Float32Array(Math.max(8, Math.round(0.002 * this.sr))); // fast envelope 2 ms ago
-    this.ringPos = 0;
+    // the quietest the envelope has been over the last riseMs, kept in 1 ms slots (cheap enough
+    // for the audio thread)
+    this.slotLen = Math.max(1, Math.round(this.sr / 1000));
+    this.ring = new Float32Array(Math.max(2, Math.round(riseMs))).fill(1);
+    this.ringPos = 0; this.slotMin = 1; this.slotCount = 0;
+    this.riseRatio = riseRatio; this.midRatio = midRatio;
     this.kMid = 1 - Math.exp(-1 / (0.015 * this.sr));
     this.kSlow = 1 - Math.exp(-1 / (0.08 * this.sr));
   }
@@ -48,8 +52,9 @@ export class OnsetDetector {
       if (this.pending) {
         if (a > this.pending.peak) this.pending.peak = a;
         if (n - this.pending.sample >= this.peakLen) { out.push(this.pending); this.pending = null; }
-      } else if (n - this.lastOnset > this.refractory && this.fast > this.minLevel && this.fast > this.floor * this.aboveFloor && this.fast > this.slow * this.ratio && this.fast > this.mid * 2.5 && this.fast > this.ring[this.ringPos] * 3) {
-        // a tap rises within ~1 ms; speech and music swell much more slowly
+      } else if (n - this.lastOnset > this.refractory && this.fast > this.minLevel && this.fast > this.floor * this.aboveFloor && this.fast > this.slow * this.ratio && this.fast > this.mid * this.midRatio && this.fast > this.recentMin() * this.riseRatio) {
+        // a tap rises within a few ms (≈10 ms through compressed webcam audio); speech and music
+        // swell more slowly
         this.pending = { sample: n, peak: a, floor: this.floor };
         this.lastOnset = n;
       }
@@ -61,11 +66,21 @@ export class OnsetDetector {
       // background floor: follows quiet stretches quickly, rises only slowly (taps don't lift it)
       this.floor += (this.mid - this.floor) * (this.mid < this.floor ? this.kFloorDown : this.kFloorUp);
       if (this.floor < 1e-6) this.floor = 1e-6;
-      this.ring[this.ringPos] = this.fast;
-      this.ringPos = (this.ringPos + 1) % this.ring.length;
+      if (this.fast < this.slotMin) this.slotMin = this.fast;
+      if (++this.slotCount >= this.slotLen) {
+        this.ring[this.ringPos] = this.slotMin;
+        this.ringPos = (this.ringPos + 1) % this.ring.length;
+        this.slotMin = 1; this.slotCount = 0;
+      }
       this.pos++;
     }
     return out;
+  }
+
+  recentMin() {
+    let m = this.slotMin;
+    for (let i = 0; i < this.ring.length; i++) if (this.ring[i] < m) m = this.ring[i];
+    return m;
   }
 
   // peak level since last call (for meters)

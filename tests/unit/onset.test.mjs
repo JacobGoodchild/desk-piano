@@ -44,9 +44,12 @@ test('louder taps give higher velocity', () => {
   assert.ok(v[0] < 0.45 && v[3] > 0.8);
 });
 
-test('sustained speech-like sound produces few or no onsets', () => {
+// The detector is tuned to catch soft taps through compressed far-away webcam audio, so it may
+// fire once per syllable of speech: those are rejected later because no finger is coming down
+// (see the fusion tests).
+test('speech-like sound gives at most one onset per syllable', () => {
   const on = run(place(1.2, [{ at: 0.1, sound: speechSound(SR, 0.1, 1) }]));
-  assert.ok(on.length <= 2, `got ${on.length}`);
+  assert.ok(on.length <= 4, `got ${on.length}`); // 4 syllables
 });
 
 test('velocity mapper learns a quiet player\'s range', async () => {

@@ -12,6 +12,7 @@ export const FUSION_DEFAULTS = {
   descendLookMs: 80, // a finger seen descending this recently can be played straight away
   echoMs: 250, // window after the app's own note in which taps are suspicious (speaker mode)
   cameraOnlyVelocity: 0.3,
+  cameraOnly: false, // play clear finger strikes the microphone didn't hear (off: hovering hands caused false notes)
 };
 
 export class Fusion {
@@ -114,6 +115,7 @@ export class Fusion {
     for (const L of this.landings) {
       if (!L.used && L.expires <= now) {
         L.used = true;
+        if (!this.o.cameraOnly) continue;
         const v = Math.min(0.45, this.o.cameraOnlyVelocity + 0.03 * (L.speed || 0));
         if (this._start(L.id, L.midi, v, now, 'camera-only')) this.stats.cameraOnly++;
       }
