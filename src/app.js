@@ -28,7 +28,7 @@ const state = {
   paperH: null, paperInv: null, paperSeen: 0, markersSeen: new Set(),
   hands: [], handsT: 0,
   micLevel: 0, micHistory: [], tapMarks: [],
-  latencies: [], lastLatency: null, tapMsgDelays: [],
+  latencies: [], lastLatency: null, tapMsgDelays: [], frameTimes: [], trackMs: 0,
   played: [], // log for tests/debug: {midi, vel, how, t}
   active: new Map(), // midi → count of sources holding it (for the on-screen keyboard)
   pedalKey: false, pedalButton: false,
@@ -190,7 +190,11 @@ async function startCamera() {
         baseOptions: { modelAssetPath: 'vendor/models/hand_landmarker.task', delegate },
         runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5,
       });
-      try { landmarker = await make('GPU'); } catch { landmarker = await make('CPU'); }
+      const want = params.get('delegate'); // ?delegate=cpu|gpu to force one
+      if (want === 'cpu') landmarker = await make('CPU');
+      else { try { landmarker = await make('GPU'); state.delegate = 'GPU'; } catch { landmarker = await make('CPU'); } }
+      state.delegate = state.delegate || 'CPU';
+      if (!want) autoPickDelegate(make);
     } catch (err) {
       console.warn('hand tracker unavailable', err);
       setStatus('Hand tracker could not start on this device – computer-keyboard play still works.');
@@ -206,6 +210,25 @@ async function startCamera() {
   else { const loop = () => { processVideoFrame(performance.now()); requestAnimationFrame(loop); }; loop(); }
 }
 
+// Some devices (and headless browsers) have slow GPU paths: after a couple of seconds, if hand
+// tracking on the GPU is slow, try the CPU version and keep it if it's faster.
+function autoPickDelegate(make) {
+  if (state.delegate !== 'GPU') return;
+  setTimeout(async () => {
+    if (state.trackMs < 45) return;
+    try {
+      const gpuMs = state.trackMs;
+      const cpu = await make('CPU');
+      const old = landmarker;
+      landmarker = cpu; state.trackMs = gpuMs; lastTs += 1;
+      setTimeout(() => {
+        if (state.trackMs > gpuMs) { landmarker = old; cpu.close(); }
+        else { state.delegate = 'CPU'; old.close(); }
+      }, 2500);
+    } catch (e) { console.warn('CPU hand tracker unavailable', e); }
+  }, 3000);
+}
+
 let frameCount = 0, lastTs = 0;
 const detCanvas = document.createElement('canvas');
 function processVideoFrame(t) {
@@ -219,7 +242,8 @@ function processVideoFrame(t) {
     t = Math.max(t, lastTs + 0.1);
     lastTs = t;
     let res;
-    try { res = landmarker.detectForVideo(video, t); } catch (err) { console.warn('hand tracking frame skipped', err); return; }
+    const t0 = performance.now();
+    try { res = landmarker.detectForVideo(video, t); state.trackMs = state.trackMs * 0.9 + (performance.now() - t0) * 0.1; } catch (err) { console.warn('hand tracking frame skipped', err); return; }
     const hands = handIds.assign((res.landmarks || []).map((lm) => ({
       points: lm.map((p) => ({ x: p.x * state.video.w, y: p.y * state.video.h })),
     })));
@@ -228,6 +252,8 @@ function processVideoFrame(t) {
 }
 
 function handleHandFrame(frame) {
+  state.frameTimes.push(performance.now());
+  if (state.frameTimes.length > 30) state.frameTimes.shift();
   state.hands = frame.hands;
   state.handsT = frame.t;
   const events = strikes.update(frame); // also drives the fingertip colours and calibration
@@ -424,6 +450,7 @@ function drawDebug() {
   const avg = lat.length ? lat.reduce((a, b) => a + b, 0) / lat.length : null;
   const fingers = [...strikes.fingers.values()].map((f) => `${f.id}${f.down ? '↓' : f.descending ? '↘' : ''}→${(k => k == null ? '-' : noteName(k))(keyForPoint(f.x, f.y))}`);
   $('debugText').textContent = [
+    `camera: ${fps().toFixed(0)} frames/s tracked, hand tracking ${state.trackMs.toFixed(0)} ms per frame (${state.delegate || '–'})`,
     `audio out: base ${fmt(state.ctx && state.ctx.baseLatency * 1000)} ms, output ${fmt(state.ctx && state.ctx.outputLatency * 1000)} ms, input ${fmt(state.inputLatencyMs)} ms`,
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
     `engine ${settings.engine}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
@@ -432,6 +459,7 @@ function drawDebug() {
     `last notes: ${state.played.slice(-8).map((p) => `${p.name}(${p.vel},${p.how})`).join(' ')}`,
   ].join('\n');
 }
+function fps() { const f = state.frameTimes; return f.length > 1 ? (1000 * (f.length - 1)) / (f[f.length - 1] - f[0]) : 0; }
 const fmt = (v) => (v == null || Number.isNaN(v) ? '–' : v.toFixed(1));
 
 function updateChecks() {

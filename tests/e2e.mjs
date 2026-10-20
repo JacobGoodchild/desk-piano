@@ -18,7 +18,8 @@ async function check(name, fn) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
   const page = await ctx.newPage();
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // MediaPipe prints harmless 'INFO:' lines through console.error
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('INFO:')) errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push(e.message));
   try {
     await fn(page);
@@ -221,7 +222,8 @@ await check('plain desk mode: calibrate on C4 and C5, then play by position', as
   const ctx = await b2.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });
   const page = await ctx.newPage();
   const errors = [];
-  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  // MediaPipe prints harmless 'INFO:' lines through console.error
+  page.on('console', (m) => { if (m.type() === 'error' && !m.text().startsWith('INFO:')) errors.push(m.text()); });
   try {
     await startApp(page);
     await page.waitForFunction(() => window.deskPiano.state.markersSeen.size >= 10, null, { timeout: 20000 });
