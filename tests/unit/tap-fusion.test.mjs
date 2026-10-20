@@ -85,3 +85,44 @@ test('two hands: only the hand that pressed plays (the other wobbles slightly)',
   }
   assert.equal(ctx.played.length, 1, JSON.stringify(ctx.played));
 });
+
+test('teaching: a ring finger that is dragged along further than the middle finger', async () => {
+  const { FingerTeacher } = await import('../../src/tap-resolver.js');
+  // this player's ring finger (16) moves 1.3× as far as the middle finger (12) whenever the middle
+  // finger presses; pressing with the ring finger itself moves it 1.6× with the middle barely
+  const coupled = (tip, at) => (t) => {
+    const l = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+    const k = t >= at - 100 && t < at ? (at - t) / 100 : t >= at && t < at + 200 ? 0 : 1;
+    if (tip === 12) { l[12] = 30 * k; l[16] = 30 - 30 * 1.3 * (1 - k); }
+    else if (tip === 16) { l[16] = 30 - 30 * 1.6 * (1 - k); l[12] = 30 - 30 * 0.3 * (1 - k); }
+    else l[tip] = 30 * k;
+    return l;
+  };
+  const runOne = (ctx, tip, teachFn) => {
+    for (let t = 0; t <= 700; t += 33) {
+      if (t === 297) ctx.fusion.onTap({ t: 300, velocity: 0.6 });
+      ctx.fusion.onFrame({ t, hands: [fakeHand('A', { x: 210, y: 300 }, coupled(tip, 300)(t))] });
+      if (teachFn && t >= 380 && !teachFn.done) { teachFn.done = true; teachFn(ctx.fusion.resolver.pattern(300)); }
+    }
+  };
+  // untaught: pressing with the middle finger plays the ring finger's key
+  const plain = setup();
+  runOne(plain, 12);
+  const ringKey = 60 + Math.floor((210 - (16 / 4 - 1 - 2) * 90 * 0.32) / 40);
+  const midKey = 60 + Math.floor((210 - (12 / 4 - 1 - 2) * 90 * 0.32) / 40);
+  assert.equal(plain.played[0].m, ringKey);
+  // teach: each finger three times
+  const teacher = new FingerTeacher();
+  for (const tip of [4, 8, 12, 16, 20]) for (let i = 0; i < 3; i++) {
+    const ctx = setup();
+    runOne(ctx, tip, (vec) => teacher.add(tip, vec));
+  }
+  const taught = setup();
+  taught.fusion.resolver.templates = teacher.templates();
+  runOne(taught, 12);
+  assert.equal(taught.played[0].m, midKey, JSON.stringify(taught.played));
+  const taught2 = setup();
+  taught2.fusion.resolver.templates = teacher.templates();
+  runOne(taught2, 16);
+  assert.equal(taught2.played[0].m, ringKey);
+});

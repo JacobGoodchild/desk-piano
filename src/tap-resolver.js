@@ -28,6 +28,7 @@ export class TapResolver {
   constructor(opts = {}) {
     this.o = { ...RESOLVER_DEFAULTS, ...opts };
     this.frames = []; // {t, hands:[{label, points}]}
+    this.templates = null; // taught finger patterns: { tip: [5 numbers] } (see FingerTeacher)
     this.lastPick = new Map(); // hand → { tip, t } of its last played finger
   }
 
@@ -82,7 +83,19 @@ export class TapResolver {
         }
         continue;
       }
-      const best = cands.reduce((a, b) => (b.score > a.score ? b : a));
+      let best = cands.reduce((a, b) => (b.score > a.score ? b : a));
+      // If the player has taught us how their fingers move together, pick the finger whose
+      // learnt pattern best matches this tap (e.g. the ring finger dragged along by the middle).
+      const vec = fingers.map((f) => Math.max(0, f.score - typical));
+      if (this.templates) {
+        let bestSim = -Infinity;
+        for (const f of cands) {
+          const T = this.templates[f.tip];
+          if (!T) continue;
+          const sim = cosine(vec, T);
+          if (sim > bestSim) { bestSim = sim; best = f; }
+        }
+      }
       const bestLead = best.score - typical;
       if (bestLead < o.minLead) continue;
       for (const f of cands) {
@@ -102,6 +115,34 @@ export class TapResolver {
     return kept;
   }
 
+  // For teaching: the movement pattern of the hand that moved most at time t (5 numbers, thumb →
+  // little finger), or null.
+  pattern(t) {
+    const o = this.o;
+    const win = this.frames.filter((f) => f.t >= t - o.lookbackMs && f.t <= t + o.afterMs);
+    if (!win.length) return null;
+    const last = win[win.length - 1];
+    const atTap = nearest(win, t), before = nearest(this.frames, t - o.lateMs);
+    let bestVec = null, bestSum = 0;
+    for (const hand of last.hands) {
+      const P = hand.points, size = handSize(P);
+      const hTap = atTap && atTap.hands.find((x) => x.label === hand.label);
+      const hBefore = before && before.hands.find((x) => x.label === hand.label);
+      const scores = TIPS.map((tip) => {
+        let minY = Infinity;
+        for (const f of win) { const h = f.hands.find((x) => x.label === hand.label); if (h) minY = Math.min(minY, h.points[tip].y); }
+        const travel = (P[tip].y - minY) / size;
+        const late = hTap && hBefore ? (hTap.points[tip].y - hBefore.points[tip].y) / size : travel;
+        return travel + o.lateWeight * late;
+      });
+      const typical = [...scores].sort((a, b) => a - b)[o.typicalRank];
+      const vec = scores.map((v) => Math.max(0, v - typical));
+      const sum = vec.reduce((a, b) => a + b, 0);
+      if (sum > bestSum) { bestSum = sum; bestVec = vec; }
+    }
+    return bestVec;
+  }
+
   // Has this finger lifted since it landed at landY? (image y, larger = lower)
   lifted(id, landY, size) {
     const [label, tipStr] = id.split('-');
@@ -110,6 +151,31 @@ export class TapResolver {
     const h = f && f.hands.find((x) => x.label === label);
     if (!h) return true; // hand gone
     return (landY - h.points[tip].y) / size > this.o.liftDist;
+  }
+}
+
+function cosine(a, b) {
+  let ab = 0, aa = 0, bb = 0;
+  for (let i = 0; i < a.length; i++) { ab += a[i] * b[i]; aa += a[i] * a[i]; bb += b[i] * b[i]; }
+  return aa && bb ? ab / Math.sqrt(aa * bb) : 0;
+}
+
+// Collects taught patterns: tip → average normalised movement pattern.
+export class FingerTeacher {
+  constructor() { this.sums = {}; this.counts = {}; }
+  add(tip, vec) {
+    if (!vec) return false;
+    const n = Math.hypot(...vec);
+    if (!n) return false;
+    const s = this.sums[tip] || (this.sums[tip] = [0, 0, 0, 0, 0]);
+    vec.forEach((v, i) => { s[i] += v / n; });
+    this.counts[tip] = (this.counts[tip] || 0) + 1;
+    return true;
+  }
+  templates() {
+    const out = {};
+    for (const [tip, s] of Object.entries(this.sums)) out[tip] = s.map((v) => v / this.counts[tip]);
+    return out;
   }
 }
 

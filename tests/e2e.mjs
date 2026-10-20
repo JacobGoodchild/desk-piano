@@ -229,6 +229,44 @@ await check('plain desk mode: calibrate on C4 and C5, then play by position', as
   assert.deepEqual(names, ['E4', 'G4', 'F#4'], cal);
 });
 
+await check('teach my fingers: five fingers × three taps are learnt and saved', async (page) => {
+  await startApp(page, '?sim=1');
+  const res = await page.evaluate(async () => {
+    const dp = window.deskPiano;
+    dp.startTeaching();
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const MCP = { 4: 2, 8: 5, 12: 9, 16: 13, 20: 17 };
+    const base = { 4: { x: 500, y: 400 }, 8: { x: 470, y: 400 }, 12: { x: 440, y: 400 }, 16: { x: 410, y: 400 }, 20: { x: 380, y: 400 } };
+    const hand = (lifts) => {
+      const pts = Array.from({ length: 21 }, () => ({ x: 440, y: 280 }));
+      pts[0] = { x: 440, y: 210 };
+      for (const k of [4, 8, 12, 16, 20]) { pts[k] = { x: base[k].x, y: base[k].y - lifts[k] }; pts[MCP[k]] = { x: base[k].x, y: 280 }; }
+      return { label: 'A', points: pts };
+    };
+    for (const tip of [4, 8, 12, 16, 20]) for (let n = 0; n < 3; n++) {
+      for (let f = 0; f <= 8; f++) {
+        const l = { 4: 30, 8: 30, 12: 30, 16: 30, 20: 30 };
+        l[tip] = Math.max(0, 30 - f * 8);
+        if (f === 4) dp.injectTap({ t: performance.now(), peak: 0.1 });
+        dp.injectHandFrame({ t: performance.now(), hands: [hand(l)] });
+        await sleep(33);
+      }
+      for (let f = 1; f <= 3; f++) { dp.injectHandFrame({ t: performance.now(), hands: [hand({ 4: 30, 8: 30, 12: 30, 16: 30, 20: 30, [tip]: f * 10 })] }); await sleep(33); }
+    }
+    await sleep(100);
+    return { teaching: !!dp.state.teach, templates: dp.settings.fingerTemplates, played: dp.state.played.length };
+  });
+  assert.equal(res.teaching, false, 'teaching finished');
+  assert.deepEqual(Object.keys(res.templates).sort(), ['12', '16', '20', '4', '8']);
+  assert.equal(res.played, 0, 'no notes while teaching');
+  // each finger's pattern is strongest on itself
+  const order = ['4', '8', '12', '16', '20'];
+  for (const [i, tip] of order.entries()) {
+    const v = res.templates[tip];
+    assert.equal(v.indexOf(Math.max(...v)), i, `${tip}: ${v}`);
+  }
+});
+
 // The real camera path: Chromium's fake camera plays a synthetic video of the paper.
 {
   const cam = makeFakeCameraY4M();

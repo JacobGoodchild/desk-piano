@@ -8,6 +8,7 @@ import { MidiOut, Recorder } from './midi.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
+import { FingerTeacher } from './tap-resolver.js';
 import { VelocityMapper } from './onset.js';
 import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
@@ -52,6 +53,7 @@ const handlers = {
 // can also play strikes without a tap).
 const engines = { tap: new TapFusion(handlers), classic: new Fusion(handlers) };
 let fusion = engines[settings.engine] || engines.tap;
+engines.tap.resolver.templates = settings.fingerTemplates || null;
 
 // ---------------------------------------------------------------- keys & notes
 function shiftNote(m) { return m == null ? null : m + settings.transpose + settings.octave * 12; }
@@ -169,6 +171,7 @@ function handleTap({ t, peak, floor, velocity }) {
   const vel = velocity ?? velocityMap.map(peak, floor);
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
+  if (state.teach) { state.teach.taps.push(t); return; } // teaching: no notes
   if (state.calib) { calibTaps.push(t); return; } // resolved against the camera in calibrationEvents
   const tap = { t, velocity: vel, peak, floor };
   const played = fusion.onTap(tap, strikes);
@@ -268,6 +271,7 @@ function handleHandFrame(frame) {
   state.hands = frame.hands;
   state.handsT = frame.t;
   const events = strikes.update(frame); // also drives the fingertip colours and calibration
+  if (state.teach) { engines.tap.resolver.pushFrame(frame); teachStep(); return; }
   if (state.calib) { engines.tap.resolver.pushFrame(frame); calibrationEvents(events); return; }
   if (fusion === engines.tap) fusion.onFrame(frame);
   else fusion.onStrikeEvents(events, strikes);
@@ -346,11 +350,45 @@ function calibrationPoint(p) {
   }
 }
 function finishCalib(msg) { state.calib = null; saveSettings(settings); showCalib(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
-function showCalib(html) {
+function showCalib(html, onCancel) {
   const el = $('calib');
   el.hidden = false;
   el.innerHTML = `${html} <button id="calibCancel">Cancel</button>`;
-  $('calibCancel').onclick = () => { state.calib = null; el.hidden = true; };
+  $('calibCancel').onclick = () => { state.calib = null; if (onCancel) onCancel(); el.hidden = true; };
+}
+
+// ---------------------------------------------------------------- teaching the app your fingers
+const FINGER_NAMES = { 4: 'THUMB', 8: 'INDEX finger', 12: 'MIDDLE finger', 16: 'RING finger', 20: 'LITTLE finger' };
+const TEACH_TAPS = 3;
+function startTeaching() {
+  if (!state.started) { setStatus('Press Start first, then teach your fingers.'); return; }
+  state.teach = { order: [4, 8, 12, 16, 20], idx: 0, count: 0, taps: [], teacher: new FingerTeacher() };
+  showTeach();
+}
+function showTeach(extra = '') {
+  const tch = state.teach;
+  const tip = tch.order[tch.idx];
+  const dots = '●'.repeat(tch.count) + '○'.repeat(TEACH_TAPS - tch.count);
+  showCalib(`Teaching (${tch.idx + 1}/5): tap ${TEACH_TAPS} times with your <b>${FINGER_NAMES[tip]}</b> <span class="dots">${dots}</span> ${extra}`, () => { state.teach = null; });
+}
+function teachStep() {
+  const tch = state.teach;
+  const r = engines.tap.resolver;
+  while (tch.taps.length && r.ready(tch.taps[0])) {
+    const vec = r.pattern(tch.taps.shift());
+    if (!vec || !tch.teacher.add(tch.order[tch.idx], vec)) { showTeach('(no finger movement seen – try again)'); continue; }
+    tch.count++;
+    if (tch.count >= TEACH_TAPS) { tch.idx++; tch.count = 0; }
+    if (tch.idx >= tch.order.length) {
+      settings.fingerTemplates = tch.teacher.templates();
+      r.templates = settings.fingerTemplates;
+      saveSettings(settings);
+      state.teach = null;
+      finishCalib('Thanks – your fingers are learnt. Play away!');
+      return;
+    }
+    showTeach();
+  }
 }
 
 // ---------------------------------------------------------------- drawing
@@ -625,6 +663,8 @@ function bindSettings() {
   });
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
+  $('teachBtn').onclick = startTeaching;
+  $('forgetBtn').onclick = () => { settings.fingerTemplates = null; engines.tap.resolver.templates = null; saveSettings(settings); setStatus('Taught finger patterns forgotten.'); };
 }
 
 async function listCameras() {
@@ -732,6 +772,6 @@ window.deskPiano = {
   injectMarkers: (found) => updatePaperFromMarkers(found, 1),
   setVideoSize: (w, h) => { state.video = { w, h }; },
   keyForPoint,
-  startCalibration, recentre,
+  startCalibration, recentre, startTeaching,
   applySettings,
 };
