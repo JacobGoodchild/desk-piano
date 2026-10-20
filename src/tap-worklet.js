@@ -18,7 +18,7 @@ class TapProcessor extends AudioWorkletProcessor {
     for (const o of onsets) {
       this.port.postMessage({ type: 'onset', time: blockTime + (o.sample - startSample) / sampleRate, peak: o.peak, floor: o.floor, now: currentTime + ch.length / sampleRate });
     }
-    if (++this.frames % 8 === 0) this.port.postMessage({ type: 'level', level: this.det.takeLevel() });
+    if (++this.frames % 8 === 0) this.port.postMessage({ type: 'level', level: this.det.takeLevel(), floor: this.det.floor });
     return true;
   }
 }

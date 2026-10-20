@@ -43,7 +43,7 @@ await check('page loads, starts with fake camera + mic, set-up and settings work
   await startApp(page);
   const checks = await page.textContent('#checks');
   assert.match(checks, /Piano sound loaded/);
-  assert.match(checks, /Microphone listening/);
+  assert.match(checks, /Microphone/);
   await page.click('#setupBtn');
   assert.ok(await page.isVisible('#setupPanel'));
   await page.click('#setupDone');

@@ -132,7 +132,7 @@ async function startMic() {
   node.port.postMessage({ type: 'options', options: { sensitivity: settings.sensitivity } });
   node.port.onmessage = (e) => {
     const d = e.data;
-    if (d.type === 'level') { state.micLevel = d.level; state.micHistory.push(d.level); if (state.micHistory.length > 150) state.micHistory.shift(); return; }
+    if (d.type === 'level') { state.micLevel = d.level; state.micFloor = d.floor; state.micHistory.push(d.level); if (state.micHistory.length > 150) state.micHistory.shift(); return; }
     if (d.type === 'onset') {
       // the worklet tells us the audio clock now (d.now) and at the onset (d.time); the
       // message hop to this thread is ~1 ms, so the tap happened about this long ago:
@@ -478,8 +478,13 @@ function updateChecks() {
   const rows = [];
   const tick = (ok, label) => rows.push(`<span class="${ok ? 'ok' : 'no'}">${ok ? '✔' : '✘'}</span><span>${label}</span>`);
   tick(state.piano && state.piano.loaded, 'Piano sound loaded');
-  tick(!!state.micNode, 'Microphone listening');
+  const lastTap = state.tapMarks.length ? (performance.now() - state.tapMarks[state.tapMarks.length - 1].t) / 1000 : null;
+  tick(!!state.micNode && lastTap != null && lastTap < 20, !state.micNode ? 'Microphone listening' : lastTap == null ? 'Microphone: tap the desk – no taps heard yet' : `Microphone hears taps (last ${lastTap < 1 ? 'just now' : `${Math.round(lastTap)} s ago`})`);
   tick(state.video.w > 0, 'Camera on');
+  if (state.video.w > 0 && !SIM && landmarker) {
+    const f = fps();
+    tick(f >= 15, f >= 15 ? `Hand tracking ${Math.round(f)} frames/s` : `Hand tracking slow (${Math.round(f)} frames/s) – close other apps or use a faster device`);
+  }
   tick(state.hands.length >= 2, `Hands found: ${state.hands.length} of 2`);
   if (settings.mode === 'paper') tick(state.markersSeen.size === state.layout.markers.length, `Paper markers: ${state.markersSeen.size} of ${state.layout.markers.length}`);
   else tick(!!(settings.desk && settings.desk.c5), 'Desk calibrated <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>');
@@ -497,6 +502,9 @@ function loop() {
   drawOverlay();
   if (settings.debug) drawDebug();
   updateChecks();
+  // mic level bar: dB relative to the background noise, so quiet far-away mics still show taps
+  const lv = state.micLevel || 0, fl = state.micFloor || 1e-4;
+  $('micLevel').style.width = `${Math.max(0, Math.min(100, (20 * Math.log10(Math.max(lv, 1e-9) / fl)) * 3))}%`;
   requestAnimationFrame(loop);
 }
 
