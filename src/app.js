@@ -263,16 +263,27 @@ function handleHandFrame(frame) {
   fusion.tick(performance.now());
 }
 
+let markerWorker = null, markerBusy = false, markerScale = 1;
+try { markerWorker = new Worker(new URL('./marker-worker.js', import.meta.url), { type: 'module' }); } catch { markerWorker = null; }
+if (markerWorker) {
+  markerWorker.onmessage = (e) => { markerBusy = false; updatePaperFromMarkers(e.data.found, markerScale); };
+  markerWorker.onerror = () => { markerWorker = null; markerBusy = false; }; // fall back to the main thread
+}
 function findPaper(video) {
-  if (!video.videoWidth) return;
+  if (!video.videoWidth || markerBusy) return;
   const scale = Math.min(1, 960 / video.videoWidth);
   const w = Math.round(video.videoWidth * scale), h = Math.round(video.videoHeight * scale);
   detCanvas.width = w; detCanvas.height = h;
   const c = detCanvas.getContext('2d', { willReadFrequently: true });
   c.drawImage(video, 0, 0, w, h);
-  const img = c.getImageData(0, 0, w, h);
-  const found = detectMarkers(toGrey(img.data, w, h), w, h);
-  updatePaperFromMarkers(found, 1 / scale);
+  const grey = toGrey(c.getImageData(0, 0, w, h).data, w, h);
+  if (markerWorker) {
+    markerBusy = true;
+    markerScale = 1 / scale;
+    markerWorker.postMessage({ grey: grey.buffer, w, h }, [grey.buffer]);
+  } else {
+    updatePaperFromMarkers(detectMarkers(grey, w, h), 1 / scale);
+  }
 }
 
 function updatePaperFromMarkers(found, scale = 1) {
