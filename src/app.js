@@ -263,7 +263,7 @@ function processVideoFrame(t) {
     const t0 = performance.now();
     try { res = landmarker.detectForVideo(video, t); state.trackMs = state.trackMs * 0.9 + (performance.now() - t0) * 0.1; } catch (err) { console.warn('hand tracking frame skipped', err); return; }
     const hands = handIds.assign((res.landmarks || []).map((lm) => ({
-      points: lm.map((p) => ({ x: p.x * state.video.w, y: p.y * state.video.h })),
+      points: lm.map((p) => ({ x: p.x * state.video.w, y: p.y * state.video.h, z: p.z * state.video.w })),
     })));
     handleHandFrame({ t, hands });
   }
