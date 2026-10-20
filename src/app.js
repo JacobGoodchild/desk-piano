@@ -636,8 +636,8 @@ function bindSettings() {
       settings[el.name] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value;
       applySettings();
       if (el.name === 'mode' && settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
-      if ((settings.output !== prevOutput || settings.mic !== prevMic) && state.started) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
-      if (settings.camera !== prevCam && state.started) startCamera().catch((e) => setStatus(`Camera: ${e.message}`));
+      if ((settings.output !== prevOutput || settings.mic !== prevMic) && state.micNode) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
+      if (settings.camera !== prevCam && $('video').srcObject) startCamera().catch((e) => setStatus(`Camera: ${e.message}`));
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
@@ -790,6 +790,11 @@ async function keepAwake() {
   try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { /* not allowed */ }
 }
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.started) keepAwake(); });
+
+// offline support (not in ?sim test mode)
+if ('serviceWorker' in navigator && !SIM && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* fine without it */ });
+}
 
 $('start').onclick = start;
 if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings(settings); setSetup(true, false); }

@@ -59,6 +59,20 @@ await check('page loads, starts with fake camera + mic, set-up and settings work
   assert.ok(await page.isVisible('#debug'));
 });
 
+await check('works offline after the first visit (service worker)', async (page) => {
+  await page.goto(url + 'index.html');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload(); // now controlled by the service worker
+  await page.keyboard.press('KeyA'); // loads the piano samples through the cache
+  await page.waitForFunction(() => window.deskPiano.state.piano && window.deskPiano.state.piano.loaded, null, { timeout: 30000 });
+  await page.context().setOffline(true);
+  await page.reload();
+  assert.equal(await page.title(), 'Desk Piano');
+  await page.keyboard.press('KeyA');
+  await page.waitForFunction(() => window.deskPiano.state.piano && window.deskPiano.state.piano.loaded, null, { timeout: 30000 });
+  await page.context().setOffline(false);
+});
+
 await check('print page renders sheets with markers', async (page) => {
   await page.goto(url + 'print.html');
   assert.equal(await page.locator('.sheet').count(), paperLayout('full').pages.length);
