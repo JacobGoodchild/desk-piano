@@ -27,14 +27,7 @@ window.analyseFrames = async (urls, fps, markerEvery = 3) => {
     const t = (i * 1000) / fps;
     const w = img.naturalWidth, h = img.naturalHeight;
     const res = landmarker.detectForVideo(img, t + 1);
-    const hands = (res.landmarks || []).map((lm, k) => ({
-      label: (res.handedness && res.handedness[k] && res.handedness[k][0] && res.handedness[k][0].categoryName) || `H${k}`,
-      points: lm.map((p) => ({ x: p.x * w, y: p.y * h })),
-    }));
-    if (hands.length === 2 && hands[0].label === hands[1].label) {
-      const [a, b] = hands[0].points[0].x < hands[1].points[0].x ? [hands[0], hands[1]] : [hands[1], hands[0]];
-      a.label = 'A'; b.label = 'B';
-    }
+    const hands = (res.landmarks || []).map((lm) => ({ points: lm.map((p) => ({ x: p.x * w, y: p.y * h })) }));
     let markers = null;
     if (i % markerEvery === 0) {
       canvas.width = w; canvas.height = h;

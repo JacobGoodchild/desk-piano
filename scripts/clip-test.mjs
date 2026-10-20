@@ -20,6 +20,7 @@ import { Fusion } from '../src/fusion.js';
 import { paperLayout, markerCorners, paperToKey } from '../src/paper.js';
 import { fitHomography, applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
+import { HandIds } from '../src/hand-ids.js';
 
 const REPO = realpathSync(new URL('..', import.meta.url).pathname);
 const args = process.argv.slice(2);
@@ -84,6 +85,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
   const known = markerCorners(layout);
   let paperInv = null, paperFrames = 0, markerCounts = [];
   const detector = new StrikeDetector();
+  const handIds = new HandIds();
   const notes = [];
   const fusion = new Fusion({
     keyFor: (p) => {
@@ -108,7 +110,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0 }) {
         markerCounts.push(new Set(f.markers.map((m) => m.id)).size);
         if (src.length >= 8) { const H = fitHomography(src, dst); if (H) { paperInv = invertH(H); paperFrames++; } }
       }
-      fusion.onStrikeEvents(detector.update({ t: f.t, hands: f.hands }), detector);
+      fusion.onStrikeEvents(detector.update({ t: f.t, hands: handIds.assign(f.hands) }), detector);
     } else {
       fusion.onTap({ t: e.tp.t, velocity: e.tp.velocity }, detector);
     }

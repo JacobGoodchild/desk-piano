@@ -12,6 +12,7 @@ import { deskKeyAt } from './desk.js';
 import { loadSettings, saveSettings } from './settings.js';
 import { noteName, isBlack, whiteIndex } from './notes.js';
 import { HAND_CONNECTIONS } from './hand-connections.js';
+import { HandIds } from './hand-ids.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -133,6 +134,7 @@ function handleTap({ t, peak, velocity }) {
 
 // ---------------------------------------------------------------- camera & hands
 let landmarker = null;
+const handIds = new HandIds();
 async function startCamera() {
   const video = $('video');
   const constraints = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } };
@@ -175,15 +177,9 @@ function processVideoFrame(t) {
   if (settings.mode === 'paper' && frameCount % 3 === 0) findPaper(video);
   if (landmarker && !SIM) {
     const res = landmarker.detectForVideo(video, t);
-    const hands = (res.landmarks || []).map((lm, i) => ({
-      label: (res.handedness && res.handedness[i] && res.handedness[i][0] && res.handedness[i][0].categoryName) || `H${i}`,
+    const hands = handIds.assign((res.landmarks || []).map((lm) => ({
       points: lm.map((p) => ({ x: p.x * state.video.w, y: p.y * state.video.h })),
-    }));
-    // two hands labelled the same: tell them apart by position
-    if (hands.length === 2 && hands[0].label === hands[1].label) {
-      const [a, b] = hands[0].points[0].x < hands[1].points[0].x ? [hands[0], hands[1]] : [hands[1], hands[0]];
-      a.label = 'A'; b.label = 'B';
-    }
+    })));
     handleHandFrame({ t, hands });
   }
 }
