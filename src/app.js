@@ -72,6 +72,7 @@ function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
   if (state.inst) state.inst.setSustain(on);
+  if (state.layer) state.layer.setSustain(on);
   if (on !== state.pedalWas) { midiOut.pedal(on); recorder.add('pedal', on); state.pedalWas = on; }
 }
 
@@ -87,6 +88,7 @@ function noteOn(midi, vel, info = {}) {
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   if (state.inst) state.inst.noteOn(midi, vel);
+  if (state.layer) state.layer.noteOn(midi, vel);
   midiOut.noteOn(midi, vel);
   recorder.add('on', midi, vel);
   // tap → sound delay: time since the tap was heard + the audio output path
@@ -104,6 +106,7 @@ function noteOff(midi) {
   if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
   for (let i = state.spans.length - 1; i >= 0; i--) if (state.spans[i].midi === midi && state.spans[i].end == null) { state.spans[i].end = performance.now(); break; }
   if (state.inst) state.inst.noteOff(midi);
+  if (state.layer) state.layer.noteOff(midi);
   midiOut.noteOff(midi);
   recorder.add('off', midi);
   drawPiano();
@@ -111,15 +114,25 @@ function noteOff(midi) {
 
 // ---------------------------------------------------------------- audio
 const synthCache = {};
+function makeInstrument(id) {
+  if (id !== 'piano' && SYNTHS[id]) return synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
+  if (id === 'bright') return synthCache.bright || (synthCache.bright = brightPiano());
+  return state.piano;
+}
+function selectLayer(id) {
+  const prev = state.layer;
+  state.layer = id && id !== settings.instrument ? makeInstrument(id) : null;
+  if (prev && prev !== state.layer && prev !== state.inst) prev.allOff();
+  if (state.layer) { state.layer.setVolume(settings.volume * 0.6, prev !== state.layer); state.layer.setSustain(pedalDown()); }
+}
 function selectInstrument(id) {
   if (!state.ctx) return;
   const prev = state.inst;
-  if (id !== 'piano' && SYNTHS[id]) state.inst = synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
-  else if (id === 'bright') state.inst = synthCache.bright || (synthCache.bright = brightPiano());
-  else state.inst = state.piano;
-  if (prev && prev !== state.inst) prev.allOff();
+  state.inst = makeInstrument(id);
+  if (prev && prev !== state.inst && prev !== state.layer) prev.allOff();
   state.inst.setVolume(settings.volume, prev !== state.inst);
   state.inst.setSustain(pedalDown());
+  selectLayer(settings.layer);
 }
 
 // The grand piano's own samples through a treble lift and a touch of presence: a brighter,
@@ -716,7 +729,7 @@ function setSetup(on, autoStart = true) {
 
 function bindSettings() {
   const form = $('settings').querySelector('form');
-  for (const [id, label] of Object.entries(INSTRUMENTS)) form.elements.instrument.add(new Option(label, id));
+  for (const [id, label] of Object.entries(INSTRUMENTS)) { form.elements.instrument.add(new Option(label, id)); form.elements.layer.add(new Option(label, id)); }
   for (const el of form.elements) {
     if (!el.name || !(el.name in settings)) continue;
     if (el.type === 'checkbox') el.checked = !!settings[el.name]; else el.value = settings[el.name];
@@ -783,6 +796,7 @@ function bindSettings() {
   $('volume').addEventListener('input', () => {
     settings.volume = Number($('volume').value);
     if (state.inst) state.inst.setVolume(settings.volume);
+    if (state.layer) state.layer.setVolume(settings.volume * 0.6);
     saveSettings(settings);
   });
   $('setupBtn').onclick = () => setSetup(true);
