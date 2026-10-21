@@ -86,7 +86,12 @@ function noteOn(midi, vel, info = {}) {
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
   if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
-  if (state.tune && info.how !== 'playback') { state.tune.play(midi); $('tuneProg').textContent = state.tune.progress(); }
+  if (state.tune && info.how !== 'playback') {
+    const want = state.tune.next;
+    state.tune.play(midi);
+    $('tuneProg').textContent = state.tune.progress();
+    if (want != null && midi !== want) { state.tuneWrong = midi; setTimeout(() => { if (state.tuneWrong === midi) { state.tuneWrong = null; drawPiano(); } }, 400); }
+  }
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   for (const v of voicesFor(midi)) v.noteOn(midi, vel);
@@ -590,7 +595,7 @@ function drawPiano() {
     if (isBlack(m)) continue;
     const x = (whiteIndex(m) - w0) * kw;
     const on = state.active.has(m);
-    g.fillStyle = on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : '#f4f4f0';
+    g.fillStyle = m === state.tuneWrong && on ? '#ff6b6b' : on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : '#f4f4f0';
     g.fillRect(x + 1, 0, kw - 2, H - 2);
     g.fillStyle = on ? '#fff' : m === 60 ? '#c00' : '#888';
     g.font = `${m === 60 ? 'bold ' : ''}${Math.max(9, Math.min(13, kw * 0.38))}px system-ui`;
@@ -600,7 +605,7 @@ function drawPiano() {
   for (let m = low; m <= high; m++) {
     if (!isBlack(m)) continue;
     const x = (whiteIndex(m) - w0 + 1) * kw - kw * 0.3;
-    g.fillStyle = state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : '#111';
+    g.fillStyle = m === state.tuneWrong && state.active.has(m) ? '#ff6b6b' : state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : '#111';
     g.fillRect(x, 0, kw * 0.6, H * 0.6);
   }
   // fingertip dots
