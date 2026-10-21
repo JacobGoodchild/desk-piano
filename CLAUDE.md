@@ -360,7 +360,7 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
    4/4 taps found (was 1). Microphone picker, a "mic hears taps" check, a level bar and a hint.
 4. *Sound too quiet* → +6 dB default and a volume slider. *Desk mode* → Paper/Desk switch in the top bar.
 
-**Accuracy on your clips** (`scripts/clip-test.mjs`): **8.5% → 54.4%** overall. Middle C ×4: 4/4 (+1
+**Accuracy on your clips** (`scripts/clip-test.mjs`): **8.5% → 56.1%** overall. Middle C ×4: 4/4 (+1
 extra). Mary (simple, scored against the full verse — my guess): 15/26. Chromatic: 12/25. C-E-G chord:
 0/2 (the footage shows no per-finger signal for chords — chords within one hand are off by default).
 
@@ -379,3 +379,7 @@ sync correction and per-finger scores.
 - **01:35** Plain desk mode: optional third calibration tap (C6) fits a 1-D perspective curve along
   the keyboard (unit test: two taps put A5 on the wrong key in a perspective view, three get it right);
   nonsense third taps are ignored.
+- **01:45** Finger score now also uses the top (DIP) joint's downward travel: **56.1%** (from 54.4%),
+  false notes in hover/rest clips 3 (from 4). A joint re-tune of depth/late/joint weights found 57.9–
+  58.6% but those differ by 1–2 notes from the current defaults → kept the simpler defaults (avoid
+  over-fitting 8 clips).
