@@ -545,3 +545,4 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **09:00 → 11:15** Usage limit hit; ~2.5 h lost (nothing lost from git).
 - **11:23** Settings → "Reset all" (with a confirm): back to defaults incl. taught fingers, tuning and desk
   calibration; browser test.
+- **11:24** Follow a tune: the two notes after the next one show in a fainter green (read ahead).

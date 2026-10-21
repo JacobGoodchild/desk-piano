@@ -20,6 +20,8 @@ export const TUNES = [
 export class TuneFollower {
   constructor(tune) { this.tune = tune; this.i = 0; this.wrong = 0; }
   get next() { return this.done ? null : this.tune.notes[this.i]; }
+  // the notes after the next one (for reading ahead)
+  ahead(n = 2) { return this.tune.notes.slice(this.i + 1, this.i + 1 + n); }
   get done() { return this.i >= this.tune.notes.length; }
   play(midi) {
     if (this.done) { if (midi === this.tune.notes[0]) { this.i = 1; this.wrong = 0; } return; }

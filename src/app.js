@@ -653,12 +653,13 @@ function drawPiano() {
   const w0 = whiteIndex(low), nW = whiteIndex(high) - w0 + 1;
   const kw = W / nW;
   state.pianoGeom = { low, high, w0, kw, H };
-  const nextKey = state.tune ? state.tune.next : null; // "Follow a tune": the key to play next
+  const nextKey = state.tune ? state.tune.next : null; // "Follow a tune": the key to play next...
+  const aheadKeys = new Set(state.tune ? state.tune.ahead(2).filter((m) => m !== nextKey) : []); // ...and the two after
   for (let m = low; m <= high; m++) {
     if (isBlack(m)) continue;
     const x = (whiteIndex(m) - w0) * kw;
     const on = state.active.has(m);
-    g.fillStyle = m === state.tuneWrong && on ? '#ff6b6b' : on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : '#f4f4f0';
+    g.fillStyle = m === state.tuneWrong && on ? '#ff6b6b' : on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : aheadKeys.has(m) ? '#ddf5e3' : '#f4f4f0';
     g.fillRect(x + 1, 0, kw - 2, H - 2);
     g.fillStyle = on ? '#fff' : m === 60 ? '#c00' : '#888';
     g.font = `${m === 60 ? 'bold ' : ''}${Math.max(9, Math.min(13, kw * 0.38))}px system-ui`;
@@ -668,7 +669,7 @@ function drawPiano() {
   for (let m = low; m <= high; m++) {
     if (!isBlack(m)) continue;
     const x = (whiteIndex(m) - w0 + 1) * kw - kw * 0.3;
-    g.fillStyle = m === state.tuneWrong && state.active.has(m) ? '#ff6b6b' : state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : '#111';
+    g.fillStyle = m === state.tuneWrong && state.active.has(m) ? '#ff6b6b' : state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : aheadKeys.has(m) ? '#1f4a2c' : '#111';
     g.fillRect(x, 0, kw * 0.6, H * 0.6);
   }
   // fingertip dots
