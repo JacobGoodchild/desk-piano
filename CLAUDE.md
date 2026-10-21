@@ -392,7 +392,7 @@ sync correction and per-finger scores.
   Tried letting taps wait longer on slow devices: in 4 live runs (headless, 8–10 fps) it made no
   measurable difference (16–20 of 28 taps dropped either way; 39 of 40 notes C4) → reverted. Live runs
   vary run-to-run, so single runs aren't evidence.
-- **01:55** Browser tests run 3× in a row: all pass (not flaky). Set-up shows the measured tap→sound
+- **01:48** Browser tests run 3× in a row: all pass (not flaky). Set-up shows the measured tap→sound
   delay. Tried *self-teaching* (learn finger patterns from clear-cut taps while playing; leave-one-clip-
   out): worse, 32 → 19–26 correct (no clear-cut middle-finger taps → biased patterns) → not used;
   `--self-teach` kept in the clip tester as an experiment.
