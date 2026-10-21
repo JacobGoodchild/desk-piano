@@ -214,7 +214,9 @@ function stopMic() {
 }
 
 function handleTap({ t, peak, floor, velocity }) {
-  const vel = velocity ?? (settings.dynamics === 'fixed' ? settings.fixedVelocity : velocityMap.map(peak, floor));
+  let vel = velocity ?? (settings.dynamics === 'fixed' ? settings.fixedVelocity : velocityMap.map(peak, floor));
+  // touch curve, like a digital piano's: light lifts soft taps, heavy needs firmer taps
+  if (velocity == null && settings.dynamics !== 'fixed') vel = Math.pow(vel, { light: 0.65, normal: 1, heavy: 1.5 }[settings.touch] || 1);
   state.tapMarks.push({ t, vel });
   if (state.tapMarks.length > 40) state.tapMarks.shift();
   if (state.teach) { state.teach.taps.push(t); return; } // teaching: no notes
