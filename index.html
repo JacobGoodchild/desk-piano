@@ -28,7 +28,7 @@
   <button id="settingsBtn">Settings</button>
   <button id="fullBtn" aria-label="Full screen" title="Full screen (locks phones to landscape)">⛶</button>
   <a href="print.html" target="_blank" rel="noopener">Print keyboard</a> <a href="help.html" target="_blank" rel="noopener">Help</a>
-  <span id="status" class="status">Press Start. Camera and microphone stay on this device – nothing is recorded or uploaded.</span>
+  <span id="status" class="status" role="status" aria-live="polite">Press Start. Camera and microphone stay on this device – nothing is recorded or uploaded.</span>
 </header>
 
 <div id="news" class="news" hidden>
@@ -85,7 +85,7 @@
         <pre id="debugText"></pre>
         <button id="copyDiag" title="Copies numbers only (no video or audio) – paste them into a message">Copy diagnostics</button>
       </div>
-      <div class="keyhelp">Computer keys: <kbd>A</kbd>–<kbd>;</kbd> play C4–E5 (W E T Y U O P = black keys), <kbd>Z</kbd>/<kbd>X</kbd> octave, <kbd>Shift</kbd> = loud, <kbd>Ctrl</kbd> = soft, <kbd>Space</kbd> = pedal, <kbd>R</kbd> = recentre (plain desk).</div>
+      <div class="keyhelp">Computer keys: <kbd>A</kbd>–<kbd>;</kbd> play C4–E5 (W E T Y U O P = black keys), <kbd>Z</kbd>/<kbd>X</kbd> octave, <kbd>Shift</kbd> = loud, <kbd>Ctrl</kbd> = soft, <kbd>Space</kbd> = pedal, <kbd>R</kbd> = recentre (plain desk), <kbd>?</kbd> = help.</div>
     </div>
   </section>
   <canvas id="roll" aria-hidden="true"></canvas>
@@ -128,7 +128,7 @@
       <select name="engine"><option value="tap">Tap-first (recommended)</option><option value="classic">Classic (finger landings)</option></select>
     </label>
     <label>Response
-      <select name="response"><option value="accurate">More accurate (≈70 ms later)</option><option value="fast">Faster (less accurate)</option></select>
+      <select name="response"><option value="accurate">More accurate (waits 2 camera frames)</option><option value="fast">Faster (1 frame, less accurate)</option></select>
     </label>
     <label class="row"><input name="chords" type="checkbox"> Allow chords within one hand (can add extra notes)</label>
     <label class="row" id="cameraOnlyRow"><input name="cameraOnly" type="checkbox"> Classic only: also play finger strikes the microphone didn't hear</label>

@@ -1157,6 +1157,7 @@ function bindKeys() {
     const mainControl = e.target && (e.target.id === 'volume' || e.target.id === 'tuneSel');
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && !(mainControl && PEDAL_KEYS.has(e.code))) return;
     if (PEDAL_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
+    if (e.key === '?') { window.open('help.html', '_blank', 'noopener'); return; }
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }
     if (k === 'r' && !e.repeat && settings.mode === 'desk') { recentre(); return; }
