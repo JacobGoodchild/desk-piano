@@ -85,3 +85,4 @@ body.setup #piano, body.setup #roll { display: none; }
 .tune { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--muted); }
 .tune select { max-width: 200px; background: #2c3546; color: var(--text); border: 1px solid #3a465c; border-radius: 6px; padding: 2px 4px; }
 #tuneProg { color: var(--text); }
+.checks button { padding: 1px 8px; font-size: 13px; }

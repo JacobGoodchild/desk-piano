@@ -755,11 +755,16 @@ function updateChecks() {
   }
   if (settings.mode === 'paper') tick(state.markersSeen.size === state.layout.markers.length, `Paper markers: ${state.markersSeen.size} of ${state.layout.markers.length}`);
   else tick(!!(settings.desk && settings.desk.c5), 'Desk calibrated <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>');
+  if (settings.engine !== 'classic' && !state.teach) {
+    const taught = !!(settings.fingerTemplates && [4, 8, 12, 16, 20].every((t) => settings.fingerTemplates[t]));
+    tick(taught, taught ? 'Fingers taught' : 'Fingers not taught yet – <button id="teachCheckBtn">Teach my fingers</button> (30 s, helps it pick the right finger)');
+  }
   const html = rows.join('');
   if (el.dataset.html !== html) {
     el.innerHTML = html; el.dataset.html = html;
     if ($('calibBtn')) $('calibBtn').onclick = startCalibration;
     if ($('recentreBtn')) $('recentreBtn').onclick = recentre;
+    if ($('teachCheckBtn')) $('teachCheckBtn').onclick = startTeaching;
   }
 }
 

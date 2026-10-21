@@ -443,3 +443,4 @@ sync correction and per-finger scores.
   samples as two strings ±11 cents apart, slight treble lift; no download; level within 0.3 dB).
 - **02:18** Tried a bonus for the finger that stopped moving right at the tap (landing time vs tap):
   no gain at any weight, more stray notes at higher weights → reverted.
+- **02:20** Set-up checklist now shows "Fingers not taught yet – [Teach my fingers]" until all five are taught.
