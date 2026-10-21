@@ -368,7 +368,7 @@ extra). Mary (simple, scored against the full verse — my guess): 15/26. Chroma
 piano, electric piano, organ, harpsichord, strings, vibraphone, music box, bass), reverb, layering,
 split; record / play back / save .mid; MIDI output; metronome; note trail; played keys light up on
 the camera picture; Check accuracy; Touch curve; offline support; full-screen; set-up screen re-laid
-out; Settings in sections. 41 unit + 9 browser tests, CI green.
+out; Settings in sections. 40 unit + 8 browser tests, CI green.
 
 **Best next steps:** record the clips listed in CLIPS.md ("teach my fingers" clip, slow scales, held
 chords, a mic close to the desk) and try it live — the debug view (`?debug=1`) shows the frame rate,
