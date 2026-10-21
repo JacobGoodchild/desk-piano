@@ -476,3 +476,13 @@ sync correction and per-finger scores.
    played nothing) and re-test the optional `flexWeight` finger-bend measure.
 2. Try it live on the Pixel 7 with `?debug=1`: frame rate, tap→sound delay, sync correction.
 3. Fix the remaining review items listed at 06:22.
+
+---
+
+# Day run (21 Oct 07:45 → 13:45 UK)
+
+Jacob: "keep going… work for 6 hours with a periodic waking worker; fix bugs, improve accuracy, make it
+better, more polished interface." Wake-ups scheduled with `send_later` every 30 min 08:15–13:15 + wrap-up 13:30.
+
+## Log
+- **07:45** Started. Plan: fix the 5 remaining review items, then accuracy, then interface polish.
