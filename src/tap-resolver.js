@@ -61,27 +61,7 @@ export class TapResolver {
       const size = handSize(P);
       const hTap = atTap && atTap.hands.find((x) => x.label === hand.label);
       const hBefore = before && before.hands.find((x) => x.label === hand.label);
-      const fingers = TIPS.map((tip) => {
-        let minY = Infinity;
-        for (const f of win) {
-          const h = f.hands.find((x) => x.label === hand.label);
-          if (h) minY = Math.min(minY, h.points[tip].y);
-        }
-        const travel = (P[tip].y - minY) / size;
-        const late = hTap && hBefore ? (hTap.points[tip].y - hBefore.points[tip].y) / size : travel;
-        const after = hTap ? (P[tip].y - hTap.points[tip].y) / size : 0;
-        // optional: change in MediaPipe's estimated depth over the same window (+ = away from camera)
-        let dz = 0;
-        if (o.zWeight && hBefore && P[tip].z != null && hBefore.points[tip].z != null) dz = (P[tip].z - hBefore.points[tip].z) / size;
-        // optional: the finger's top joint (DIP) comes down with a press too
-        let joint = 0;
-        if (o.jointWeight) {
-          let mj = Infinity;
-          for (const f of win) { const h = f.hands.find((x) => x.label === hand.label); if (h) mj = Math.min(mj, h.points[tip - 1].y); }
-          joint = (P[tip - 1].y - mj) / size;
-        }
-        return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz + o.jointWeight * joint };
-      });
+      const fingers = this._fingerScores(win, hand, hTap, hBefore);
       this.lastScores = { t, hand: hand.label, fingers: fingers.map((f) => ({ tip: f.tip, score: +f.score.toFixed(2), late: +f.late.toFixed(2) })) };
       const sorted = fingers.map((x) => x.score).sort((a, b) => a - b);
       const typical = sorted[o.typicalRank]; // a 'typical' non-pressing finger of this hand
@@ -156,6 +136,30 @@ export class TapResolver {
     return null;
   }
 
+  // Per-finger movement around a tap for one hand (shared by resolve() and pattern()):
+  // travel = how far the tip came down in the window, late = in the last ~lateMs, after = since the
+  // tap, score = the weighted mix used to pick the pressing finger.
+  _fingerScores(win, hand, hTap, hBefore) {
+    const o = this.o;
+    const P = hand.points;
+    const size = handSize(P);
+    const minOver = (idx) => {
+      let m = Infinity;
+      for (const f of win) { const h = f.hands.find((x) => x.label === hand.label); if (h) m = Math.min(m, h.points[idx].y); }
+      return m;
+    };
+    return TIPS.map((tip) => {
+      const travel = (P[tip].y - minOver(tip)) / size;
+      const late = hTap && hBefore ? (hTap.points[tip].y - hBefore.points[tip].y) / size : travel;
+      const after = hTap ? (P[tip].y - hTap.points[tip].y) / size : 0;
+      // change in MediaPipe's estimated depth (+ = away from the camera)
+      const dz = o.zWeight && hBefore && P[tip].z != null && hBefore.points[tip].z != null ? (P[tip].z - hBefore.points[tip].z) / size : 0;
+      // the finger's top joint (DIP) comes down with a press too
+      const joint = o.jointWeight ? (P[tip - 1].y - minOver(tip - 1)) / size : 0;
+      return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz + o.jointWeight * joint };
+    });
+  }
+
   // For teaching: the movement pattern of the hand that moved most at time t (5 numbers, thumb →
   // little finger), or null.
   pattern(t) {
@@ -166,16 +170,9 @@ export class TapResolver {
     const atTap = nearest(win, t), before = nearest(this.frames, t - o.lateMs);
     let bestVec = null, bestSum = 0;
     for (const hand of last.hands) {
-      const P = hand.points, size = handSize(P);
       const hTap = atTap && atTap.hands.find((x) => x.label === hand.label);
       const hBefore = before && before.hands.find((x) => x.label === hand.label);
-      const scores = TIPS.map((tip) => {
-        let minY = Infinity;
-        for (const f of win) { const h = f.hands.find((x) => x.label === hand.label); if (h) minY = Math.min(minY, h.points[tip].y); }
-        const travel = (P[tip].y - minY) / size;
-        const late = hTap && hBefore ? (hTap.points[tip].y - hBefore.points[tip].y) / size : travel;
-        return travel + o.lateWeight * late;
-      });
+      const scores = this._fingerScores(win, hand, hTap, hBefore).map((f) => f.score);
       const typical = [...scores].sort((a, b) => a - b)[o.typicalRank];
       const vec = scores.map((v) => Math.max(0, v - typical));
       const sum = vec.reduce((a, b) => a + b, 0);
