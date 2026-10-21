@@ -8,13 +8,13 @@ export const TAP_FUSION_DEFAULTS = {
   echoMs: 250, // speaker mode: taps this soon after the app's own note need a clearer finger
   echoLeadFactor: 1.8,
   maxHoldMs: 4000, // safety: release a note if its finger was lost track of
+  earlyMs: 0, // > 0: decide this soon after the tap when one finger is clearly ahead...
+  earlyMargin: 0.2, // ...by at least this much (otherwise wait the full time). On the clips: ~11% of
+  // notes go early at 0.2 with no accuracy loss; 0.15 starts to cost accuracy
   // Auto-sync: on Jacob's (in-sync) clips the pressing finger stops ~17 ms before the tap is heard.
   // If the live app sees a different typical gap, the microphone and camera clocks are offset (each
   // device has its own delays) and taps are shifted to line up again. Accuracy is very sensitive to
   // this (±15 ms cost 4–10 points on the clips).
-  earlyMs: 0, // > 0: decide this soon after the tap when one finger is clearly ahead...
-  earlyMargin: 0.2, // ...by at least this much (otherwise wait the full time). On the clips: ~11% of
-  // notes go early at 0.2 with no accuracy loss; 0.15 starts to cost accuracy
   autoSync: true,
   syncTargetMs: -17,
   syncSamples: 25,
