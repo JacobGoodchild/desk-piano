@@ -107,6 +107,10 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
 `--sweep --grid '{"minLead":[0.02,0.04],"afterMs":[35,70]}'` to try specific values. The old
 landing-based engine is still available with `--engine classic`.
 
+`--auto-tune` checks the app's personal auto-tuning (Set-up → Check accuracy): it tunes on each
+clip alone and scores the other clips with the result. Tuning must never make the other clips worse;
+if it does, narrow `TUNE_GRID` in `src/auto-tune.js`.
+
 ## Tuning loop
 
 1. Run all clips once and **log the accuracy per clip (before)** in the CLAUDE.md progress log.
