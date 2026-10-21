@@ -423,3 +423,5 @@ sync correction and per-finger scores.
   in different places, so it fits both and keeps the one that explains the markers) and switches
   after 5 agreeing looks. Synthetic unit + browser tests; on Jacob's clips (privately) it said "full"
   in every frame where it could tell and never "2-octave".
+- **02:10** Piano polyphony limit (48 voices, oldest fade out over ~0.1 s) so long pedalled passages
+  can't overload a phone; browser test (100 pedalled notes → 48 sounding).

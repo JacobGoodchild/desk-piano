@@ -89,8 +89,19 @@ await check('every sound renders: audible, no clipping spike, no broken samples'
       for (const v of d) { if (!Number.isFinite(v)) bad++; peak = Math.max(peak, Math.abs(v)); sum += v * v; }
       out[id] = { peak, rmsDb: 10 * Math.log10(sum / d.length), bad };
     }
+    // polyphony limit: 100 notes with the pedal down leave at most 48 sounding
+    const ctx = new OfflineAudioContext(2, 48000, 48000);
+    const p = new Piano(ctx, ctx.destination);
+    await p.load('samples/piano/');
+    p.setSustain(true);
+    for (let i = 0; i < 100; i++) { p.noteOn(40 + (i % 50), 0.5, i * 0.005); p.noteOff(40 + (i % 50)); }
+    let live = 0;
+    for (const list of p.voices.values()) for (const v of list) if (!v.released) live++;
+    out.live = live;
     return out;
   });
+  assert.equal(res.live, 48, 'polyphony limit');
+  delete res.live;
   for (const [id, r] of Object.entries(res)) {
     assert.equal(r.bad, 0, `${id}: broken samples`);
     assert.ok(r.rmsDb > -50 && r.rmsDb < -15, `${id}: level ${r.rmsDb.toFixed(1)} dB`);

@@ -8,6 +8,7 @@ const LAYERS = [
   { v: 12, at: 0.74 },
   { v: 16, at: 1.0 },
 ];
+const MAX_VOICES = 48; // polyphony limit (each voice is 1–2 sample players)
 const START_OFFSET = 0.008; // skip encoder padding before the hammer strike
 const LOW = 36, HIGH = 96; // C2..C7
 
@@ -110,8 +111,24 @@ export class Piano {
     const voice = { midi, gain, sources, held: true, start: t, released: false, vel };
     if (!this.voices.has(midi)) this.voices.set(midi, []);
     this.voices.get(midi).push(voice);
+    this._limitVoices(t);
     sources[0] && (sources[0].onended = () => this._forget(voice));
     return voice;
+  }
+
+  // Like a digital piano's polyphony limit: with the pedal down in a fast passage, voices pile up
+  // (each sample rings for several seconds), which can overload a phone. Fade out the oldest.
+  _limitVoices(t) {
+    const live = [];
+    for (const list of this.voices.values()) for (const v of list) if (!v.released) live.push(v);
+    if (live.length <= MAX_VOICES) return;
+    live.sort((a, b) => a.start - b.start);
+    for (const v of live.slice(0, live.length - MAX_VOICES)) {
+      v.released = true; v.held = false;
+      v.gain.gain.cancelScheduledValues(t);
+      v.gain.gain.setTargetAtTime(0, t, 0.08);
+      for (const s of v.sources) { try { s.stop(t + 0.6); } catch { /* not started */ } }
+    }
   }
 
   _anyLayer(sm) {
