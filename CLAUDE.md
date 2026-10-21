@@ -626,3 +626,7 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   the 2-octave paper (it starts at C4); desk overlay labels follow octave/transpose, the top key's right
   edge is drawn, nothing drawn after the picture rotates; holding ? opens Help once; Check accuracy
   now expects the notes that actually sound when octave/transpose are changed (was all wrong). Tests.
+- **12:10** Final per-clip (30 fps): middle C 4/4 (+1), Mary simple 18/26 (+3 extra), chromatic 10/25, C-E-G 0/2,
+  hovering 1 stray, resting 2 stray → 56.1%. Mary's wrong notes: 4 one white key too high, 4 → G (little
+  finger dragged). Tried shifting the touch point sideways (−8…+8 mm): −4 mm +1 note, others worse →
+  mapping is right; those errors are wrong-finger picks (Teach my fingers is the tool for that).
