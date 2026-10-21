@@ -1111,7 +1111,7 @@ function bindSettings() {
       video: state.video, markers: state.markersSeen.size, cameraMirrored: !!state.cameraMirrored,
       audio: state.ctx && { base: state.ctx.baseLatency, output: state.ctx.outputLatency, sampleRate: state.ctx.sampleRate }, inputLatencyMs: state.inputLatencyMs,
       tapToSoundMs: state.latencies.map((v) => Math.round(v)), syncOffsetMs: engines.tap.syncOffset, stats: fusion.stats,
-      afterMs: engines.tap.resolver.o.afterMs, taught: !!fingerTemplates, settings: rest,
+      afterMs: engines.tap.resolver.o.afterMs, maxWaitMs: engines.tap.o.maxWaitMs, tipOffsetMm: tipOffset(), micFailed: !!state.micFailed, taught: !!fingerTemplates, settings: rest,
     };
     try { await navigator.clipboard.writeText(JSON.stringify(diag, null, 1)); $('copyDiag').textContent = 'Copied ✓'; }
     catch { $('copyDiag').textContent = 'Copy failed'; }
