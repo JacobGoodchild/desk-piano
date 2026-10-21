@@ -22,7 +22,12 @@ saved or uploaded. After the first visit it also works offline.
 4. Optional but recommended: **Teach my fingers** (set-up screen) — tap 3 times with each finger.
 5. Play. Tap firmly enough that the mic hears it (watch the green "Mic" bar).
 
-No paper? Press **Desk** in the top bar and tap middle C, then the C above, to calibrate.
+No paper? Press **Desk** in the top bar and tap middle C, then the C above, to calibrate (optionally
+a third tap two octaves above middle C makes the far ends more accurate). **R** recentres.
+
+The green **Mic** bar flashes green when a tap became a note, and orange when a tap was heard but no
+finger was seen pressing (move the camera, or keep the other fingers still). **Set-up → Check
+accuracy** gives a quick score on a short exercise.
 
 ## Controls
 
@@ -31,7 +36,9 @@ No paper? Press **Desk** in the top bar and tap middle C, then the C above, to c
 - Volume slider, **⛶** full screen (locks phones to landscape).
 - Computer keys **A–;** play C4–E5 (W E T Y U O P = black keys), **Z / X** octave, Shift = loud,
   Ctrl = soft. You can also tap the on-screen keys.
-- Settings: sound and reverb, loudness from taps or fixed, keyboard range / octave / transpose,
+- **♩** metronome. Settings: sound (grand, bright, electric piano, organ, harpsichord, strings,
+  vibraphone, music box, bass), layer two sounds, split below middle C, reverb, touch (light/normal/
+  heavy), loudness from taps or fixed, keyboard range / octave / transpose,
   tap sensitivity, "faster ↔ more accurate", chords within one hand, camera/microphone choice,
   MIDI output to a real keyboard/synth/app, note trail, debug view (also `?debug=1`).
 
