@@ -12,6 +12,9 @@ export const TAP_FUSION_DEFAULTS = {
   // If the live app sees a different typical gap, the microphone and camera clocks are offset (each
   // device has its own delays) and taps are shifted to line up again. Accuracy is very sensitive to
   // this (±15 ms cost 4–10 points on the clips).
+  earlyMs: 0, // > 0: decide this soon after the tap when one finger is clearly ahead...
+  earlyMargin: 0.2, // ...by at least this much (otherwise wait the full time). On the clips: ~11% of
+  // notes go early at 0.2 with no accuracy loss; 0.15 starts to cost accuracy
   autoSync: true,
   syncTargetMs: -17,
   syncSamples: 25,
@@ -86,9 +89,18 @@ export class TapFusion {
   _resolvePending() {
     const still = [];
     for (const tap of this.pending) {
-      if (!this.resolver.ready(tap.t)) { still.push(tap); continue; }
+      let early = null;
+      if (!this.resolver.ready(tap.t)) {
+        if (this.o.earlyMs && !tap.triedEarly && this.resolver.ready(tap.t, this.o.earlyMs)) {
+          tap.triedEarly = true;
+          const ep = this.resolver.resolve(tap.t, this.o.earlyMs);
+          if (ep.length && ep.every((p) => p.margin >= this.o.earlyMargin)) early = ep;
+        }
+        if (!early) { still.push(tap); continue; }
+      }
       const suspicious = this.speakerMode && tap.t - this.lastPlayT >= 0 && tap.t - this.lastPlayT < this.o.echoMs;
-      let picks = this.resolver.resolve(tap.t);
+      if (early) this.stats.early = (this.stats.early || 0) + 1;
+      let picks = early || this.resolver.resolve(tap.t);
       if (suspicious) picks = picks.filter((p) => p.lead >= this.resolver.o.minLead * this.o.echoLeadFactor);
       let played = 0;
       const midis = new Set();

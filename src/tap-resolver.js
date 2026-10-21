@@ -44,12 +44,12 @@ export class TapResolver {
   latestT() { return this.frames.length ? this.frames[this.frames.length - 1].t : -Infinity; }
 
   // Can a tap at time t be resolved yet (have we seen a frame after it)?
-  ready(t) { return this.latestT() >= t + this.o.afterMs; }
+  ready(t, afterMs = this.o.afterMs) { return this.latestT() >= t + afterMs; }
 
   // Returns [{ id, hand, tip, x, y, travel, lead }] — possibly empty (nothing pressed).
-  resolve(t) {
+  resolve(t, afterMs = this.o.afterMs) {
     const o = this.o;
-    const win = this.frames.filter((f) => f.t >= t - o.lookbackMs && f.t <= t + o.afterMs);
+    const win = this.frames.filter((f) => f.t >= t - o.lookbackMs && f.t <= t + afterMs);
     if (!win.length) return [];
     const last = win[win.length - 1];
     // the frame closest to the tap, and the one ~lateMs before it
@@ -105,11 +105,14 @@ export class TapResolver {
         }
       }
       const bestLead = best.score - typical;
+      // how clearly the best finger beats the runner-up (for deciding early)
+      const runnerUp = Math.max(-Infinity, ...fingers.filter((f) => f !== best).map((f) => f.score));
+      const margin = best.score - runnerUp;
       if (bestLead < o.minLead) continue;
       for (const f of cands) {
         const lead = f.score - typical;
         if (f === best || (lead >= o.minLead && lead >= bestLead * o.chordRatio)) {
-          picks.push({ id: `${hand.label}-${f.tip}`, hand: hand.label, tip: f.tip, x: P[f.tip].x, y: P[f.tip].y, travel: f.travel, lead, size });
+          picks.push({ id: `${hand.label}-${f.tip}`, hand: hand.label, tip: f.tip, x: P[f.tip].x, y: P[f.tip].y, travel: f.travel, lead, size, margin });
         }
       }
     }

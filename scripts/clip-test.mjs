@@ -120,7 +120,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     fusion.tick(e.at);
   }
   fusion.tick(1e12);
-  return { notes, markerCounts, paperFrames };
+  return { notes, markerCounts, paperFrames, early: fusion.stats && fusion.stats.early || 0 };
 }
 
 // group notes starting within 60 ms into chords
@@ -290,20 +290,23 @@ function sweep(analysed, { variant, latency }) {
     for (const a of analysed) {
       const key = `${a.clip}|${c.sensitivity ?? 0.65}`;
       if (!tapCache.has(key)) tapCache.set(key, tapsFromAudio(a.audio, c.sensitivity ?? 0.65));
-      const { notes } = replay(a.frames, tapCache.get(key), {
+      const { notes, early } = replay(a.frames, tapCache.get(key), {
         variant, latency,
-        resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset', 'avOffset', 'autoSync'].includes(k))),
+        resolverOpts: Object.fromEntries(Object.entries(c).filter(([k]) => !['sensitivity', 'tipOffset', 'avOffset', 'autoSync', 'earlyMs', 'earlyMargin'].includes(k))),
         tipOffset: c.tipOffset ?? TIP_OFFSET_MM,
         avOffset: c.avOffset ?? 0,
-        fusionOpts: { autoSync: c.autoSync ?? true },
+        fusionOpts: { autoSync: c.autoSync ?? true, earlyMs: c.earlyMs ?? 0, earlyMargin: c.earlyMargin ?? 0.25 },
       });
       const groups = groupChords(notes);
+      c.earlyN = (c.earlyN || 0) + early; c.notesN = (c.notesN || 0) + notes.length;
       if (!a.exp) continue;
       const sc = score(a.exp, groups);
       correct += sc.correct; expN += a.exp.length; detN += groups.length;
       if (!a.exp.length) falseNotes += groups.length;
     }
-    rows.push({ ...c, accuracy: expN || detN ? correct / Math.max(expN, detN) : 1, falseNotes });
+    const { earlyN, notesN, ...cc } = c;
+    if (earlyN) cc.early = `${earlyN}/${notesN}`;
+    rows.push({ ...cc, accuracy: expN || detN ? correct / Math.max(expN, detN) : 1, falseNotes });
   }
   rows.sort((a, b) => b.accuracy - a.accuracy || a.falseNotes - b.falseNotes);
   console.log(`\nSWEEP (${combos.length} combinations) – best 10:`);

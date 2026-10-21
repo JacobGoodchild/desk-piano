@@ -319,6 +319,8 @@ function adaptWait() {
   const f = fps();
   const frameMs = f > 5 ? 1000 / f : 33;
   engines.tap.resolver.o.afterMs = Math.max(25, Math.min(90, (settings.response === 'fast' ? 1 : 2) * frameMs + 4));
+  // in accurate mode, clear-cut notes (one finger well ahead) still play after one frame
+  engines.tap.o.earlyMs = settings.response === 'fast' ? 0 : Math.max(20, frameMs + 4);
 }
 
 function handleHandFrame(frame) {
