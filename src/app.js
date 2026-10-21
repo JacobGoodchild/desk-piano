@@ -16,7 +16,7 @@ import { paperLayout, paperToKey, fitPaper, detectPaperSize, TIP_OFFSET_MM } fro
 import { detectMarkers, toGrey } from './markers.js';
 import { applyH, invertH } from './homography.js';
 import { deskKeyAt } from './desk.js';
-import { loadSettings, saveSettings } from './settings.js';
+import { loadSettings, saveSettings, DEFAULTS } from './settings.js';
 import { noteName, isBlack, whiteIndex } from './notes.js';
 import { HAND_CONNECTIONS } from './hand-connections.js';
 import { HandIds } from './hand-ids.js';
@@ -962,6 +962,20 @@ function bindSettings() {
     });
   }
   $('settingsBtn').onclick = () => $('settings').showModal();
+  $('resetSettings').onclick = () => {
+    if (!confirm('Reset every setting, taught fingers, tuning and desk calibration?')) return;
+    const keep = { seenSetup: settings.seenSetup, seenNews: settings.seenNews };
+    for (const k of Object.keys(settings)) delete settings[k];
+    Object.assign(settings, loadSettings(), { ...DEFAULTS }, keep);
+    engines.tap.resolver.templates = null;
+    for (const el of form.elements) { if (!el.name || !(el.name in settings)) continue; if (el.type === 'checkbox') el.checked = !!settings[el.name]; else el.value = settings[el.name]; }
+    fusion.allOff();
+    applySettings();
+    selectLayer(settings.layer); selectSplit(settings.split);
+    if (state.inst) state.inst.setVolume(settings.volume);
+    $('volume').value = settings.volume;
+    setStatus('All settings reset.');
+  };
   // MIDI output: asking for MIDI access only when the player chooses to
   const fillMidi = (outs) => {
     const sel = form.elements.midiOut;

@@ -246,6 +246,23 @@ await check('personal tuning: applied to the engine, forgotten by Forget; a chec
   assert.match(r.msg, /Accuracy check: 2 of 9/);
 });
 
+await check('Reset all puts settings, taught fingers and tuning back to the start', async (page) => {
+  await startApp(page, '?sim=1');
+  page.on('dialog', (d) => d.accept());
+  await page.evaluate(() => {
+    const dp = window.deskPiano;
+    Object.assign(dp.settings, { instrument: 'organ', volume: 0.4, octave: 1, tuned: { minLate: 0.02 }, fingerTemplates: { 4: [1, 0, 0, 0, 0] } });
+    dp.applySettings();
+  });
+  await page.click('#settingsBtn');
+  await page.click('#resetSettings');
+  const r = await page.evaluate(() => {
+    const s = window.deskPiano.settings;
+    return { instrument: s.instrument, volume: s.volume, octave: s.octave, tuned: s.tuned, fingers: s.fingerTemplates, form: document.querySelector('select[name=instrument]').value, minLate: window.deskPiano.engines.tap.resolver.o.minLate };
+  });
+  assert.deepEqual(r, { instrument: 'piano', volume: 1.2, octave: 0, tuned: null, fingers: null, form: 'piano', minLate: 0.04 }, JSON.stringify(r));
+});
+
 await check('follow a tune: the next key lights up and advances on the right note', async (page) => {
   await startApp(page, '?sim=1');
   await page.selectOption('#tuneSel', { label: 'Mary had a little lamb' });

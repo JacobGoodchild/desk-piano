@@ -542,3 +542,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:33** Early decisions re-measured: margin 0.2 → 27% of notes play a frame early (was 11%) at full
   accuracy; 0.15 → 40% early but −1 note; 0.05 → 63% early, 49%. Kept 0.2.
 - **08:35** Teach my fingers: after each tap it says which finger it saw move most (✔ when it's the one asked for).
+- **09:00 → 11:15** Usage limit hit; ~2.5 h lost (nothing lost from git).
+- **11:23** Settings → "Reset all" (with a confirm): back to defaults incl. taught fingers, tuning and desk
+  calibration; browser test.
