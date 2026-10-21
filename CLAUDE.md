@@ -374,7 +374,7 @@ the camera picture; Check accuracy; Touch curve; offline support; full-screen; s
 out; Settings in sections; **Follow a tune** (next key lights up green); orange dots on the on-screen
 keyboard show the key under each fingertip; plays from the camera alone if the microphone is refused;
 recognises which paper size you printed; 48-voice polyphony limit; 7 stuck/cut-off-note and phone
-camera-switching bugs fixed after a code review; "why no note" diagnostics. 45 unit + 13 browser
+camera-switching bugs fixed after a code review; "why no note" diagnostics. 45 unit + 12 browser
 tests, CI green.
 
 **Best next steps:** record the clips listed in CLIPS.md ("teach my fingers" clip, slow scales, held
