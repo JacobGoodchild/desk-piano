@@ -376,10 +376,10 @@ sync correction and per-finger scores.
 - **01:28** Checked a "yesterday's saved settings" start: new sensitivity and engine applied, no errors.
   Early decisions: in accurate mode a note plays after one frame (instead of two) when one finger is
   well ahead (margin ≥ 0.2) — ~11% of notes on the clips, accuracy unchanged (0.15 would cost 2 points).
-- **01:35** Plain desk mode: optional third calibration tap (C6) fits a 1-D perspective curve along
+- **01:31** Plain desk mode: optional third calibration tap (C6) fits a 1-D perspective curve along
   the keyboard (unit test: two taps put A5 on the wrong key in a perspective view, three get it right);
   nonsense third taps are ignored.
-- **01:45** Finger score now also uses the top (DIP) joint's downward travel: **56.1%** (from 54.4%),
+- **01:33** Finger score now also uses the top (DIP) joint's downward travel: **56.1%** (from 54.4%),
   false notes in hover/rest clips 3 (from 4). A joint re-tune of depth/late/joint weights found 57.9–
   58.6% but those differ by 1–2 notes from the current defaults → kept the simpler defaults (avoid
   over-fitting 8 clips).
