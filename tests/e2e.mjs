@@ -73,6 +73,31 @@ await check('works offline after the first visit (service worker)', async (page)
   await page.context().setOffline(false);
 });
 
+await check('every sound renders: audible, no clipping spike, no broken samples', async (page) => {
+  await page.goto(url + 'index.html?sim=1');
+  const res = await page.evaluate(async () => {
+    const { Piano } = await import('./src/piano.js');
+    const { SYNTHS } = await import('./src/synths.js');
+    const out = {};
+    for (const id of ['piano', ...Object.keys(SYNTHS)]) {
+      const ctx = new OfflineAudioContext(2, 48000, 48000);
+      const inst = id === 'piano' ? new Piano(ctx, ctx.destination) : new SYNTHS[id](ctx, ctx.destination);
+      if (id === 'piano') await inst.load('samples/piano/');
+      inst.noteOn(60, 0.6);
+      const d = (await ctx.startRendering()).getChannelData(0);
+      let peak = 0, sum = 0, bad = 0;
+      for (const v of d) { if (!Number.isFinite(v)) bad++; peak = Math.max(peak, Math.abs(v)); sum += v * v; }
+      out[id] = { peak, rmsDb: 10 * Math.log10(sum / d.length), bad };
+    }
+    return out;
+  });
+  for (const [id, r] of Object.entries(res)) {
+    assert.equal(r.bad, 0, `${id}: broken samples`);
+    assert.ok(r.rmsDb > -50 && r.rmsDb < -15, `${id}: level ${r.rmsDb.toFixed(1)} dB`);
+    assert.ok(r.peak < 0.8, `${id}: peak ${r.peak.toFixed(2)}`);
+  }
+});
+
 await check('print page renders sheets with markers', async (page) => {
   await page.goto(url + 'print.html');
   assert.equal(await page.locator('.sheet').count(), paperLayout('full').pages.length);
