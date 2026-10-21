@@ -407,3 +407,6 @@ sync correction and per-finger scores.
   mostly a finger 4–5 keys away (wrong finger of the same hand) plus 7 of 22 taps with no finger chosen.
 - **01:59** On-screen keyboard shows an orange dot on the key under each tracked fingertip (live check of
   the key mapping before you play; checked in a screenshot, browser test added).
+- **02:00** Tried a finger *bend* measure (angle change at the two upper joints): 0.15–0.3 weight scored
+  57.9% (one more note than 56.1%); larger weights worse. Too small to trust → kept as an option
+  (`flexWeight`, off) for the next clip session.

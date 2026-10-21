@@ -21,6 +21,8 @@ export const RESOLVER_DEFAULTS = {
   typicalRank: 1, // compare against this finger in travel order (0 = least moved, 2 = median)
   zWeight: 1, // weight of MediaPipe's fingertip depth change (helped the chromatic clip)
   jointWeight: 2, // the top joint (DIP) comes down with a press too: 1.5–4 all scored 56.1% vs 54.4%
+  flexWeight: 0, // weight of the change in the finger's bend (radians, PIP + DIP joints). 0.15–0.3 scored
+  // one more note (57.9% vs 56.1%) on the first clips — too small to trust; re-test on new clips
   handRatio: 0.6, // second hand joins a tap only if its best finger led by this fraction of the first's
   repeatMs: 600, // repeated notes: replay the last finger within this window (0 = off)...
   repeatLateFactor: 0, // ...as long as that finger isn't rising
@@ -156,7 +158,8 @@ export class TapResolver {
       const dz = o.zWeight && hBefore && P[tip].z != null && hBefore.points[tip].z != null ? (P[tip].z - hBefore.points[tip].z) / size : 0;
       // the finger's top joint (DIP) comes down with a press too
       const joint = o.jointWeight ? (P[tip - 1].y - minOver(tip - 1)) / size : 0;
-      return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz + o.jointWeight * joint };
+      const flex = o.flexWeight && hBefore ? bend(P, tip) - bend(hBefore.points, tip) : 0;
+      return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz + o.jointWeight * joint + o.flexWeight * flex };
     });
   }
 
@@ -228,4 +231,15 @@ export function handSize(P) {
   const span = Math.hypot(P[17].x - P[5].x, P[17].y - P[5].y);
   const wm = Math.hypot(P[9].x - P[0].x, P[9].y - P[0].y);
   return (span > 0.4 * wm ? span * 0.8 : wm) || 1;
+}
+
+// How bent a finger is: the angles at its two upper joints (radians, 0 = straight).
+function bend(P, tip) {
+  const ang = (a, b, c) => {
+    const u = [b.x - a.x, b.y - a.y, (b.z || 0) - (a.z || 0)], v = [c.x - b.x, c.y - b.y, (c.z || 0) - (b.z || 0)];
+    const d = u[0] * v[0] + u[1] * v[1] + u[2] * v[2];
+    const n = Math.hypot(...u) * Math.hypot(...v);
+    return n ? Math.acos(Math.max(-1, Math.min(1, d / n))) : 0;
+  };
+  return ang(P[tip - 3], P[tip - 2], P[tip - 1]) + ang(P[tip - 2], P[tip - 1], P[tip]);
 }

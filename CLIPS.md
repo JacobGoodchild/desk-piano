@@ -102,7 +102,8 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
 ## Engine settings to tune (in `RESOLVER_DEFAULTS`)
 
 `lookbackMs`, `afterMs` (70 = accurate, 35 = fast), `minTravel`, `minLead`, `minLate`, `maxAfter`,
-`lateWeight`, `typicalRank`, `chordRatio`, `handRatio`, `repeatMs`. Use
+`lateWeight`, `zWeight`, `jointWeight`, `flexWeight` (finger bend; off — worth re-testing on new clips),
+`typicalRank`, `chordRatio`, `handRatio`, `repeatMs`. Use
 `--sweep --grid '{"minLead":[0.02,0.04],"afterMs":[35,70]}'` to try specific values. The old
 landing-based engine is still available with `--engine classic`.
 
