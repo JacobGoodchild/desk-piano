@@ -497,3 +497,5 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   scrolling (phones), Fixed-loudness slider only when Loudness = Fixed (Touch only when from taps), and
   a global rule so hidden rows really hide (the classic-only option was showing). Classic engine's
   shared-key cut-off is covered by this morning's note-holder counting. All 6 review items done.
+- **07:53** Tried per-finger score boosts for thumb/little finger (0.8–2×): no boost is best (56.1%) → reverted.
+  The current engine sits at a local optimum on these 8 clips; more accuracy needs new clips.
