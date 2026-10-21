@@ -577,3 +577,6 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   switch off MIDI output, didn't restart a changed mic/camera, and a running calibration/teaching could
   write old values back; interpolation dropped a hand that appeared between two frames. Browser tests
   for the pedal cases; clip accuracy unchanged (30 fps 56.1%, 10 fps 47.4%).
+- **11:29** Desk mode simulated on the clips (`clip-test --desk 2|3`: perfect calibration taken from the paper's
+  C4/C5(/C6), printed keys otherwise ignored): **50.8%** vs 56.1% with the paper — usable; the third
+  calibration tap made no difference at this camera angle. (Real calibration taps add some error.)

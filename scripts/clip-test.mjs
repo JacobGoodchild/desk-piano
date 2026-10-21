@@ -24,6 +24,7 @@ import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
 import { HandIds } from '../src/hand-ids.js';
 import { TUNE_GRID } from '../src/auto-tune.js';
+import { deskKeyAt } from '../src/desk.js';
 
 const REPO = realpathSync(new URL('..', import.meta.url).pathname);
 const args = process.argv.slice(2);
@@ -92,6 +93,15 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
   const handlers = {
     keyFor: (p) => {
       if (!paperInv) return null;
+      // --desk 2|3: simulate plain desk mode with a perfect 2- or 3-tap calibration taken from
+      // where the paper's C4 / C5 (/ C6) keys are, ignoring the printed keys otherwise
+      if (opt('desk')) {
+        const Hf = invertH(paperInv);
+        const at = (m) => { const r = layout.kb.keyRect(m); return applyH(Hf, layout.keysX + (r.x0 + r.x1) / 2, layout.keysY + 120); };
+        const cal = { c4: at(60), c5: at(72), ...(opt('desk') === '3' ? { c6: at(84) } : {}) };
+        const k = deskKeyAt(cal, p.x, p.y);
+        return k == null ? null : k + transpose + octave * 12;
+      }
       const q = applyH(paperInv, p.x, p.y);
       const k = paperToKey(layout, q.x, q.y, tipOffset);
       return k == null ? null : k + transpose + octave * 12;
