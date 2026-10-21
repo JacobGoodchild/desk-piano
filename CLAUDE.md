@@ -444,3 +444,35 @@ sync correction and per-finger scores.
 - **02:18** Tried a bonus for the finger that stopped moving right at the tap (landing time vs tap):
   no gain at any weight, more stray notes at higher weights → reverted.
 - **02:20** Set-up checklist now shows "Fingers not taught yet – [Teach my fingers]" until all five are taught.
+- **02:25** Follow a tune: wrong notes flash red.
+- **02:30 → 06:20** The session's worker was restarted repeatedly again (~4 h lost; nothing lost from git).
+- **06:22** A second code review (other files) found 6 smaller issues. Fixed now: the offline cache
+  (app now works offline after a single visit — its own files are saved at install; app code is
+  re-checked with the server so a fresh deploy can't mix old and new modules). **Not fixed yet** (for
+  next time): desk calibration is saved in camera pixels, so rotating the phone or changing camera
+  resolution needs a re-calibration; with "pedal always on", decaying synth sounds keep silent
+  oscillators running until the key is struck again; a one-bit misread of a mirrored marker can drop
+  it; a 3-tap desk calibration with a very short C6 distance can make notes past C6 silent; the classic
+  engine can cut off a note shared by two fingers.
+
+## Overnight wrap-up (21 Oct, 06:25)
+
+**Live:** https://jacobgoodchild.github.io/desk-piano/ — `main` deployed, every CI run green.
+
+**Accuracy on your clips, before → after** (correct notes / expected; stray notes in no-play clips):
+| Clip | Before (20:05) | After |
+|---|---|---|
+| Hovering (no playing) | 55 false chords | 1–2 stray notes |
+| Resting hands (no playing) | 11 false | 1–2 stray notes |
+| Middle C ×4 | 18% (11 detected) | 4/4 (+1 extra) |
+| C-E-G chord ×2 | 0% | 0/2 (no per-finger signal in the footage) |
+| Mary (simple) | 25% | ~15/26 |
+| Chromatic, two octaves | not scored | ~10–12/25 |
+| **Overall** | **8.5%** | **56.1%** |
+
+**What to try next**
+1. Record new clips (see CLIPS.md): a "teach my fingers" clip, slow scales, held chords, and with a
+   microphone close to the paper. Then re-tune with `clip-test --verbose` (it now says *why* a tap
+   played nothing) and re-test the optional `flexWeight` finger-bend measure.
+2. Try it live on the Pixel 7 with `?debug=1`: frame rate, tap→sound delay, sync correction.
+3. Fix the remaining review items listed at 06:22.
