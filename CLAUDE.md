@@ -405,3 +405,5 @@ sync correction and per-finger scores.
 - **01:57** Tried preferring fingers near the last note (melodies move in small steps): worse at every
   weight (56.1% → 42–54%), and preferring far fingers no better → reverted. Chromatic clip errors are
   mostly a finger 4–5 keys away (wrong finger of the same hand) plus 7 of 22 taps with no finger chosen.
+- **01:59** On-screen keyboard shows an orange dot on the key under each tracked fingertip (live check of
+  the key mapping before you play; checked in a screenshot, browser test added).

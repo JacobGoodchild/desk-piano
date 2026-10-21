@@ -331,6 +331,7 @@ function handleHandFrame(frame) {
   state.hands = frame.hands;
   state.handsT = frame.t;
   const events = strikes.update(frame); // also drives the fingertip colours and calibration
+  updateHover(frame.hands);
   if (state.teach) { engines.tap.resolver.pushFrame(frame); teachStep(); return; }
   if (state.calib) { engines.tap.resolver.pushFrame(frame); calibrationEvents(events); return; }
   if (fusion === engines.tap) fusion.onFrame(frame);
@@ -518,6 +519,19 @@ function drawRoll() {
   }
 }
 
+// Which key is under each tracked fingertip: shown as dots on the on-screen keyboard so you can
+// see where the app thinks your fingers are before you play.
+function updateHover(hands) {
+  const keys = [];
+  for (const h of hands || []) for (const tip of [4, 8, 12, 16, 20]) {
+    const p = h.points[tip];
+    const m = p && keyForPoint(p.x, p.y);
+    if (m != null) keys.push(m);
+  }
+  const sig = keys.sort((a, b) => a - b).join(',');
+  if (sig !== state.hoverSig) { state.hoverSig = sig; state.hover = keys; drawPiano(); }
+}
+
 function drawPiano() {
   const cv = $('piano');
   const dpr = window.devicePixelRatio || 1;
@@ -547,6 +561,14 @@ function drawPiano() {
     const x = (whiteIndex(m) - w0 + 1) * kw - kw * 0.3;
     g.fillStyle = state.active.has(m) ? '#4fa3ff' : '#111';
     g.fillRect(x, 0, kw * 0.6, H * 0.6);
+  }
+  // fingertip dots
+  g.fillStyle = '#ff9f1a';
+  for (const m of state.hover || []) {
+    if (m < low || m > high) continue;
+    const black = isBlack(m);
+    const x = black ? (whiteIndex(m) - w0 + 1) * kw : (whiteIndex(m) - w0 + 0.5) * kw;
+    g.beginPath(); g.arc(x, black ? H * 0.45 : H * 0.72, Math.max(3, Math.min(7, kw * 0.18)), 0, Math.PI * 2); g.fill();
   }
 }
 function visibleRange() {

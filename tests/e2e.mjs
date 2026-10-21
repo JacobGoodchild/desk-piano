@@ -284,10 +284,11 @@ await check('no microphone: falls back to playing clear finger strikes from the 
       }
       await sleep(250);
     }
-    return { engine: dp.fusion === dp.engines.classic, played: dp.state.played.map((p) => p.name) };
+    return { engine: dp.fusion === dp.engines.classic, played: dp.state.played.map((p) => p.name), hover: dp.state.hover.length };
   }, { markers, W, H, base: { 4: keyPoint(60), 8: keyPoint(62), 12: keyPoint(64), 16: keyPoint(65), 20: keyPoint(67) } });
   assert.ok(result.engine, 'classic engine in use');
   assert.deepEqual(result.played, ['C4', 'E4'], JSON.stringify(result));
+  assert.equal(result.hover, 5, 'a dot on the on-screen keyboard for each fingertip');
 });
 
 await check('plain desk mode: calibrate on C4 and C5, then play by position', async (page) => {
