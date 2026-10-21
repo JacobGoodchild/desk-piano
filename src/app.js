@@ -693,6 +693,11 @@ function loop() {
   updateChecks();
   drawRoll();
   // mic level bar: dB relative to the background noise, so quiet far-away mics still show taps
+  // flash: green = a tap became a note, orange = a tap was heard but no finger was seen pressing
+  const rej = fusion.stats.tapsRejected, notes = fusion.stats.notes;
+  if (rej !== state.lastRej) { state.lastRej = rej; state.flash = { c: '#ffaa33', until: performance.now() + 350 }; }
+  if (notes !== state.lastNotes) { state.lastNotes = notes; state.flash = { c: '#3ecf7a', until: performance.now() + 350 }; }
+  $('micLevel').parentElement.style.boxShadow = state.flash && performance.now() < state.flash.until ? `0 0 0 2px ${state.flash.c}` : 'none';
   const lv = state.micLevel || 0, fl = state.micFloor || 1e-4;
   $('micLevel').style.width = `${Math.max(0, Math.min(100, (20 * Math.log10(Math.max(lv, 1e-9) / fl)) * 3))}%`;
   requestAnimationFrame(loop);
