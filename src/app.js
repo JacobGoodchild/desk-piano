@@ -830,6 +830,20 @@ function bindSettings() {
   $('setupBtn').onclick = () => setSetup(true);
   $('setupDone').onclick = () => setSetup(false);
   $('teachBtn').onclick = startTeaching;
+  $('copyDiag').onclick = async () => {
+    const { desk, fingerTemplates, camera, mic, midiOut, ...rest } = settings; // no device ids or positions
+    const diag = {
+      when: new Date().toISOString(), userAgent: navigator.userAgent,
+      fps: +fps().toFixed(1), trackMs: +state.trackMs.toFixed(1), delegate: state.delegate,
+      video: state.video, markers: state.markersSeen.size, cameraMirrored: !!state.cameraMirrored,
+      audio: state.ctx && { base: state.ctx.baseLatency, output: state.ctx.outputLatency, sampleRate: state.ctx.sampleRate }, inputLatencyMs: state.inputLatencyMs,
+      tapToSoundMs: state.latencies.map((v) => Math.round(v)), syncOffsetMs: engines.tap.syncOffset, stats: fusion.stats,
+      afterMs: engines.tap.resolver.o.afterMs, taught: !!fingerTemplates, settings: rest,
+    };
+    try { await navigator.clipboard.writeText(JSON.stringify(diag, null, 1)); $('copyDiag').textContent = 'Copied ✓'; }
+    catch { $('copyDiag').textContent = 'Copy failed'; }
+    setTimeout(() => { $('copyDiag').textContent = 'Copy diagnostics'; }, 2000);
+  };
   $('checkBtn').onclick = startCheck;
   $('metroBtn').onclick = async () => {
     await ensureAudio();
