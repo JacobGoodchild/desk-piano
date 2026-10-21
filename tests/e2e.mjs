@@ -267,6 +267,7 @@ await check('plain desk mode: calibrate on C4 and C5, then play by position', as
     }
     await strike(400, 400, false); // calibration: middle C
     await strike(750, 400, false); // calibration: C5 (350 px = one octave → 50 px per white key)
+    document.getElementById('calibSkip').click(); // skip the optional third (C6) tap
     await strike(400 + 2 * 50, 400, true); // E4
     await strike(400 + 4 * 50, 400, true); // G4
     await strike(400 + 3.5 * 50 - 6, 400 + 60, true); // further forward (towards the camera) between F and G = F#4

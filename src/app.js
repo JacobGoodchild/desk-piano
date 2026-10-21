@@ -407,10 +407,16 @@ function calibrationEvents(events) {
 }
 function calibrationPoint(p) {
   if (state.calib === 'c4') { settings.desk = { c4: p }; state.calib = 'c5'; showCalib('Now tap the <b>C above</b> middle C.'); }
-  else if (state.calib === 'c5') { settings.desk.c5 = p; finishCalib('Calibrated – play away!'); }
+  else if (state.calib === 'c5') {
+    settings.desk.c5 = p; state.calib = 'c6';
+    showCalib('Optional, for better accuracy at the ends: tap the <b>C above that</b> (two octaves above middle C). <button id="calibSkip">Skip</button>');
+    $('calibSkip').onclick = () => finishCalib('Calibrated – play away!');
+  }
+  else if (state.calib === 'c6') { settings.desk.c6 = p; finishCalib('Calibrated – play away!'); }
   else if (state.calib === 'recentre') {
     const dx = p.x - settings.desk.c4.x, dy = p.y - settings.desk.c4.y;
-    settings.desk = { c4: p, c5: { x: settings.desk.c5.x + dx, y: settings.desk.c5.y + dy } };
+    const c6 = settings.desk.c6;
+    settings.desk = { c4: p, c5: { x: settings.desk.c5.x + dx, y: settings.desk.c5.y + dy }, ...(c6 ? { c6: { x: c6.x + dx, y: c6.y + dy } } : {}) };
     finishCalib('Recentred.');
   }
 }

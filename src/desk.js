@@ -1,6 +1,8 @@
 // Plain desk mode: no paper. Two calibration taps (middle C, then the C above) define where
 // the keyboard is in the camera picture: a straight line along the keys and the octave width.
 // Taps further from you (towards the camera = lower in the picture) are black keys.
+// An optional third tap on the C above that (C6) corrects for perspective (keys further from the
+// camera look narrower): positions along the line are then mapped with a 1-D projective curve.
 import { KeyboardLayout } from './layout.js';
 
 const kb = new KeyboardLayout(36, 96); // C2..C7 virtual keyboard
@@ -14,7 +16,16 @@ export function deskKeyAt(cal, x, y) {
   const L2 = dx * dx + dy * dy;
   if (L2 < 1) return null;
   const px = x - cal.c4.x, py = y - cal.c4.y;
-  const u = (px * dx + py * dy) / L2; // octaves to the right of middle C
+  let u = (px * dx + py * dy) / L2; // octaves to the right of middle C (in picture units)
+  if (cal.c6) {
+    // k(u) = (1+g)u / (1+g·u) passes through k(0)=0, k(1)=1 and k(u6)=2
+    const u6 = ((cal.c6.x - cal.c4.x) * dx + (cal.c6.y - cal.c4.y) * dy) / L2;
+    if (u6 > 1.2 && u6 < 3.5) {
+      const g = (u6 - 2) / u6;
+      const den = 1 + g * u;
+      if (den > 0.05) u = ((1 + g) * u) / den;
+    }
+  }
   let nx = -dy, ny = dx;
   if (ny < 0) { nx = -nx; ny = -ny; } // normal pointing down the picture (towards the camera)
   const v = (px * nx + py * ny) / L2; // octaves towards the camera

@@ -59,3 +59,15 @@ test('paper layouts: sheets fit A4, markers unique and away from joins', () => {
   assert.equal(paperToKey(L, L.keysX + 0.5, L.keysY + 140), 48);
   assert.equal(paperToKey(L, L.keysX + L.kb.width - 1, L.keysY + 140), 84);
 });
+
+test('plain desk mode: a third calibration tap corrects perspective', async () => {
+  const { deskKeyAt } = await import('../../src/desk.js');
+  // a perspective picture: octave positions k = 0,1,2 appear at x = 400, 700, 940 (far keys squeezed)
+  const toX = (k) => 400 + 300 * k / (1 + 0.125 * k) * (1 + 0.125); // k=1→700, k=2→933
+  const cal2 = { c4: { x: toX(0), y: 400 }, c5: { x: toX(1), y: 400 } };
+  const cal3 = { ...cal2, c6: { x: toX(2), y: 400 } };
+  // the centre of A5 is 12 white keys (12/7 octaves) to the right of the centre of middle C
+  const k = 12 / 7;
+  assert.equal(deskKeyAt(cal3, toX(k), 400), 81, 'A5 with three taps');
+  assert.notEqual(deskKeyAt(cal2, toX(k), 400), 81, 'two taps alone get it wrong here');
+});
