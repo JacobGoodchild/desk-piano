@@ -117,7 +117,11 @@ landing-based engine is still available with `--engine classic`.
    - *Taps heard ≠ notes played*: tap detector (`src/onset.js` — `sensitivity`, `ratio`, the 2 ms rise
      test, refractory time). Count taps vs. expected notes.
    - *Missed notes with taps heard*: the tap resolver's gates (`minTravel`, `minLate`, `maxAfter`,
-     `minLead`) — or, with `--engine classic`, the strike detector (`src/strike.js`).
+     `minLead`) — or, with `--engine classic`, the strike detector (`src/strike.js`). `--verbose`
+     prints **why** each heard tap played nothing ("too little travel", "not still moving down",
+     "kept moving after the tap", "no finger ahead of the others", "off the keys", "no hands",
+     "no camera frame in time"); the live app shows the last reason in the debug view. Loosen the
+     gate that blocks most real notes, then check the hovering/resting clips stay silent.
    - *Wrong notes (neighbouring key)*: key mapping — the fingertip landmark sits above the contact
      point; `TIP_OFFSET_MM` in `src/paper.js` (default 5 mm towards the camera) corrects for that.
      Black↔white mix-ups → tune it; sideways mix-ups → check the predicted touch-down point.
