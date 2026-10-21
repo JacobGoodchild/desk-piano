@@ -373,3 +373,6 @@ out; Settings in sections. 40 unit + 8 browser tests, CI green.
 **Best next steps:** record the clips listed in CLIPS.md ("teach my fingers" clip, slow scales, held
 chords, a mic close to the desk) and try it live — the debug view (`?debug=1`) shows the frame rate,
 sync correction and per-finger scores.
+- **01:45** Checked a "yesterday's saved settings" start: new sensitivity and engine applied, no errors.
+  Early decisions: in accurate mode a note plays after one frame (instead of two) when one finger is
+  well ahead (margin ≥ 0.2) — ~11% of notes on the clips, accuracy unchanged (0.15 would cost 2 points).
