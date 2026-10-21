@@ -398,3 +398,7 @@ sync correction and per-finger scores.
   `--self-teach` kept in the clip tester as an experiment.
 - **01:52** Live memory check (looping clip, CPU tracking): JS heap flat at ~92–93 MB over the run;
   note/frame histories stay bounded. Taught patterns are used only when all five fingers are taught.
+- **01:56** No microphone (refused/missing) but a camera → the app now plays clear finger strikes
+  from the camera alone (classic engine, quieter) and says so, instead of playing nothing; the
+  "camera-only" setting was never actually connected — fixed. Browser test added. Phone landscape:
+  smaller what's-new banner (checked in screenshots).

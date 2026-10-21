@@ -249,6 +249,47 @@ await check('taps + finger strikes on the paper play the right notes, chords and
   assert.ok(result.every((r) => r.how.startsWith('tap') || r.how.startsWith('land')), JSON.stringify(result));
 });
 
+await check('no microphone: falls back to playing clear finger strikes from the camera', async (page) => {
+  // the microphone is refused; the camera still works
+  await page.addInitScript(() => {
+    const gum = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = (c) => (c && c.audio ? Promise.reject(new DOMException('denied', 'NotAllowedError')) : gum(c));
+  });
+  await startApp(page, '?sim=1');
+  assert.match(await page.textContent('#status'), /camera alone/);
+  const result = await page.evaluate(async ({ markers, W, H, base }) => {
+    const dp = window.deskPiano;
+    dp.setVideoSize(W, H);
+    dp.injectMarkers(markers);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const MCP = { 4: 2, 8: 5, 12: 9, 16: 13, 20: 17 };
+    const hand = (tips) => {
+      const pts = Array.from({ length: 21 }, () => ({ x: base[12].x, y: base[12].y - 120 }));
+      pts[0] = { x: base[12].x, y: base[12].y - 190 };
+      for (const k of [4, 8, 12, 16, 20]) { pts[k] = tips[k]; pts[MCP[k]] = { x: base[k].x, y: base[k].y - 120 }; }
+      return { label: 'Right', points: pts };
+    };
+    for (const press of [4, 12]) {
+      for (let f = 0; f <= 10; f++) {
+        const tips = {};
+        for (const [k, p] of Object.entries(base)) tips[k] = { x: p.x, y: p.y - (Number(k) === press ? Math.max(0, 40 - f * 10) : 40) };
+        dp.injectHandFrame({ t: performance.now(), hands: [hand(tips)] });
+        await sleep(33);
+      }
+      for (let f = 0; f < 3; f++) {
+        const tips = {};
+        for (const [k, p] of Object.entries(base)) tips[k] = { x: p.x, y: p.y - 40 };
+        dp.injectHandFrame({ t: performance.now(), hands: [hand(tips)] });
+        await sleep(33);
+      }
+      await sleep(250);
+    }
+    return { engine: dp.fusion === dp.engines.classic, played: dp.state.played.map((p) => p.name) };
+  }, { markers, W, H, base: { 4: keyPoint(60), 8: keyPoint(62), 12: keyPoint(64), 16: keyPoint(65), 20: keyPoint(67) } });
+  assert.ok(result.engine, 'classic engine in use');
+  assert.deepEqual(result.played, ['C4', 'E4'], JSON.stringify(result));
+});
+
 await check('plain desk mode: calibrate on C4 and C5, then play by position', async (page) => {
   await startApp(page, '?sim=1');
   const names = await page.evaluate(async () => {

@@ -655,7 +655,7 @@ function drawDebug() {
     `audio out: base ${fmt(state.ctx && state.ctx.baseLatency * 1000)} ms, output ${fmt(state.ctx && state.ctx.outputLatency * 1000)} ms, input ${fmt(state.inputLatencyMs)} ms`,
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
     `sound/picture sync correction: ${engines.tap.syncOffset.toFixed(0)} ms`,
-    `engine ${settings.engine}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
+    `engine ${fusion === engines.classic ? "classic" : "tap"}${state.micFailed ? " (no microphone)" : ""}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
     `paper markers: ${[...state.markersSeen].join(',') || 'none'}`,
     `last tap, finger scores (thumb→little): ${(() => { const ls = engines.tap.resolver.lastScores; return ls ? ls.fingers.map((f) => f.score).join(' ') : '–'; })()}`,
     `fingers: ${fingers.join('  ')}`,
@@ -732,7 +732,11 @@ function applySettings() {
   $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   $('cameraOnlyRow').hidden = settings.engine !== 'classic'; // only applies to the classic engine
-  const nextEngine = engines[settings.engine] || engines.tap;
+  // Without a microphone the tap engine can never play, so fall back to the classic engine playing
+  // clear finger strikes on their own (quieter, a little later, and hovering hands may trigger notes).
+  const noMic = !!state.micFailed;
+  engines.classic.o.cameraOnly = settings.cameraOnly || noMic;
+  const nextEngine = noMic ? engines.classic : engines[settings.engine] || engines.tap;
   if (nextEngine !== fusion) { fusion.allOff(); fusion = nextEngine; }
   for (const e of Object.values(engines)) e.speakerMode = settings.output === 'speaker';
   adaptWait();
@@ -770,7 +774,7 @@ function bindSettings() {
       settings[el.name] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value;
       applySettings();
       if (el.name === 'mode' && settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
-      if ((settings.output !== prevOutput || settings.mic !== prevMic) && state.micNode) startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
+      if ((settings.output !== prevOutput || settings.mic !== prevMic) && (state.micNode || state.micFailed)) startMic().then(() => { state.micFailed = false; applySettings(); }).catch((e) => { state.micFailed = true; applySettings(); setStatus(`Microphone: ${e.message}`); });
       if (settings.camera !== prevCam && $('video').srcObject) startCamera().catch((e) => setStatus(`Camera: ${e.message}`));
     });
   }
@@ -948,13 +952,13 @@ async function start() {
   $('start').disabled = true;
   await ensureAudio();
   const problems = [];
-  try { await startMic(); } catch (e) { problems.push('microphone'); console.warn('mic', e); }
+  try { await startMic(); state.micFailed = false; } catch (e) { state.micFailed = true; problems.push('microphone'); console.warn('mic', e); }
   try { await startCamera(); } catch (e) { problems.push('camera'); console.warn('camera', e); $('camMsg').textContent = 'No camera'; }
   state.started = true;
   $('start').textContent = 'Running';
   keepAwake();
   applySettings();
-  setStatus(problems.length ? `Could not start the ${problems.join(' and ')}. You can still play with the computer keyboard.` : 'Ready – tap your fingers on the paper keys. Nothing is recorded or uploaded.');
+  setStatus(problems.length ? `Could not start the ${problems.join(' and ')}. ${state.micFailed && !problems.includes('camera') ? 'Playing from the camera alone (less reliable: allow the microphone for best results).' : 'You can still play with the computer keyboard.'}` : 'Ready – tap your fingers on the paper keys. Nothing is recorded or uploaded.');
   if (settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
 }
 
