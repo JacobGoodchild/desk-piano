@@ -27,7 +27,11 @@ a third tap two octaves above middle C makes the far ends more accurate). **R** 
 
 The green **Mic** bar flashes green when a tap became a note, and orange when a tap was heard but no
 finger was seen pressing (move the camera, or keep the other fingers still). **Set-up → Check
-accuracy** gives a quick score on a short exercise.
+accuracy** gives a quick score on a short exercise. Orange dots on the on-screen keyboard show the
+key under each fingertip the camera sees — check they match your fingers before you play.
+
+No microphone (or you didn't allow it)? The app still plays clear finger strikes from the camera
+alone — quieter and less reliable (hovering hands can set notes off), so allow the mic if you can.
 
 ## Controls
 
