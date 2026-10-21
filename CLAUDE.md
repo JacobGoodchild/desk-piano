@@ -532,3 +532,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   Pages workflow copies an explicit file list, so it was added there).
 - **08:25** Octave −/+ buttons beside the tune picker (the paper is 3 octaves; real pieces need more); buttons
   lose focus after a click so Space (pedal) can't press them again. Browser test.
+- **08:28** Finger movement is now measured from hand positions *interpolated* to the exact tap time (and
+  100 ms before) instead of the nearest camera frame: 30 fps unchanged (56.1%), 15 fps 47.4% → 50.9%,
+  10 fps 45.6% → 47.4% with fewer stray notes (5→3). Help page live on the site.
