@@ -52,3 +52,9 @@ test('auto-tune finds settings that fit this player, and leaves good settings al
   const again = autoTune({ frames, taps, expected, keyFor, base: { ...RESOLVER_DEFAULTS, ...r.params } });
   assert.equal(again.params, null);
 });
+
+test('alignMatched marks which expected notes were played', async () => {
+  const { alignMatched } = await import('../../src/auto-tune.js');
+  assert.deepEqual(alignMatched([60, 62, 64, 65], [60, 61, 64, 65]), [true, false, true, true]);
+  assert.deepEqual(alignMatched([60, 62], []), [false, false]);
+});

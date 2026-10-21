@@ -112,3 +112,7 @@ dialog form { max-height: calc(100dvh - 60px); }
 .oct b { min-width: 22px; text-align: center; color: var(--text); }
 .teachSeen { color: var(--muted); font-size: 13px; }
 .dyn { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 17px; color: var(--text); min-width: 28px; }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 3px; vertical-align: middle; margin: 2px 4px; }
+.chip { font-size: 12px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.chip.hit { background: #23402c; color: var(--good); }
+.chip.miss { background: #4a2326; color: #ff8d8d; }

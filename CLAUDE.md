@@ -613,3 +613,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   The synthetic unit test sets its own −17 ms target (its fake fingers stop 17 ms before the tap).
 - **11:55** Desk mode: once calibrated, the camera picture shows the invisible keyboard (white-key edges, each C
   labelled), drawn with the same geometry as the note mapping (unit test: each drawn C maps to that C).
+- **11:57** Check accuracy shows each expected note as a green/red chip (which ones it got); result panels say
+  "Close" instead of "Cancel". Unit test for the alignment; checked in a screenshot.

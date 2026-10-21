@@ -9,7 +9,7 @@ import { Metronome } from './metronome.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
-import { autoTune, alignCorrect, TUNE_GRID } from './auto-tune.js';
+import { autoTune, alignCorrect, alignMatched, TUNE_GRID } from './auto-tune.js';
 import { FingerTeacher } from './tap-resolver.js';
 import { VelocityMapper } from './onset.js';
 import { paperLayout, paperToKey, fitPaper, detectPaperSize, TIP_OFFSET_MM } from './paper.js';
@@ -517,11 +517,13 @@ function calibrationPoint(p) {
 }
 function finishCalib(msg) {
   if (state.calibDraft) { settings.desk = { ...state.calibDraft, w: state.video.w, h: state.video.h }; state.calibDraft = null; }
-  state.calib = null; saveSettings(settings); showCalib(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
-function showCalib(html, onCancel) {
+  state.calib = null; saveSettings(settings); showResult(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
+// results (nothing to cancel) get a "Close" button
+function showResult(html) { showCalib(html, null, 'Close'); }
+function showCalib(html, onCancel, closeLabel = 'Cancel') {
   const el = $('calib');
   el.hidden = false;
-  el.innerHTML = `${html} <button id="calibCancel">Cancel</button>`;
+  el.innerHTML = `${html} <button id="calibCancel">${closeLabel}</button>`;
   $('calibCancel').onclick = () => { state.calib = null; state.calibDraft = null; if (onCancel) onCancel(); el.hidden = true; };
 }
 
@@ -585,9 +587,11 @@ function finishCheck() {
   resumeTuneRecording();
   const correct = alignCorrect(CHECK_NOTES, c.got);
   const extra = Math.max(0, c.got.length - correct);
-  const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
+  const hit = alignMatched(CHECK_NOTES, c.got);
+  const chips = CHECK_NOTES.map((m, i) => `<span class="chip ${hit[i] ? 'hit' : 'miss'}">${noteName(m)}</span>`).join('');
+  const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. <span class="chips">${chips}</span> Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
   const tips = correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.';
-  if (correct >= CHECK_NOTES.length) { showCalib(`${msg} ${tips}`); return; }
+  if (correct >= CHECK_NOTES.length) { showResult(`${msg} ${tips}`); return; }
   offerTuning(CHECK_NOTES, rec, msg, tips);
 }
 
@@ -597,7 +601,7 @@ function startRecordingForTuning() { state.rec = { frames: [], taps: [] }; }
 // after a check: keep recording only if a tune is being followed (a fresh recording from here)
 function resumeTuneRecording() { if (state.tune && state.started) startRecordingForTuning(); else state.rec = null; }
 function offerTuning(expected, rec, msg, tips = '', autoHide = false) {
-  if (!rec || fusion !== engines.tap || rec.taps.length < 5) { if (msg) showCalib(`${msg} ${tips}`); return; }
+  if (!rec || fusion !== engines.tap || rec.taps.length < 5) { if (msg) showResult(`${msg} ${tips}`); return; }
   showCalib(`${msg} Tuning the note detection to your playing…`);
   // let the message show before the (short) number crunching
   setTimeout(() => {
@@ -606,7 +610,7 @@ function offerTuning(expected, rec, msg, tips = '', autoHide = false) {
       base: { ...engines.tap.resolver.o }, fusionOpts: { ...engines.tap.o }, templates: engines.tap.resolver.templates, syncOffset: engines.tap.syncOffset,
     });
     if (!r.params) {
-      showCalib(`${msg} ${tips}`);
+      showResult(`${msg} ${tips}`);
       if (autoHide) setTimeout(() => { if (!state.calib && !state.teach && !state.check) $('calib').hidden = true; }, 4000);
       return;
     }
