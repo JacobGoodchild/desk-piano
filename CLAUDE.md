@@ -622,3 +622,7 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   triggers, no change (his offset is already right); unit test where only a 10 mm offset is right →
   found. Note-detection option labels in plain English.
 - **12:04** Check accuracy has a left-hand version (C3–G3), so the left hand can be checked and tuned too.
+- **12:09** Sixth review (last hour's changes) found 5 small issues + 1 older one, all fixed: no left-hand check on
+  the 2-octave paper (it starts at C4); desk overlay labels follow octave/transpose, the top key's right
+  edge is drawn, nothing drawn after the picture rotates; holding ? opens Help once; Check accuracy
+  now expects the notes that actually sound when octave/transpose are changed (was all wrong). Tests.

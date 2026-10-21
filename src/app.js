@@ -580,11 +580,14 @@ function startCheck(hand = 'right') {
   if (!state.started) { setStatus('Press Start first.'); return; }
   if (hand !== 'left') hand = 'right'; // (called from a button click with an event)
   const ex = CHECK[hand];
-  state.check = { got: [], t0: performance.now(), notes: ex.notes, hand };
+  // expected = what will sound (octave shift / transpose apply to the paper keys too)
+  state.check = { got: [], t0: performance.now(), notes: ex.notes.map(shiftNote), hand };
   startRecordingForTuning();
   const other = hand === 'right' ? 'left' : 'right';
-  showCalib(`Accuracy check: play <b>${ex.notes.map(noteName).join(' ')}</b> slowly, one finger per note (${ex.how}). <button id="checkOther">${other === 'left' ? 'Left' : 'Right'} hand instead</button>`, () => { state.check = null; resumeTuneRecording(); });
-  $('checkOther').onclick = () => startCheck(other);
+  const canLeft = settings.mode === 'desk' || state.layout.variant.low <= 48; // the 2-octave paper starts at C4
+  const switchBtn = hand === 'left' || canLeft ? ` <button id="checkOther">${other === 'left' ? 'Left' : 'Right'} hand instead</button>` : '';
+  showCalib(`Accuracy check: play <b>${ex.notes.map(noteName).join(' ')}</b> slowly, one finger per note (${ex.how}).${switchBtn}`, () => { state.check = null; resumeTuneRecording(); });
+  if ($('checkOther')) $('checkOther').onclick = () => startCheck(other);
 }
 function checkNote(midi) {
   const c = state.check;
@@ -782,12 +785,13 @@ function drawOverlay() {
     const sx = !state.calibDraft && deskPts.w ? vw / deskPts.w : 1, sy = !state.calibDraft && deskPts.h ? vh / deskPts.h : 1;
     for (const p of [deskPts.c4, deskPts.c5, deskPts.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x * sx), p.y * sy, 8, 0, 7); g.fill(); }
     // the invisible keyboard: white-key edges and the C's (once calibrated)
-    const kl = !state.calibDraft && deskKeyLines(deskPts, state.layout.variant.low, state.layout.variant.high);
+    const turned = !state.calibDraft && deskPts.w && (deskPts.w > deskPts.h) !== (vw > vh); // needs a new calibration
+    const kl = !state.calibDraft && !turned && deskKeyLines(deskPts, state.layout.variant.low, state.layout.variant.high);
     if (kl) {
       g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1.5;
       for (const [a, b] of kl.lines) { g.beginPath(); g.moveTo(X(a.x * sx), a.y * sy); g.lineTo(X(b.x * sx), b.y * sy); g.stroke(); }
       g.fillStyle = 'rgba(255,204,51,0.95)'; g.font = `bold ${Math.round(vw / 45)}px system-ui`; g.textAlign = 'center';
-      for (const c of kl.cs) g.fillText(noteName(c.midi), X(c.p.x * sx), c.p.y * sy);
+      for (const c of kl.cs) g.fillText(noteName(shiftNote(c.midi)), X(c.p.x * sx), c.p.y * sy);
     }
   }
   for (const hand of state.hands) {
@@ -1170,7 +1174,7 @@ function bindKeys() {
     const mainControl = e.target && (e.target.id === 'volume' || e.target.id === 'tuneSel');
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && !(mainControl && PEDAL_KEYS.has(e.code))) return;
     if (PEDAL_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
-    if (e.key === '?') { window.open('help.html', '_blank', 'noopener'); return; }
+    if (e.key === '?') { if (!e.repeat) window.open('help.html', '_blank', 'noopener'); return; }
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }
     if (k === 'r' && !e.repeat && settings.mode === 'desk') { recentre(); return; }

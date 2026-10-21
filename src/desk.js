@@ -52,12 +52,13 @@ export function deskKeyLines(cal, low = 48, high = 84) {
   const vBack = TAP_Y / OCT_MM, vFront = (TAP_Y - kb.whiteLen) / OCT_MM;
   const lines = [], cs = [];
   const c4w = whiteIdx(60);
-  for (let m = low; m <= high + 1; m++) {
+  for (let m = low; m <= high; m++) {
     if (isBlackKey(m)) continue;
     const k = (whiteIdx(m) - c4w - 0.5) / 7; // left edge of this white key, in octaves from C4's centre
     lines.push([at(k, vBack), at(k, vFront)]);
     if (m % 12 === 0 && m <= high) cs.push({ midi: m, p: at((whiteIdx(m) - c4w) / 7, vFront * 0.5) });
   }
+  if (!isBlackKey(high)) { const k = (whiteIdx(high) - c4w + 0.5) / 7; lines.push([at(k, vBack), at(k, vFront)]); } // right edge of the top key
   return { lines, cs };
 }
 const whiteIdx = (m) => Math.floor(m / 12) * 7 + [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6][m % 12];

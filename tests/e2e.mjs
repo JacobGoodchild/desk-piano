@@ -278,6 +278,18 @@ await check('personal tuning: applied to the engine, forgotten by Forget; a chec
   // left-hand version of the exercise
   const left = await page.evaluate(() => { const dp = window.deskPiano; dp.startCheck(); document.getElementById('checkOther').click(); return dp.state.check.notes; });
   assert.deepEqual(left, [48, 50, 52, 53, 55, 53, 52, 50, 48]);
+  // with the octave shifted up, the check expects (and scores) the notes that actually sound
+  const shifted = await page.evaluate(async () => {
+    const dp = window.deskPiano;
+    dp.settings.octave = 1; dp.applySettings();
+    dp.startCheck();
+    dp.state.check.got.push(72, 74, 76, 77, 79, 77, 76, 74, 72);
+    dp.finishCheck();
+    await new Promise((r) => setTimeout(r, 100));
+    dp.settings.octave = 0; dp.applySettings();
+    return document.getElementById('calib').textContent;
+  });
+  assert.match(shifted, /9 of 9/);
 });
 
 await check('Reset all puts settings, taught fingers and tuning back to the start', async (page) => {
