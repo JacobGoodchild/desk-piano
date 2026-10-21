@@ -891,6 +891,8 @@ function updateChecks() {
     hands: state.hands.length >= 2,
   };
   for (const li of document.querySelectorAll('#setupPanel li[data-step]')) li.classList.toggle('done', !!stepDone[li.dataset.step]);
+  const doneLabel = state.started ? 'Done – start playing' : '▶ Start camera & microphone';
+  if ($('setupDone').textContent !== doneLabel) $('setupDone').textContent = doneLabel;
   const html = rows.join('');
   if (el.dataset.html !== html) {
     el.innerHTML = html; el.dataset.html = html;
@@ -1098,7 +1100,8 @@ function bindSettings() {
     saveSettings(settings);
   });
   $('setupBtn').onclick = () => setSetup(true);
-  $('setupDone').onclick = () => setSetup(false);
+  // before Start, the set-up panel's main button starts the camera and microphone
+  $('setupDone').onclick = () => { if (!state.started) start(); else setSetup(false); };
   $('teachBtn').onclick = startTeaching;
   $('copyDiag').onclick = async () => {
     const { desk, fingerTemplates, camera, mic, midiOut, ...rest } = settings; // no device ids or positions

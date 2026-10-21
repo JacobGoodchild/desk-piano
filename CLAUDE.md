@@ -632,3 +632,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   mapping is right; those errors are wrong-finger picks (Teach my fingers is the tool for that).
 - **12:12** Phones: coming back to the page resumes a paused camera picture/audio, and reopens the camera or
   microphone if the phone stopped them in the background.
+- **12:15** First screen: the set-up panel's main button reads "▶ Start camera & microphone" until things are running
+  (then "Done – start playing"). Help mentions octave buttons, ? and Reset all.
