@@ -402,3 +402,6 @@ sync correction and per-finger scores.
   from the camera alone (classic engine, quieter) and says so, instead of playing nothing; the
   "camera-only" setting was never actually connected — fixed. Browser test added. Phone landscape:
   smaller what's-new banner (checked in screenshots).
+- **01:57** Tried preferring fingers near the last note (melodies move in small steps): worse at every
+  weight (56.1% → 42–54%), and preferring far fingers no better → reverted. Chromatic clip errors are
+  mostly a finger 4–5 keys away (wrong finger of the same hand) plus 7 of 22 taps with no finger chosen.
