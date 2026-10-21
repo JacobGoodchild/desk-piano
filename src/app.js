@@ -529,6 +529,11 @@ function teachStep() {
     const vec = r.pattern(tch.taps.shift());
     if (!vec || !tch.teacher.add(tch.order[tch.idx], vec)) { showTeach('(no finger movement seen – try again)'); continue; }
     tch.count++;
+    // say which finger moved most (thumb → little finger), as a check that the camera sees it
+    const most = vec.indexOf(Math.max(...vec));
+    const seen = FINGER_NAMES[[4, 8, 12, 16, 20][most]].toLowerCase();
+    const wanted = tch.order[tch.idx];
+    const note = [4, 8, 12, 16, 20][most] === wanted ? `✔ saw your ${seen}` : `saw your ${seen} move most – that's fine, it learns how your fingers move together`;
     if (tch.count >= TEACH_TAPS) { tch.idx++; tch.count = 0; }
     if (tch.idx >= tch.order.length) {
       settings.fingerTemplates = tch.teacher.templates();
@@ -538,7 +543,7 @@ function teachStep() {
       finishCalib('Thanks – your fingers are learnt. Play away!');
       return;
     }
-    showTeach();
+    showTeach(`<span class="teachSeen">(${note})</span>`);
   }
 }
 

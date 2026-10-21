@@ -541,3 +541,4 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   pedal (controller 64 on any MIDI input, once MIDI is enabled) work as the sustain pedal. Tests added.
 - **08:33** Early decisions re-measured: margin 0.2 → 27% of notes play a frame early (was 11%) at full
   accuracy; 0.15 → 40% early but −1 note; 0.05 → 63% early, 49%. Kept 0.2.
+- **08:35** Teach my fingers: after each tap it says which finger it saw move most (✔ when it's the one asked for).
