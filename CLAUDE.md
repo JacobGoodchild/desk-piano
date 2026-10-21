@@ -396,3 +396,5 @@ sync correction and per-finger scores.
   delay. Tried *self-teaching* (learn finger patterns from clear-cut taps while playing; leave-one-clip-
   out): worse, 32 → 19–26 correct (no clear-cut middle-finger taps → biased patterns) → not used;
   `--self-teach` kept in the clip tester as an experiment.
+- **01:52** Live memory check (looping clip, CPU tracking): JS heap flat at ~92–93 MB over the run;
+  note/frame histories stay bounded. Taught patterns are used only when all five fingers are taught.
