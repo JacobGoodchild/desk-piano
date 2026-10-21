@@ -230,10 +230,16 @@ export class FingerTeacher {
   }
 }
 
-// The hands at time t, interpolated between the frames either side (the nearest frame if t is
-// outside them). Same as the nearest frame at 30 fps on the clips; better with slower tracking
-// (dropping clip frames: 15 fps 47.4% → 50.9%, 10 fps 45.6% → 47.4%, fewer stray notes).
-function nearest(frames, t) { return interp(frames, t); }
+// The hands at time t: interpolated between the frames either side with slower tracking (dropping
+// clip frames: 15 fps 47.4% → 50.9%, 10 fps 45.6% → 47.4%, fewer stray notes).
+// Only when frames are far apart (> 45 ms): at 30 fps the nearest frame had one stray note fewer.
+function nearest(frames, t) {
+  let a = null, b = null;
+  for (const f of frames) { if (f.t <= t) a = f; else { b = f; break; } }
+  if (a && b && b.t - a.t > 45) return interp(frames, t);
+  if (!a || !b) return a || b;
+  return t - a.t <= b.t - t ? a : b;
+}
 
 function interp(frames, t) {
   let a = null, b = null;

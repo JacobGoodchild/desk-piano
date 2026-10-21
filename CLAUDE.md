@@ -535,3 +535,5 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:28** Finger movement is now measured from hand positions *interpolated* to the exact tap time (and
   100 ms before) instead of the nearest camera frame: 30 fps unchanged (56.1%), 15 fps 47.4% → 50.9%,
   10 fps 45.6% → 47.4% with fewer stray notes (5→3). Help page live on the site.
+- **08:29** Interpolation added 1 stray note at 30 fps (3→4) → now only used when frames are > 45 ms apart:
+  30 fps 56.1% / 3 stray, 15 fps 50.9% / 5, 10 fps 47.4% / 3. Shorter waits re-checked: 70 ms still best.
