@@ -604,3 +604,6 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   15 ms deadband) are the best balance — no harm in sync (32/57 both passes), +20 ms offset recovered
   by the 2nd pass (28→32/57, strays 8→3). Faster settings hurt when already in sync. Weakness for next
   time: a −20 ms offset (sound early) is not corrected (stays 23/57) — the measured gap doesn't move.
+- **11:50** Why −20 ms isn't corrected: the measured finger-stop→tap gap barely moves with the true offset
+  (in-sync median ≈ −29 ms, −20 ms offset ≈ −14 ms, +20 ms ≈ −33 ms), so the measure saturates on the
+  "sound early" side. Needs a better landing measure (next clip session); nothing changed.
