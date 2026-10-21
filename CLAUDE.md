@@ -630,3 +630,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   hovering 1 stray, resting 2 stray → 56.1%. Mary's wrong notes: 4 one white key too high, 4 → G (little
   finger dragged). Tried shifting the touch point sideways (−8…+8 mm): −4 mm +1 note, others worse →
   mapping is right; those errors are wrong-finger picks (Teach my fingers is the tool for that).
+- **12:12** Phones: coming back to the page resumes a paused camera picture/audio, and reopens the camera or
+  microphone if the phone stopped them in the background.
