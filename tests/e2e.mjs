@@ -175,6 +175,15 @@ const keyPoint = (midi) => {
   return applyH(Hp, L.keysX + (r.x0 + r.x1) / 2, L.keysY + (r.black ? 60 : 125));
 };
 
+await check('follow a tune: the next key lights up and advances on the right note', async (page) => {
+  await startApp(page, '?sim=1');
+  await page.selectOption('#tuneSel', { label: 'Mary had a little lamb' });
+  assert.match(await page.textContent('#tuneProg'), /^0 \/ 26/);
+  for (const k of ['KeyD', 'KeyS', 'KeyA', 'KeyG']) { await page.keyboard.press(k); await page.waitForTimeout(60); } // E D C, then a wrong F
+  assert.match(await page.textContent('#tuneProg'), /^3 \/ 26 · 1 wrong/);
+  assert.equal(await page.evaluate(() => window.deskPiano.state.tune.next), 62);
+});
+
 await check('taps + finger strikes on the paper play the right notes, chords and loudness', async (page) => {
   await startApp(page, '?sim=1');
   const result = await page.evaluate(async ({ markers, plan, W, H }) => {

@@ -82,3 +82,6 @@ body.setup #piano, body.setup #roll { display: none; }
   .news { font-size: 11px; padding: 3px 8px; line-height: 1.3; }
   .news button { padding: 0 8px; font-size: 11px; }
 }
+.tune { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--muted); }
+.tune select { max-width: 200px; background: #2c3546; color: var(--text); border: 1px solid #3a465c; border-radius: 6px; padding: 2px 4px; }
+#tuneProg { color: var(--text); }

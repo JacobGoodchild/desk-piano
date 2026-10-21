@@ -30,6 +30,10 @@ finger was seen pressing (move the camera, or keep the other fingers still). **S
 accuracy** gives a quick score on a short exercise. Orange dots on the on-screen keyboard show the
 key under each fingertip the camera sees — check they match your fingers before you play.
 
+**Follow a tune** (beside the camera picture): pick a tune — scale, Mary had a little lamb, Twinkle
+twinkle, Ode to joy, Frère Jacques, chromatic scale — and the next key lights up green; it moves on
+when you play the right note and counts wrong ones.
+
 No microphone (or you didn't allow it)? The app still plays clear finger strikes from the camera
 alone — quieter and less reliable (hovering hands can set notes off), so allow the mic if you can.
 

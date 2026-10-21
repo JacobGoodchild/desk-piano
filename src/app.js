@@ -19,6 +19,7 @@ import { loadSettings, saveSettings } from './settings.js';
 import { noteName, isBlack, whiteIndex } from './notes.js';
 import { HAND_CONNECTIONS } from './hand-connections.js';
 import { HandIds } from './hand-ids.js';
+import { TUNES, TuneFollower } from './tunes.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -85,6 +86,7 @@ function noteOn(midi, vel, info = {}) {
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
   if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
+  if (state.tune && info.how !== 'playback') { state.tune.play(midi); $('tuneProg').textContent = state.tune.progress(); }
   if (info.tap && !info.tap.learnt && info.tap.peak != null) { info.tap.learnt = true; velocityMap.add(info.tap.peak, info.tap.floor); }
   if (state.played.length > 500) state.played.shift();
   for (const v of voicesFor(midi)) v.noteOn(midi, vel);
@@ -545,11 +547,12 @@ function drawPiano() {
   const w0 = whiteIndex(low), nW = whiteIndex(high) - w0 + 1;
   const kw = W / nW;
   state.pianoGeom = { low, high, w0, kw, H };
+  const nextKey = state.tune ? state.tune.next : null; // "Follow a tune": the key to play next
   for (let m = low; m <= high; m++) {
     if (isBlack(m)) continue;
     const x = (whiteIndex(m) - w0) * kw;
     const on = state.active.has(m);
-    g.fillStyle = on ? '#4fa3ff' : '#f4f4f0';
+    g.fillStyle = on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : '#f4f4f0';
     g.fillRect(x + 1, 0, kw - 2, H - 2);
     g.fillStyle = on ? '#fff' : m === 60 ? '#c00' : '#888';
     g.font = `${m === 60 ? 'bold ' : ''}${Math.max(9, Math.min(13, kw * 0.38))}px system-ui`;
@@ -559,7 +562,7 @@ function drawPiano() {
   for (let m = low; m <= high; m++) {
     if (!isBlack(m)) continue;
     const x = (whiteIndex(m) - w0 + 1) * kw - kw * 0.3;
-    g.fillStyle = state.active.has(m) ? '#4fa3ff' : '#111';
+    g.fillStyle = state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : '#111';
     g.fillRect(x, 0, kw * 0.6, H * 0.6);
   }
   // fingertip dots
@@ -785,6 +788,17 @@ function setSetup(on, autoStart = true) {
   requestAnimationFrame(drawPiano);
 }
 
+function bindTunes() {
+  const sel = $('tuneSel');
+  sel.innerHTML = '<option value="">—</option>' + TUNES.map((t, i) => `<option value="${i}">${t.name}</option>`).join('');
+  sel.onchange = () => {
+    state.tune = sel.value === '' ? null : new TuneFollower(TUNES[Number(sel.value)]);
+    $('tuneProg').textContent = state.tune ? `${state.tune.progress()} — play the green key` : '';
+    sel.blur(); // keep the computer keys for playing
+    drawPiano();
+  };
+}
+
 function bindSettings() {
   const form = $('settings').querySelector('form');
   for (const [id, label] of Object.entries(INSTRUMENTS)) { form.elements.instrument.add(new Option(label, id)); form.elements.layer.add(new Option(label, id)); form.elements.split.add(new Option(label, id)); }
@@ -1004,6 +1018,7 @@ if (!SIM && (settings.seenNews || 0) < 2) {
 }
 if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings(settings); setSetup(true, false); }
 bindSettings();
+bindTunes();
 bindKeys();
 applySettings();
 requestAnimationFrame(loop);

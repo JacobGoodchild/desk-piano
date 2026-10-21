@@ -410,3 +410,6 @@ sync correction and per-finger scores.
 - **02:00** Tried a finger *bend* measure (angle change at the two upper joints): 0.15–0.3 weight scored
   57.9% (one more note than 56.1%); larger weights worse. Too small to trust → kept as an option
   (`flexWeight`, off) for the next clip session.
+- **02:03** New: **Follow a tune** — pick a public-domain tune (6 of them) and the next key lights up green
+  on the on-screen keyboard, advancing on the right note and counting wrong ones (unit + browser
+  tests; checked in laptop and phone screenshots — moved to the top of the side panel so phones see it).
