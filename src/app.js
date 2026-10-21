@@ -609,7 +609,7 @@ function drawOverlay() {
   }
   if (settings.mode === 'desk' && settings.desk && settings.desk.c4) {
     g.fillStyle = '#ffcc33';
-    for (const p of [settings.desk.c4, settings.desk.c5].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
+    for (const p of [settings.desk.c4, settings.desk.c5, settings.desk.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
   }
   for (const hand of state.hands) {
     const pts = hand.points;
