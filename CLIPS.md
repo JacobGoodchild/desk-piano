@@ -88,6 +88,8 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
   + `src/tap-fusion.js`): on each tap it picks the finger that moved down most compared with the
   hand's other fingers, and must still be moving down just before the tap.
 - Chords: in the C-E-G clip no finger stands out, so chords within a hand are **off by default**.
+- Slower hand tracking (simulate with `--frame-step 2|3`) costs accuracy; the app now waits longer
+  after a tap when frames are sparse and interpolates hand positions between frames.
 
 ## Clips that would help most next time
 
@@ -98,6 +100,15 @@ times and gaps, and how each note was triggered (`tap+descending`, `tap+land`, `
 3. Chords held for a moment (C-E-G, then F-A-C) with the hand starting clearly lifted.
 4. A clip filmed from higher up (looking down more steeply at the fingers), and one with the
    microphone close to the desk, to compare.
+5. The **Check accuracy** exercise (`check.mp4: C4 D4 E4 F4 G4 F4 E4 D4 C4`) and one or two
+   **Follow a tune** pieces played as written (e.g. `mary.mp4` with the tune's notes from
+   `src/tunes.js`) — exact transcriptions make every clip scoreable, and `--auto-tune` can then
+   test the app's personal tuning on real, known sequences.
+6. Something at real speed (a Grade-8-style passage, both hands) with a written note list, to see
+   how far accuracy falls with tempo.
+
+Tips for the recordings: keep the whole paper and all markers in view, the phone/webcam at the far
+side ~45° down, the mic as close to the paper as possible, and say nothing while playing.
 
 ## Engine settings to tune (in `RESOLVER_DEFAULTS`)
 
