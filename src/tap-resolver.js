@@ -20,6 +20,7 @@ export const RESOLVER_DEFAULTS = {
   lateWeight: 1, // score = travel + lateWeight × late (+ zWeight × depth change)
   typicalRank: 1, // compare against this finger in travel order (0 = least moved, 2 = median)
   zWeight: 1, // weight of MediaPipe's fingertip depth change (helped the chromatic clip)
+  jointWeight: 2, // the top joint (DIP) comes down with a press too: 1.5–4 all scored 56.1% vs 54.4%
   handRatio: 0.6, // second hand joins a tap only if its best finger led by this fraction of the first's
   repeatMs: 600, // repeated notes: replay the last finger within this window (0 = off)...
   repeatLateFactor: 0, // ...as long as that finger isn't rising
@@ -72,7 +73,14 @@ export class TapResolver {
         // optional: change in MediaPipe's estimated depth over the same window (+ = away from camera)
         let dz = 0;
         if (o.zWeight && hBefore && P[tip].z != null && hBefore.points[tip].z != null) dz = (P[tip].z - hBefore.points[tip].z) / size;
-        return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz };
+        // optional: the finger's top joint (DIP) comes down with a press too
+        let joint = 0;
+        if (o.jointWeight) {
+          let mj = Infinity;
+          for (const f of win) { const h = f.hands.find((x) => x.label === hand.label); if (h) mj = Math.min(mj, h.points[tip - 1].y); }
+          joint = (P[tip - 1].y - mj) / size;
+        }
+        return { tip, travel, late, after, score: travel + o.lateWeight * late + o.zWeight * dz + o.jointWeight * joint };
       });
       this.lastScores = { t, hand: hand.label, fingers: fingers.map((f) => ({ tip: f.tip, score: +f.score.toFixed(2), late: +f.late.toFixed(2) })) };
       const sorted = fingers.map((x) => x.score).sort((a, b) => a - b);
