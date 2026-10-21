@@ -621,3 +621,4 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   causes black/white mix-ups). Leave-one-clip-out on Jacob's clips (`--auto-tune --tune-tip`): never
   triggers, no change (his offset is already right); unit test where only a 10 mm offset is right →
   found. Note-detection option labels in plain English.
+- **12:04** Check accuracy has a left-hand version (C3–G3), so the left hand can be checked and tuned too.

@@ -571,30 +571,38 @@ function teachStep() {
 
 // ---------------------------------------------------------------- accuracy check
 // Play a short known exercise; the app compares what it heard with what was asked.
-const CHECK_NOTES = [60, 62, 64, 65, 67, 65, 64, 62, 60];
-function startCheck() {
+// the exercise: right hand from middle C, or left hand an octave lower (little finger on C3)
+const CHECK = {
+  right: { notes: [60, 62, 64, 65, 67, 65, 64, 62, 60], how: 'right hand, thumb on middle C' },
+  left: { notes: [48, 50, 52, 53, 55, 53, 52, 50, 48], how: 'left hand, little finger on the C below middle C' },
+};
+function startCheck(hand = 'right') {
   if (!state.started) { setStatus('Press Start first.'); return; }
-  state.check = { got: [], t0: performance.now() };
+  if (hand !== 'left') hand = 'right'; // (called from a button click with an event)
+  const ex = CHECK[hand];
+  state.check = { got: [], t0: performance.now(), notes: ex.notes, hand };
   startRecordingForTuning();
-  showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; resumeTuneRecording(); });
+  const other = hand === 'right' ? 'left' : 'right';
+  showCalib(`Accuracy check: play <b>${ex.notes.map(noteName).join(' ')}</b> slowly, one finger per note (${ex.how}). <button id="checkOther">${other === 'left' ? 'Left' : 'Right'} hand instead</button>`, () => { state.check = null; resumeTuneRecording(); });
+  $('checkOther').onclick = () => startCheck(other);
 }
 function checkNote(midi) {
   const c = state.check;
   c.got.push(midi);
-  if (c.got.length >= CHECK_NOTES.length + 3) finishCheck();
+  if (c.got.length >= c.notes.length + 3) finishCheck();
 }
 function finishCheck() {
   const c = state.check; state.check = null;
   const rec = state.rec;
   resumeTuneRecording();
-  const correct = alignCorrect(CHECK_NOTES, c.got);
+  const correct = alignCorrect(c.notes, c.got);
   const extra = Math.max(0, c.got.length - correct);
-  const hit = alignMatched(CHECK_NOTES, c.got);
-  const chips = CHECK_NOTES.map((m, i) => `<span class="chip ${hit[i] ? 'hit' : 'miss'}">${noteName(m)}</span>`).join('');
-  const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. <span class="chips">${chips}</span> Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
+  const hit = alignMatched(c.notes, c.got);
+  const chips = c.notes.map((m, i) => `<span class="chip ${hit[i] ? 'hit' : 'miss'}">${noteName(m)}</span>`).join('');
+  const msg = `Accuracy check: <b>${correct} of ${c.notes.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. <span class="chips">${chips}</span> Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
   const tips = correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.';
-  if (correct >= CHECK_NOTES.length) { showResult(`${msg} ${tips}`); return; }
-  offerTuning(CHECK_NOTES, rec, msg, tips);
+  if (correct >= c.notes.length) { showResult(`${msg} ${tips}`); return; }
+  offerTuning(c.notes, rec, msg, tips);
 }
 
 // Personal auto-tuning (see auto-tune.js): the hand frames and taps of a known exercise or tune are

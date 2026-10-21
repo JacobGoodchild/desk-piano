@@ -275,6 +275,9 @@ await check('personal tuning: applied to the engine, forgotten by Forget; a chec
   });
   assert.deepEqual([r.tuned, r.after, r.saved], [0.02, r.before, null], JSON.stringify(r));
   assert.match(r.msg, /Accuracy check: 2 of 9/);
+  // left-hand version of the exercise
+  const left = await page.evaluate(() => { const dp = window.deskPiano; dp.startCheck(); document.getElementById('checkOther').click(); return dp.state.check.notes; });
+  assert.deepEqual(left, [48, 50, 52, 53, 55, 53, 52, 50, 48]);
 });
 
 await check('Reset all puts settings, taught fingers and tuning back to the start', async (page) => {
