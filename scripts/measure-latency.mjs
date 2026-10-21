@@ -33,7 +33,13 @@ const r = await page.evaluate(() => {
 console.log(`taps heard: ${r.taps}`);
 console.log(`tap detected → main thread: median ${r.median.toFixed(1)} ms, max ${r.max.toFixed(1)} ms (includes the 3 ms loudness window and one 128-sample block)`);
 console.log(`browser-reported audio: base ${r.base.toFixed(1)} ms, output ${r.output.toFixed(1)} ms, input ${r.input.toFixed(1)} ms`);
-console.log(`estimated tap → sound (when the finger is already seen descending): ~${(r.median + r.base + r.output + r.input).toFixed(0)} ms`);
+const audio = r.median + r.base + r.output + r.input;
+console.log(`audio path (tap → sound, if the finger were known instantly): ~${audio.toFixed(0)} ms`);
+// the tap engine then waits for camera frames after the tap (see adaptWait in src/app.js)
+for (const [fps, label] of [[30, '30 fps camera'], [60, '60 fps camera']]) {
+  const frame = 1000 / fps;
+  console.log(`  + ${label}: accurate ~${(audio + 2 * frame + 4).toFixed(0)} ms (clear-cut notes ~${(audio + frame + 4).toFixed(0)} ms), fast ~${(audio + frame + 4).toFixed(0)} ms`);
+}
 await browser.close();
 await close();
 rmSync(dir, { recursive: true, force: true });

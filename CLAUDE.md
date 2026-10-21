@@ -519,3 +519,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:15** Slow-tracker check of look-back windows at 10 fps: defaults already best. Personal tuning also
   offered after finishing a **Follow a tune** piece with wrong or missed notes (longer known sequence
   than the 9-note check; same in-memory-only recording, same safe 2-gate grid).
+- **08:17** Delay re-measured (`scripts/measure-latency.mjs`, headless): audio path ~57 ms; with the tap engine's
+  wait for camera frames, 30 fps camera: ~128 ms accurate (clear-cut notes ~95 ms), ~95 ms fast; 60 fps:
+  ~95 / ~78 ms. On a real device add the camera + hand-tracking time; the debug view shows the live figure.
