@@ -530,3 +530,5 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:23** New **Help** page (help.html, linked in the top bar): set-up, playing, getting it right, what's on
   screen, extras, privacy — plain English; checked on laptop and phone; cached offline; deployed (the
   Pages workflow copies an explicit file list, so it was added there).
+- **08:25** Octave −/+ buttons beside the tune picker (the paper is 3 octaves; real pieces need more); buttons
+  lose focus after a click so Space (pedal) can't press them again. Browser test.

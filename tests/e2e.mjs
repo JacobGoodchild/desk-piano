@@ -248,6 +248,12 @@ await check('follow a tune: the next key lights up and advances on the right not
   for (const k of ['KeyD', 'KeyS', 'KeyA', 'KeyG']) { await page.keyboard.press(k); await page.waitForTimeout(60); } // E D C, then a wrong F
   assert.match(await page.textContent('#tuneProg'), /^3 \/ 26 · 1 wrong/);
   assert.equal(await page.evaluate(() => window.deskPiano.state.tune.next), 62);
+  // octave buttons
+  await page.click('#octUp');
+  assert.equal(await page.textContent('#octVal'), '+1');
+  assert.equal(await page.evaluate(() => window.deskPiano.settings.octave), 1);
+  await page.click('#octDown');
+  assert.equal(await page.textContent('#octVal'), '0');
 });
 
 await check('finishing a tune then switching it off at once does not crash', async (page) => {

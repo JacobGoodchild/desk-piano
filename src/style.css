@@ -107,3 +107,6 @@ dialog form { max-height: calc(100dvh - 60px); }
   #camWrap, body.setup #camWrap { max-height: 32vh; }
   .news { font-size: 12px; }
 }
+.oct { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; }
+.oct button { padding: 0 9px; line-height: 22px; }
+.oct b { min-width: 22px; text-align: center; color: var(--text); }

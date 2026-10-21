@@ -879,6 +879,7 @@ function applySettings() {
   $('cameraOnlyRow').hidden = settings.engine !== 'classic'; // only applies to the classic engine
   for (const k of Object.keys(TUNE_GRID)) engines.tap.resolver.o[k] = settings.tuned && k in settings.tuned ? settings.tuned[k] : baseResolver[k]; // personal tuning
   $('fixedRow').hidden = settings.dynamics !== 'fixed';
+  $('octVal').textContent = settings.octave > 0 ? `+${settings.octave}` : String(settings.octave);
   $('touchRow').hidden = settings.dynamics === 'fixed';
   // Without a microphone the tap engine can never play, so fall back to the classic engine playing
   // clear finger strikes on their own (quieter, a little later, and hovering hands may trigger notes).
@@ -909,6 +910,17 @@ function setSetup(on, autoStart = true) {
   $('setupBtn').setAttribute('aria-pressed', String(on));
   if (on && autoStart && !state.started) start();
   requestAnimationFrame(drawPiano);
+}
+
+function bindOctave() {
+  const step = (d) => {
+    settings.octave = Math.max(-2, Math.min(2, settings.octave + d));
+    $('settings').querySelector('form').elements.octave.value = settings.octave;
+    fusion.allOff(); // keys now mean other notes: let go of what's sounding
+    applySettings();
+  };
+  $('octDown').onclick = () => step(-1);
+  $('octUp').onclick = () => step(1);
 }
 
 function bindTunes() {
@@ -1155,6 +1167,9 @@ if (!SIM && (settings.seenNews || 0) < 2) {
 if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings(settings); setSetup(true, false); }
 bindSettings();
 bindTunes();
+bindOctave();
+// don't leave buttons focused after a click: Space (the sustain pedal) would press them again
+document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b && !b.closest('dialog')) b.blur(); });
 bindKeys();
 applySettings();
 requestAnimationFrame(loop);
