@@ -70,3 +70,10 @@ No build step — plain ES modules. `npm test` runs unit tests (Node) and browse
 Chromium with a fake camera and microphone, synthetic data only). `scripts/clip-test.mjs` scores the
 detection against real recordings kept **outside** the repo (see `CLIPS.md` for the rules).
 `CREDITS.md` lists every third-party asset and its licence.
+
+Main pieces: `src/app.js` (wiring and UI), `src/tap-resolver.js` + `src/tap-fusion.js` (which finger
+pressed, decided on each heard tap), `src/onset.js` + `src/tap-worklet.js` (tap detector),
+`src/markers.js` + `src/paper.js` (finding the printed paper), `src/desk.js` (plain desk mode),
+`src/auto-tune.js` (personal tuning), `src/piano.js` / `src/synths.js` (sounds), `sw.js` (offline).
+Useful scripts: `scripts/measure-latency.mjs` (delay), `scripts/measure-instruments.mjs` (levels),
+`scripts/screenshots.mjs` (fake-camera screenshots into the git-ignored `screenshots/`).

@@ -570,6 +570,9 @@ only relevant rows, Reset all); phone portrait layout; Help page; octave −/+ b
 reads ahead (next 2 notes) and has 4 more tunes (Für Elise, Minuet in G, Jingle bells, Amazing grace);
 Teach my fingers says which finger it saw; shorter what's-new note; status line follows Paper/Desk.
 
+**Tests:** 51 unit + 18 browser tests (synthetic data only), CI green; offline after a single visit
+now really works (strict test). Desk mode simulated on your clips: 50.8% (paper 56.1%).
+
 **Delay:** audio path ~57 ms (headless); with the camera wait ~128 ms at 30 fps (~95 ms for clear-cut
 notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera/tracking time.
 - **11:28** Fourth review (latest changes) found 6 issues, all fixed: a foot pedal moved the volume slider /
