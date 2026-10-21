@@ -336,3 +336,7 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 - **21:26** More sounds: bright piano (same samples + treble lift, no download), vibraphone, music box
   (all level-matched within 1 dB); "Layer with" setting plays two sounds together (layer at 60%).
   Live end-to-end re-check on the middle-C video: still only C4 played.
+- **21:35** Bass sound + split keyboard ("Below middle C play …"). Tried MediaPipe confidence 0.3 instead
+  of 0.5: hands found in a few more frames but accuracy 52.6% vs 54.4% → kept 0.5.
+- **21:35 → 01:21** The session's worker was restarted over and over (~4 h lost, nothing lost from git;
+  wake-ups queued up and arrived together at 01:21). Carrying on.
