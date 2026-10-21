@@ -634,3 +634,6 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   microphone if the phone stopped them in the background.
 - **12:15** First screen: the set-up panel's main button reads "▶ Start camera & microphone" until things are running
   (then "Done – start playing"). Help mentions octave buttons, ? and Reset all.
+- **12:18** Browsers without per-frame camera callbacks (e.g. some Firefox versions): only new camera pictures are
+  processed (was every screen refresh, repeating the same picture). Diagnostics include the tap
+  time-out, fingertip offset and mic failure.

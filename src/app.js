@@ -334,7 +334,12 @@ async function startCamera() {
     video.requestVideoFrameCallback(onFrame);
   };
   if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(onFrame);
-  else { const loop = () => { processVideoFrame(performance.now()); requestAnimationFrame(loop); }; loop(); }
+  else {
+    // browsers without per-frame callbacks: check on each screen refresh, but only process a new picture
+    let lastTime = -1;
+    const loop = () => { if (video.currentTime !== lastTime) { lastTime = video.currentTime; processVideoFrame(performance.now()); } requestAnimationFrame(loop); };
+    loop();
+  }
 }
 
 // Some devices (and headless browsers) have slow GPU paths: after a couple of seconds, if hand
