@@ -98,8 +98,14 @@ function noteOn(midi, vel, info = {}) {
   state.played.push(entry);
   if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
   if (state.tune && info.how !== 'playback') {
-    const want = state.tune.next;
+    const want = state.tune.next, wasDone = state.tune.done;
     state.tune.play(midi);
+    if (wasDone && !state.tune.done && state.started && !state.check) startRecordingForTuning(); // started again
+    if (!wasDone && state.tune.done && state.rec && !state.check) {
+      const rec = state.rec; state.rec = null;
+      // tuning only helps if notes were wrong or taps were missed (more taps heard than notes)
+      if (state.tune.wrong > 0 || rec.taps.length > state.tune.tune.notes.length + 1) setTimeout(() => offerTuning(state.tune.tune.notes, rec, `Finished “${state.tune.tune.name}” with ${state.tune.wrong} wrong.`), 600);
+    }
     $('tuneProg').textContent = state.tune.progress();
     if (want != null && midi !== want) { state.tuneWrong = midi; setTimeout(() => { if (state.tuneWrong === midi) { state.tuneWrong = null; drawPiano(); } }, 400); }
   }
@@ -260,7 +266,7 @@ function handleTap({ t, peak, floor, velocity }) {
   if (state.teach) { state.teach.taps.push(t); return; } // teaching: no notes
   if (state.calib) { calibTaps.push(t); return; } // resolved against the camera in calibrationEvents
   const tap = { t, velocity: vel, peak, floor };
-  if (state.check && state.check.rec.taps.length < 100) state.check.rec.taps.push({ t, velocity: vel });
+  if (state.rec && state.rec.taps.length < 200) state.rec.taps.push({ t, velocity: vel });
   const played = fusion.onTap(tap, strikes);
   // learn the loudness range only from taps that really were notes (not talking or knocks);
   // the tap engine decides a moment later, so it's learnt in noteOn
@@ -380,7 +386,7 @@ function handleHandFrame(frame) {
   updateHover(frame.hands);
   if (state.teach) { engines.tap.resolver.pushFrame(frame); teachStep(); return; }
   if (state.calib) { engines.tap.resolver.pushFrame(frame); calibrationEvents(events); return; }
-  if (state.check && state.check.rec.frames.length < 3000) state.check.rec.frames.push(frame);
+  if (state.rec && state.rec.frames.length < 6000) state.rec.frames.push(frame);
   if (fusion === engines.tap) fusion.onFrame(frame);
   else fusion.onStrikeEvents(events, strikes);
   fusion.tick(performance.now());
@@ -536,7 +542,8 @@ function teachStep() {
 const CHECK_NOTES = [60, 62, 64, 65, 67, 65, 64, 62, 60];
 function startCheck() {
   if (!state.started) { setStatus('Press Start first.'); return; }
-  state.check = { got: [], t0: performance.now(), rec: { frames: [], taps: [] } }; // rec: in memory only, for auto-tuning
+  state.check = { got: [], t0: performance.now() };
+  startRecordingForTuning();
   showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; });
 }
 function checkNote(midi) {
@@ -546,21 +553,30 @@ function checkNote(midi) {
 }
 function finishCheck() {
   const c = state.check; state.check = null;
+  const rec = state.rec; state.rec = null;
   const correct = alignCorrect(CHECK_NOTES, c.got);
   const extra = Math.max(0, c.got.length - correct);
   const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
   const tips = correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.';
-  if (correct >= CHECK_NOTES.length || fusion !== engines.tap || c.rec.taps.length < 5) { showCalib(`${msg} ${tips}`); return; }
+  if (correct >= CHECK_NOTES.length) { showCalib(`${msg} ${tips}`); return; }
+  offerTuning(CHECK_NOTES, rec, msg, tips);
+}
+
+// Personal auto-tuning (see auto-tune.js): the hand frames and taps of a known exercise or tune are
+// kept in memory only (state.rec) and replayed with variations of the detection settings.
+function startRecordingForTuning() { state.rec = { frames: [], taps: [] }; }
+function offerTuning(expected, rec, msg, tips = '') {
+  if (!rec || fusion !== engines.tap || rec.taps.length < 5) { if (msg) showCalib(`${msg} ${tips}`); return; }
   showCalib(`${msg} Tuning the note detection to your playing…`);
   // let the message show before the (short) number crunching
   setTimeout(() => {
     const r = autoTune({
-      frames: c.rec.frames, taps: c.rec.taps, expected: CHECK_NOTES, keyFor: (p) => keyForPoint(p.x, p.y),
+      frames: rec.frames, taps: rec.taps, expected, keyFor: (p) => keyForPoint(p.x, p.y),
       base: { ...engines.tap.resolver.o }, fusionOpts: { ...engines.tap.o }, templates: engines.tap.resolver.templates, syncOffset: engines.tap.syncOffset,
     });
     if (!r.params) { showCalib(`${msg} ${tips}`); return; }
-    showCalib(`${msg} <b>Tuned to your playing:</b> replaying what you just played with adjusted detection gets <b>${r.after} of ${CHECK_NOTES.length}</b>. <button id="tuneKeep" class="primary">Keep it</button> <button id="tuneNo">No thanks</button>`);
-    $('tuneKeep').onclick = () => { settings.tuned = { ...(settings.tuned || {}), ...r.params }; applySettings(); finishCalib('Tuned – try Check accuracy again to see the difference.'); };
+    showCalib(`${msg} <b>Tuned to your playing:</b> replaying what you just played with adjusted detection gets <b>${r.after} of ${expected.length}</b> notes right (was ${r.before}). <button id="tuneKeep" class="primary">Keep it</button> <button id="tuneNo">No thanks</button>`);
+    $('tuneKeep').onclick = () => { settings.tuned = { ...(settings.tuned || {}), ...r.params }; applySettings(); finishCalib('Tuned to your playing – Settings are unchanged; “Forget” on the set-up screen undoes it.'); };
     $('tuneNo').onclick = () => { $('calib').hidden = true; };
   }, 30);
 }
@@ -889,6 +905,7 @@ function bindTunes() {
   sel.innerHTML = '<option value="">—</option>' + TUNES.map((t, i) => `<option value="${i}">${t.name}</option>`).join('');
   sel.onchange = () => {
     state.tune = sel.value === '' ? null : new TuneFollower(TUNES[Number(sel.value)]);
+    if (state.tune && state.started && !state.check) startRecordingForTuning(); else if (!state.check) state.rec = null;
     $('tuneProg').textContent = state.tune ? `${state.tune.progress()} — play the green key` : '';
     sel.blur(); // keep the computer keys for playing
     drawPiano();

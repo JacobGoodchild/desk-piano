@@ -516,3 +516,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   10 fps (45.6%) — but the app capped it at 90 ms. New rule: fast cameras 2 frames; slower
   max(70, 2.1 frames − 70 ms), up to 210 ms. The tap time-out now also allows for tracking time (the
   live run's "no camera frame in time" drops are gone; 2 live runs: 31 of 33 notes C4).
+- **08:15** Slow-tracker check of look-back windows at 10 fps: defaults already best. Personal tuning also
+  offered after finishing a **Follow a tune** piece with wrong or missed notes (longer known sequence
+  than the 9-note check; same in-memory-only recording, same safe 2-gate grid).

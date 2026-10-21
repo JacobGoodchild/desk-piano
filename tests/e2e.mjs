@@ -225,7 +225,7 @@ await check('personal tuning: applied to the engine, forgotten by Forget; a chec
     const after = o.minLate;
     // an accuracy check where taps were heard but nothing useful was seen
     dp.startCheck();
-    for (let i = 0; i < 6; i++) dp.state.check.rec.taps.push({ t: performance.now() - 1000 + i * 100, velocity: 0.5 });
+    for (let i = 0; i < 6; i++) dp.state.rec.taps.push({ t: performance.now() - 1000 + i * 100, velocity: 0.5 });
     dp.state.check.got.push(62, 64);
     dp.finishCheck();
     await new Promise((res) => setTimeout(res, 300));
