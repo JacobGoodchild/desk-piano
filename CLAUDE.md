@@ -522,3 +522,8 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:17** Delay re-measured (`scripts/measure-latency.mjs`, headless): audio path ~57 ms; with the tap engine's
   wait for camera frames, 30 fps camera: ~128 ms accurate (clear-cut notes ~95 ms), ~95 ms fast; 60 fps:
   ~95 / ~78 ms. On a real device add the camera + hand-tracking time; the debug view shows the live figure.
+- **08:21** Third code review (today's changes) found 5 bugs, all fixed: a crash / wrong scoring if the tune was
+  changed within 0.6 s of finishing one; cancelling Check accuracy left the in-memory recording
+  running; a check during a tune dropped the tune's recording; a restarted tune missed its first
+  tap; desk calibration dots drawn in old camera pixels after a resolution change. The tune-finished
+  message now closes by itself. Browser test for the crash case.

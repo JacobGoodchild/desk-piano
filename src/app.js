@@ -100,11 +100,13 @@ function noteOn(midi, vel, info = {}) {
   if (state.tune && info.how !== 'playback') {
     const want = state.tune.next, wasDone = state.tune.done;
     state.tune.play(midi);
-    if (wasDone && !state.tune.done && state.started && !state.check) startRecordingForTuning(); // started again
     if (!wasDone && state.tune.done && state.rec && !state.check) {
-      const rec = state.rec; state.rec = null;
-      // tuning only helps if notes were wrong or taps were missed (more taps heard than notes)
-      if (state.tune.wrong > 0 || rec.taps.length > state.tune.tune.notes.length + 1) setTimeout(() => offerTuning(state.tune.tune.notes, rec, `Finished “${state.tune.tune.name}” with ${state.tune.wrong} wrong.`), 600);
+      const rec = state.rec;
+      startRecordingForTuning(); // already recording if the player starts the tune again
+      // tuning only helps if notes were wrong or taps were missed (more taps heard than notes);
+      // read everything now: the player may change or restart the tune before the timer fires
+      const { notes, name } = state.tune.tune, wrong = state.tune.wrong;
+      if (rec.taps.length >= 5 && (wrong > 0 || rec.taps.length > notes.length + 1)) setTimeout(() => offerTuning(notes, rec, `Finished “${name}” with ${wrong} wrong.`, '', true), 600);
     }
     $('tuneProg').textContent = state.tune.progress();
     if (want != null && midi !== want) { state.tuneWrong = midi; setTimeout(() => { if (state.tuneWrong === midi) { state.tuneWrong = null; drawPiano(); } }, 400); }
@@ -544,7 +546,7 @@ function startCheck() {
   if (!state.started) { setStatus('Press Start first.'); return; }
   state.check = { got: [], t0: performance.now() };
   startRecordingForTuning();
-  showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; });
+  showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; resumeTuneRecording(); });
 }
 function checkNote(midi) {
   const c = state.check;
@@ -553,7 +555,8 @@ function checkNote(midi) {
 }
 function finishCheck() {
   const c = state.check; state.check = null;
-  const rec = state.rec; state.rec = null;
+  const rec = state.rec;
+  resumeTuneRecording();
   const correct = alignCorrect(CHECK_NOTES, c.got);
   const extra = Math.max(0, c.got.length - correct);
   const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
@@ -565,7 +568,9 @@ function finishCheck() {
 // Personal auto-tuning (see auto-tune.js): the hand frames and taps of a known exercise or tune are
 // kept in memory only (state.rec) and replayed with variations of the detection settings.
 function startRecordingForTuning() { state.rec = { frames: [], taps: [] }; }
-function offerTuning(expected, rec, msg, tips = '') {
+// after a check: keep recording only if a tune is being followed (a fresh recording from here)
+function resumeTuneRecording() { if (state.tune && state.started) startRecordingForTuning(); else state.rec = null; }
+function offerTuning(expected, rec, msg, tips = '', autoHide = false) {
   if (!rec || fusion !== engines.tap || rec.taps.length < 5) { if (msg) showCalib(`${msg} ${tips}`); return; }
   showCalib(`${msg} Tuning the note detection to your playing…`);
   // let the message show before the (short) number crunching
@@ -574,7 +579,11 @@ function offerTuning(expected, rec, msg, tips = '') {
       frames: rec.frames, taps: rec.taps, expected, keyFor: (p) => keyForPoint(p.x, p.y),
       base: { ...engines.tap.resolver.o }, fusionOpts: { ...engines.tap.o }, templates: engines.tap.resolver.templates, syncOffset: engines.tap.syncOffset,
     });
-    if (!r.params) { showCalib(`${msg} ${tips}`); return; }
+    if (!r.params) {
+      showCalib(`${msg} ${tips}`);
+      if (autoHide) setTimeout(() => { if (!state.calib && !state.teach && !state.check) $('calib').hidden = true; }, 4000);
+      return;
+    }
     showCalib(`${msg} <b>Tuned to your playing:</b> replaying what you just played with adjusted detection gets <b>${r.after} of ${expected.length}</b> notes right (was ${r.before}). <button id="tuneKeep" class="primary">Keep it</button> <button id="tuneNo">No thanks</button>`);
     $('tuneKeep').onclick = () => { settings.tuned = { ...(settings.tuned || {}), ...r.params }; applySettings(); finishCalib('Tuned to your playing – Settings are unchanged; “Forget” on the set-up screen undoes it.'); };
     $('tuneNo').onclick = () => { $('calib').hidden = true; };
@@ -725,7 +734,9 @@ function drawOverlay() {
   const deskPts = state.calibDraft || settings.desk; // show the new points while calibrating
   if (settings.mode === 'desk' && deskPts && deskPts.c4) {
     g.fillStyle = '#ffcc33';
-    for (const p of [deskPts.c4, deskPts.c5, deskPts.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
+    // saved points are in the camera pixels at calibration time (the draft is in today's)
+    const sx = !state.calibDraft && deskPts.w ? vw / deskPts.w : 1, sy = !state.calibDraft && deskPts.h ? vh / deskPts.h : 1;
+    for (const p of [deskPts.c4, deskPts.c5, deskPts.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x * sx), p.y * sy, 8, 0, 7); g.fill(); }
   }
   for (const hand of state.hands) {
     const pts = hand.points;

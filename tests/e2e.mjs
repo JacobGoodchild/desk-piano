@@ -244,6 +244,23 @@ await check('follow a tune: the next key lights up and advances on the right not
   assert.equal(await page.evaluate(() => window.deskPiano.state.tune.next), 62);
 });
 
+await check('finishing a tune then switching it off at once does not crash', async (page) => {
+  await startApp(page, '?sim=1');
+  await page.selectOption('#tuneSel', { label: 'Chromatic scale' });
+  const r = await page.evaluate(async () => {
+    const dp = window.deskPiano;
+    for (let i = 0; i < 20; i++) dp.state.rec.taps.push({ t: performance.now() - 2000 + i * 50, velocity: 0.5 });
+    dp.noteOn(61, 0.5, { how: 'tap' }); dp.noteOff(61); // a wrong note
+    for (let m = 60; m <= 72; m++) { dp.noteOn(m, 0.5, { how: 'tap' }); dp.noteOff(m); }
+    const done = dp.state.tune.done;
+    const sel = document.getElementById('tuneSel'); sel.value = ''; sel.dispatchEvent(new Event('change'));
+    await new Promise((res) => setTimeout(res, 1200));
+    return { done, rec: dp.state.rec };
+  });
+  assert.ok(r.done);
+  assert.equal(r.rec, null, 'recording stops when no tune is followed');
+});
+
 await check('taps + finger strikes on the paper play the right notes, chords and loudness', async (page) => {
   await startApp(page, '?sim=1');
   const result = await page.evaluate(async ({ markers, plan, W, H }) => {
