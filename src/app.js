@@ -678,6 +678,10 @@ function updateChecks() {
     tick(f >= 15, f >= 15 ? `Hand tracking ${Math.round(f)} frames/s` : `Hand tracking slow (${Math.round(f)} frames/s) – close other apps or use a faster device`);
   }
   tick(state.hands.length >= 2, `Hands found: ${state.hands.length} of 2`);
+  if (state.latencies.length >= 3) {
+    const l = [...state.latencies].sort((a, b) => a - b)[state.latencies.length >> 1];
+    tick(l < 180, `Delay from tap to sound: about ${Math.round(l / 10) * 10} ms${l >= 180 ? ' – try Settings → Response: Faster, or a faster device' : ''}`);
+  }
   // hands busy for a while but no taps heard → the mic is probably too far away or too insensitive
   const now = performance.now();
   if (state.hands.length) { if (!state.handsSince) state.handsSince = now; } else state.handsSince = 0;
