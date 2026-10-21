@@ -385,7 +385,7 @@ sync correction and per-finger scores.
   over-fitting 8 clips).
 - **01:40** "Teach my fingers" now measures movement exactly like the resolver (shared scoring); sustain
   pedal adds a little sympathetic resonance; print page shows the set-up diagram and mentions Desk mode.
-- **01:50** "Copy diagnostics" button in the debug view (numbers only — no video/audio, no device ids).
+- **01:43** "Copy diagnostics" button in the debug view (numbers only — no video/audio, no device ids).
   Tried letting taps wait longer on slow devices: in 4 live runs (headless, 8–10 fps) it made no
   measurable difference (16–20 of 28 taps dropped either way; 39 of 40 notes C4) → reverted. Live runs
   vary run-to-run, so single runs aren't evidence.

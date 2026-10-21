@@ -727,6 +727,7 @@ function applySettings() {
   applyMirror();
   $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
+  $('cameraOnlyRow').hidden = settings.engine !== 'classic'; // only applies to the classic engine
   const nextEngine = engines[settings.engine] || engines.tap;
   if (nextEngine !== fusion) { fusion.allOff(); fusion = nextEngine; }
   for (const e of Object.values(engines)) e.speakerMode = settings.output === 'speaker';
