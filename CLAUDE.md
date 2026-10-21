@@ -615,3 +615,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   labelled), drawn with the same geometry as the note mapping (unit test: each drawn C maps to that C).
 - **11:57** Check accuracy shows each expected note as a green/red chip (which ones it got); result panels say
   "Close" instead of "Cancel". Unit test for the alignment; checked in a screenshot.
+- **11:59** Live site checked fresh in headless Chromium: loads with no errors, plays, Help page live. Repeated-note
+  window re-checked (0–1200 ms): 400–600 ms best (56.1%), 900 ms adds stray notes → kept 600.
