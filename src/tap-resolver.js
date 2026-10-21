@@ -83,7 +83,7 @@ export class TapResolver {
       // If the player has taught us how their fingers move together, pick the finger whose
       // learnt pattern best matches this tap (e.g. the ring finger dragged along by the middle).
       const vec = fingers.map((f) => Math.max(0, f.score - typical));
-      if (this.templates) {
+      if (this.templates && TIPS.every((tip) => this.templates[tip])) { // only a complete set (partial sets skew choices)
         let bestSim = -Infinity;
         for (const f of cands) {
           const T = this.templates[f.tip];
