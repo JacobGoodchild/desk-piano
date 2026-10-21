@@ -383,3 +383,5 @@ sync correction and per-finger scores.
   false notes in hover/rest clips 3 (from 4). A joint re-tune of depth/late/joint weights found 57.9–
   58.6% but those differ by 1–2 notes from the current defaults → kept the simpler defaults (avoid
   over-fitting 8 clips).
+- **01:40** "Teach my fingers" now measures movement exactly like the resolver (shared scoring); sustain
+  pedal adds a little sympathetic resonance; print page shows the set-up diagram and mentions Desk mode.
