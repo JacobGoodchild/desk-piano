@@ -873,11 +873,14 @@ function loop() {
 
 // ---------------------------------------------------------------- UI
 function setStatus(s) { $('status').textContent = s; }
+const readyText = () => `Ready – tap your fingers on the ${settings.mode === 'desk' ? 'desk' : 'paper keys'}. Nothing is recorded or uploaded.`;
 
 function applySettings() {
   state.layout = paperLayout(settings.paperSize);
   $('debug').hidden = !settings.debug;
   selectInstrument(settings.instrument);
+  if (state.started && state.shownMode && state.shownMode !== settings.mode && $('status').textContent.startsWith('Ready')) setStatus(readyText());
+  state.shownMode = settings.mode;
   $('modePaper').setAttribute('aria-pressed', String(settings.mode === 'paper'));
   $('modeDesk').setAttribute('aria-pressed', String(settings.mode === 'desk'));
   $('camWrap').classList.toggle('hidden', !settings.showCamera);
@@ -1146,7 +1149,7 @@ async function start() {
   $('start').textContent = 'Running';
   keepAwake();
   applySettings();
-  setStatus(problems.length ? `Could not start the ${problems.join(' and ')}. ${state.micFailed && !problems.includes('camera') ? 'Playing from the camera alone (less reliable: allow the microphone for best results).' : 'You can still play with the computer keyboard.'}` : 'Ready – tap your fingers on the paper keys. Nothing is recorded or uploaded.');
+  setStatus(problems.length ? `Could not start the ${problems.join(' and ')}. ${state.micFailed && !problems.includes('camera') ? 'Playing from the camera alone (less reliable: allow the microphone for best results).' : 'You can still play with the computer keyboard.'}` : readyText());
   if (settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
 }
 
