@@ -45,18 +45,23 @@ const scoreOf = (expected, got) => { const c = alignCorrect(expected, got); retu
 
 // Returns { params, before, after } — params is null if nothing was clearly better (needs at least
 // `margin` more notes right), so a lucky variation on a few notes doesn't change anything.
-export function autoTune({ frames, taps, expected, keyFor, base, fusionOpts, templates, syncOffset, margin = 2 }) {
-  const run = (extra) => scoreOf(expected, replayNotes({ frames, taps, keyFor, resolverOpts: { ...base, ...extra }, fusionOpts, templates, syncOffset }));
+// keyForTip (optional): (tipOffsetMm) → keyFor, to also try where the fingertip meets the paper
+// (camera angle: mixes up black and white keys); baseTip is the current value.
+export function autoTune({ frames, taps, expected, keyFor, base, fusionOpts, templates, syncOffset, margin = 2, keyForTip = null, baseTip = 5, tips = [0, 5, 10] }) {
+  const run = (extra, tip = baseTip) => scoreOf(expected, replayNotes({ frames, taps, keyFor: tip === baseTip ? keyFor : keyForTip(tip), resolverOpts: { ...base, ...extra }, fusionOpts, templates, syncOffset }));
   const before = run({});
   let combos = [{}];
   for (const [k, vals] of Object.entries(TUNE_GRID)) combos = combos.flatMap((c) => vals.map((v) => ({ ...c, [k]: v })));
   let best = null;
-  for (const c of combos) {
-    const changed = Object.fromEntries(Object.entries(c).filter(([k, v]) => base[k] !== v));
-    const r = run(changed);
-    const n = Object.keys(changed).length;
-    // better score wins; on a tie, the variation that changes fewest settings
-    if (!best || r.score > best.r.score || (r.score === best.r.score && n < best.n)) best = { r, params: changed, n };
+  for (const tip of keyForTip ? tips : [baseTip]) {
+    for (const c of combos) {
+      const changed = Object.fromEntries(Object.entries(c).filter(([k, v]) => base[k] !== v));
+      const r = run(changed, tip);
+      const params = tip === baseTip ? changed : { ...changed, tipOffset: tip };
+      const n = Object.keys(params).length;
+      // better score wins; on a tie, the variation that changes fewest settings
+      if (!best || r.score > best.r.score || (r.score === best.r.score && n < best.n)) best = { r, params, n };
+    }
   }
   const ok = best && best.n > 0 && best.r.correct >= before.correct + margin && best.r.score > before.score;
   return { params: ok ? best.params : null, before: before.correct, after: ok ? best.r.correct : before.correct };

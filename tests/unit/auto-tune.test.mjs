@@ -58,3 +58,15 @@ test('alignMatched marks which expected notes were played', async () => {
   assert.deepEqual(alignMatched([60, 62, 64, 65], [60, 61, 64, 65]), [true, false, true, true]);
   assert.deepEqual(alignMatched([60, 62], []), [false, false]);
 });
+
+test('auto-tune can also fix where the fingertip meets the paper (black/white mix-ups)', () => {
+  const presses = [4, 8, 12, 16, 12, 8, 4];
+  const keyOf = { 0: 60, 50: 62, 100: 64, 150: 65, 200: 67 };
+  const expected = presses.map((tip) => keyOf[[4, 8, 12, 16, 20].indexOf(tip) * 50]);
+  const { frames, taps } = session(presses);
+  const right = (p) => keyOf[Math.round(p.x)] ?? null;
+  const shifted = (p) => { const k = right(p); return k == null ? null : k + 1; }; // lands on the black key
+  const r = autoTune({ frames, taps, expected, keyFor: shifted, base: { ...RESOLVER_DEFAULTS, minLate: 0.02 }, keyForTip: (tip) => (tip === 10 ? right : shifted), baseTip: 5 });
+  assert.equal(r.params && r.params.tipOffset, 10, JSON.stringify(r));
+  assert.ok(r.after >= 6, JSON.stringify(r));
+});

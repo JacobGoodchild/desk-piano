@@ -120,7 +120,7 @@ landing-based engine is still available with `--engine classic`.
 
 `--sync-test 0,20,-20` plays all clips back to back with deliberate sound/picture offsets to test auto-sync.
 `--desk 2|3` simulates plain desk mode (a perfect 2- or 3-tap calibration taken from the paper).
-`--auto-tune` checks the app's personal auto-tuning (Set-up → Check accuracy): it tunes on each
+`--auto-tune` (add `--tune-tip` to include the fingertip offset) checks the app's personal auto-tuning (Set-up → Check accuracy): it tunes on each
 clip alone and scores the other clips with the result. Tuning must never make the other clips worse;
 if it does, narrow `TUNE_GRID` in `src/auto-tune.js`.
 

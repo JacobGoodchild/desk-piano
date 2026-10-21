@@ -376,14 +376,16 @@ function syncTest(analysed, { variant, latency, sensitivity }) {
 function autoTuneTest(analysed, { variant, latency, sensitivity }) {
   const tapsOf = new Map(analysed.map((a) => [a.clip, tapsFromAudio(a.audio, sensitivity)]));
   const evalClip = (a, extra) => {
-    const { notes } = replay(a.frames, tapsOf.get(a.clip), { variant, latency, resolverOpts: extra });
+    const { tipOffset, ...ro } = extra;
+    const { notes } = replay(a.frames, tapsOf.get(a.clip), { variant, latency, resolverOpts: ro, tipOffset: tipOffset ?? TIP_OFFSET_MM });
     const groups = groupChords(notes);
     if (!a.exp.length) return { correct: 0, n: 0, det: groups.length, falseNotes: groups.length };
     const sc = score(a.exp, groups);
     return { correct: sc.correct, n: a.exp.length, det: groups.length, falseNotes: 0, score: sc.correct - 0.5 * Math.max(0, groups.length - sc.correct) };
   };
   let combos = [{}];
-  for (const [k, vals] of Object.entries(TUNE_GRID)) combos = combos.flatMap((c) => vals.map((v) => ({ ...c, [k]: v })));
+  const grid = { ...TUNE_GRID, ...(flag('tune-tip') ? { tipOffset: [0, 5, 10] } : {}) };
+  for (const [k, vals] of Object.entries(grid)) combos = combos.flatMap((c) => vals.map((v) => ({ ...c, [k]: v })));
   const withExp = analysed.filter((a) => a.exp);
   console.log('\nAUTO-TUNE (tune on one clip, score the others):');
   for (const A of withExp.filter((a) => a.exp.length)) {

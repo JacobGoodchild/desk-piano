@@ -617,3 +617,7 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   "Close" instead of "Cancel". Unit test for the alignment; checked in a screenshot.
 - **11:59** Live site checked fresh in headless Chromium: loads with no errors, plays, Help page live. Repeated-note
   window re-checked (0–1200 ms): 400–600 ms best (56.1%), 900 ms adds stray notes → kept 600.
+- **12:02** Personal tuning can now also adjust where the fingertip meets the paper (0/5/10 mm — camera angle
+  causes black/white mix-ups). Leave-one-clip-out on Jacob's clips (`--auto-tune --tune-tip`): never
+  triggers, no change (his offset is already right); unit test where only a 10 mm offset is right →
+  found. Note-detection option labels in plain English.

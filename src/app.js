@@ -64,6 +64,8 @@ const baseResolver = { ...engines.tap.resolver.o }; // defaults, before any pers
 // ---------------------------------------------------------------- keys & notes
 function shiftNote(m) { return m == null ? null : m + settings.transpose + settings.octave * 12; }
 
+// where the fingertip meets the paper (personal tuning can change it for a camera angle)
+const tipOffset = () => (settings.tuned && settings.tuned.tipOffset != null ? settings.tuned.tipOffset : TIP_OFFSET_MM);
 function keyForPoint(x, y) {
   if (settings.mode === 'desk') {
     // calibration points are in the camera picture's pixels at the time: rescale if the picture
@@ -77,7 +79,7 @@ function keyForPoint(x, y) {
   }
   if (!state.paperInv) return null;
   const p = applyH(state.paperInv, x, y);
-  return shiftNote(paperToKey(state.layout, p.x, p.y, TIP_OFFSET_MM));
+  return shiftNote(paperToKey(state.layout, p.x, p.y, tipOffset()));
 }
 
 function pedalDown() { return !!(settings.pedalAlways || state.pedalKey || state.pedalButton || state.pedalMidi); }
@@ -607,6 +609,9 @@ function offerTuning(expected, rec, msg, tips = '', autoHide = false) {
   setTimeout(() => {
     const r = autoTune({
       frames: rec.frames, taps: rec.taps, expected, keyFor: (p) => keyForPoint(p.x, p.y),
+      // in paper mode also try where the fingertip meets the paper
+      keyForTip: settings.mode === 'paper' ? (tip) => (p) => { if (!state.paperInv) return null; const q = applyH(state.paperInv, p.x, p.y); return shiftNote(paperToKey(state.layout, q.x, q.y, tip)); } : null,
+      baseTip: tipOffset(),
       base: { ...engines.tap.resolver.o }, fusionOpts: { ...engines.tap.o }, templates: engines.tap.resolver.templates, syncOffset: engines.tap.syncOffset,
     });
     if (!r.params) {
