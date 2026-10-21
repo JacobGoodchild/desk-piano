@@ -140,6 +140,19 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'true');
   await page.keyboard.up('PageDown');
   assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'false');
+  // after using the volume slider the pedal still works (and doesn't move the slider)
+  const vol = await page.inputValue('#volume');
+  await page.focus('#volume');
+  await page.keyboard.down('ArrowRight');
+  assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'true');
+  await page.keyboard.up('ArrowRight');
+  assert.equal(await page.inputValue('#volume'), vol);
+  // inside Settings, keys work as usual (no pedal)
+  await page.click('#settingsBtn');
+  await page.keyboard.down('PageDown');
+  assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'false');
+  await page.keyboard.up('PageDown');
+  await page.keyboard.press('Escape');
   const played = await page.evaluate(() => window.deskPiano.state.played.map((p) => [p.name, p.vel]));
   assert.equal(played[0][0], 'C4');
   assert.equal(played[1][0], 'C5');

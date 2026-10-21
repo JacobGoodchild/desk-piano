@@ -966,6 +966,9 @@ function bindSettings() {
   $('resetSettings').onclick = () => {
     if (!confirm('Reset every setting, taught fingers, tuning and desk calibration?')) return;
     const keep = { seenSetup: settings.seenSetup, seenNews: settings.seenNews };
+    const prev = { output: settings.output, mic: settings.mic, camera: settings.camera };
+    // stop any calibration or teaching run first, so it can't write its old values back
+    state.calib = null; state.calibDraft = null; state.teach = null; $('calib').hidden = true;
     for (const k of Object.keys(settings)) delete settings[k];
     Object.assign(settings, loadSettings(), { ...DEFAULTS }, keep);
     engines.tap.resolver.templates = null;
@@ -975,6 +978,9 @@ function bindSettings() {
     selectLayer(settings.layer); selectSplit(settings.split);
     if (state.inst) state.inst.setVolume(settings.volume);
     $('volume').value = settings.volume;
+    midiOut.select('');
+    if ((settings.output !== prev.output || settings.mic !== prev.mic) && (state.micNode || state.micFailed)) startMic().then(() => { state.micFailed = false; applySettings(); }).catch((err) => { state.micFailed = true; applySettings(); setStatus(`Microphone: ${err.message}`); });
+    if (settings.camera !== prev.camera && $('video').srcObject) startCamera().catch((err) => setStatus(`Camera: ${err.message}`));
     setStatus('All settings reset.');
   };
   // MIDI output: asking for MIDI access only when the player chooses to
@@ -1106,7 +1112,10 @@ function releaseComputerKeys() {
 
 function bindKeys() {
   window.addEventListener('keydown', (e) => {
-    if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    if (e.target && e.target.closest && e.target.closest('dialog[open]')) return; // settings: keys work as usual
+    // the main screen's slider and tune list keep focus after use: a foot pedal there is still the pedal
+    const mainControl = e.target && (e.target.id === 'volume' || e.target.id === 'tuneSel');
+    if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName) && !(mainControl && PEDAL_KEYS.has(e.code))) return;
     if (PEDAL_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }

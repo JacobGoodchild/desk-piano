@@ -572,3 +572,8 @@ Teach my fingers says which finger it saw; shorter what's-new note; status line 
 
 **Delay:** audio path ~57 ms (headless); with the camera wait ~128 ms at 30 fps (~95 ms for clear-cut
 notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera/tracking time.
+- **11:28** Fourth review (latest changes) found 6 issues, all fixed: a foot pedal moved the volume slider /
+  changed the tune if those had focus; pedal keys were swallowed inside Settings; Reset all didn't
+  switch off MIDI output, didn't restart a changed mic/camera, and a running calibration/teaching could
+  write old values back; interpolation dropped a hand that appeared between two frames. Browser tests
+  for the pedal cases; clip accuracy unchanged (30 fps 56.1%, 10 fps 47.4%).

@@ -252,7 +252,7 @@ function interp(frames, t) {
       const hb = b.hands.find((x) => x.label === ha.label);
       if (!hb) return ha;
       return { label: ha.label, points: ha.points.map((p, i) => ({ x: p.x + (hb.points[i].x - p.x) * w, y: p.y + (hb.points[i].y - p.y) * w, z: p.z == null ? p.z : p.z + (hb.points[i].z - p.z) * w })) };
-    }),
+    }).concat(b.hands.filter((hb) => !a.hands.some((ha) => ha.label === hb.label))), // a hand only in the later frame
   };
 }
 
