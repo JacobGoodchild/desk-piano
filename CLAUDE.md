@@ -438,3 +438,6 @@ sync correction and per-finger scores.
   many Android phones); stopping a recording mid-note left a stuck note/pedal on playback and in .mid.
   Also: no empty voices before samples load. (Minor, not fixed: the repeat-note fallback can remember
   a finger whose note was thrown away.)
+- **02:18** Wait-after-tap re-measured on clips: 0 ms 37.9%, 17 ms 36.8%, 34 ms 42.1%, 50 ms 50.9%, 70 ms
+  56.1% (default), 90 ms 57.9% (+1 false note) → keep 70. New sound: **honky-tonk piano** (the grand
+  samples as two strings ±11 cents apart, slight treble lift; no download; level within 0.3 dB).

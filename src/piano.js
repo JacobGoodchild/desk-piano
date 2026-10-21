@@ -36,6 +36,7 @@ export class Piano {
     this.sustain = false;
     this.loaded = false;
     this.release = 0.11; // damper time-constant (s)
+    this.detunes = [0]; // cents; several = several slightly out-of-tune strings (honky-tonk)
   }
 
   // volume 0..2 (1 = normal). The output gain is halved here and doubled inside the shaper curve,
@@ -98,14 +99,17 @@ export class Piano {
       if (w < 0.02) continue;
       const buf = this.buffers.get(`${sm}-${LAYERS[idx].v}`) || this._anyLayer(sm);
       if (!buf) continue;
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.playbackRate.value = rate;
       const g = ctx.createGain();
-      g.gain.value = Math.sqrt(w);
-      src.connect(g).connect(gain);
-      src.start(t, START_OFFSET);
-      sources.push(src);
+      g.gain.value = Math.sqrt(w / this.detunes.length);
+      g.connect(gain);
+      for (const cents of this.detunes) {
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = rate * Math.pow(2, cents / 1200);
+        src.connect(g);
+        src.start(t, START_OFFSET);
+        sources.push(src);
+      }
       if (lo === hi) break;
     }
     if (!sources.length) { gain.disconnect(); return null; } // samples not loaded (yet)

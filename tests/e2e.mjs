@@ -79,10 +79,11 @@ await check('every sound renders: audible, no clipping spike, no broken samples'
     const { Piano } = await import('./src/piano.js');
     const { SYNTHS } = await import('./src/synths.js');
     const out = {};
-    for (const id of ['piano', ...Object.keys(SYNTHS)]) {
+    for (const id of ['piano', 'honky', ...Object.keys(SYNTHS)]) {
       const ctx = new OfflineAudioContext(2, 48000, 48000);
-      const inst = id === 'piano' ? new Piano(ctx, ctx.destination) : new SYNTHS[id](ctx, ctx.destination);
-      if (id === 'piano') await inst.load('samples/piano/');
+      const inst = id === 'piano' || id === 'honky' ? new Piano(ctx, ctx.destination) : new SYNTHS[id](ctx, ctx.destination);
+      if (id === 'honky') inst.detunes = [-11, 11];
+      if (!SYNTHS[id]) await inst.load('samples/piano/');
       inst.noteOn(60, 0.6);
       const d = (await ctx.startRendering()).getChannelData(0);
       let peak = 0, sum = 0, bad = 0;
@@ -101,6 +102,7 @@ await check('every sound renders: audible, no clipping spike, no broken samples'
     return out;
   });
   assert.equal(res.live, 48, 'polyphony limit');
+  assert.ok(Math.abs(res.honky.rmsDb - res.piano.rmsDb) < 2, `honky-tonk level ${res.honky.rmsDb.toFixed(1)} vs piano ${res.piano.rmsDb.toFixed(1)} dB`);
   delete res.live;
   for (const [id, r] of Object.entries(res)) {
     assert.equal(r.bad, 0, `${id}: broken samples`);

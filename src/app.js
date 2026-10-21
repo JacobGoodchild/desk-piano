@@ -120,6 +120,7 @@ const synthCache = {};
 function makeInstrument(id) {
   if (id !== 'piano' && SYNTHS[id]) return synthCache[id] || (synthCache[id] = new SYNTHS[id](state.ctx, state.bus.input));
   if (id === 'bright') return synthCache.bright || (synthCache.bright = brightPiano());
+  if (id === 'honky') return synthCache.honky || (synthCache.honky = honkyTonk());
   return state.piano;
 }
 function selectLayer(id) {
@@ -162,6 +163,18 @@ function brightPiano() {
   const p = new Piano(state.ctx, shelf);
   p.buffers = state.piano.buffers; // share the already-loaded samples
   p.loaded = true;
+  return p;
+}
+
+// Honky-tonk: the same recordings played as two strings tuned slightly apart, a bit brighter.
+function honkyTonk() {
+  const shelf = state.ctx.createBiquadFilter();
+  shelf.type = 'highshelf'; shelf.frequency.value = 2000; shelf.gain.value = 4;
+  shelf.connect(state.bus.input);
+  const p = new Piano(state.ctx, shelf);
+  p.buffers = state.piano.buffers;
+  p.loaded = true;
+  p.detunes = [-11, 11];
   return p;
 }
 

@@ -193,6 +193,7 @@ export class Bass extends SynthBase {
 export const INSTRUMENTS = {
   piano: 'Grand piano',
   bright: 'Bright piano',
+  honky: 'Honky-tonk piano',
   epiano: 'Electric piano',
   organ: 'Organ',
   harpsichord: 'Harpsichord',

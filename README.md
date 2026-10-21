@@ -44,7 +44,7 @@ alone — quieter and less reliable (hovering hands can set notes off), so allow
 - Volume slider, **⛶** full screen (locks phones to landscape).
 - Computer keys **A–;** play C4–E5 (W E T Y U O P = black keys), **Z / X** octave, Shift = loud,
   Ctrl = soft. You can also tap the on-screen keys.
-- **♩** metronome. Settings: sound (grand, bright, electric piano, organ, harpsichord, strings,
+- **♩** metronome. Settings: sound (grand, bright, honky-tonk, electric piano, organ, harpsichord, strings,
   vibraphone, music box, bass), layer two sounds, split below middle C, reverb, touch (light/normal/
   heavy), loudness from taps or fixed, keyboard range / octave / transpose,
   tap sensitivity, "faster ↔ more accurate", chords within one hand, camera/microphone choice,
