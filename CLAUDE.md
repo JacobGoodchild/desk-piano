@@ -547,34 +547,43 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   calibration; browser test.
 - **11:24** Follow a tune: the two notes after the next one show in a fainter green (read ahead).
 
-## Day-run summary (draft, kept up to date)
+## Day-run summary (21 Oct, 07:45 → 13:45 UK)
 
-**Live:** https://jacobgoodchild.github.io/desk-piano/ (Help page: …/help.html)
+**Live:** https://jacobgoodchild.github.io/desk-piano/ (Help page: …/help.html) — `main` green and deployed.
+About 2.5 h were lost to a usage limit (09:00–11:15); nothing was lost from git.
 
-**Bugs fixed:** all 5 left over from the overnight review (desk calibration survives camera
-resolution changes; safe 3-tap perspective curve; silent synth voices freed under the pedal; mirrored
-marker misreads; classic-engine shared keys) + 5 more found by a third review of today's code (a
-crash when changing tune right after finishing one, stale in-memory recordings, desk dots).
+**Bugs:** six independent code reviews today; every finding fixed (≈30 issues), mostly small: stuck or
+cut-off notes, desk calibration after camera changes, stale in-memory recordings, foot-pedal/keyboard
+conflicts, Reset-all side effects, offline caching (now really works after one visit where you played),
+a crash when changing tune right after finishing one, phones pausing camera/mic in the background.
 
 **Accuracy / feel**
-- Personal **auto-tuning** in Check accuracy and after Follow-a-tune pieces (offered, never forced;
-  tested leave-one-clip-out on your clips so it can't make things worse there).
-- Slower hand tracking handled much better (simulated by dropping frames from your clips): waits
-  scale with frame rate, tap time-out allows for tracking time, hand positions interpolated between
-  frames → 10 fps 40.4% → 47.4%, 15 fps 47.4% → 50.9%; 30 fps unchanged at 56.1%.
-- 27% of notes now play a frame early (was 11%) at the same accuracy.
-- Real **foot pedals**: USB/Bluetooth page-turner pedals and MIDI sustain pedals.
+- Your clips at 30 fps: still 56.1% (middle C 4/4, Mary 18/26, chromatic 10/25, C-E-G 0/2, 3 stray notes
+  in the hovering/resting clips) — these 8 clips are tuned out; more needs new recordings (CLIPS.md).
+- Slower hand tracking (laptops/phones that can't do 30 fps), simulated by dropping frames: 15 fps
+  47.4% → 50.9%, 10 fps 40.4% → 47.4% (waits scale with frame rate; positions interpolated between frames).
+- 27% of notes now take the faster early path (was 11%). Auto-sync target re-measured (−29 ms): fixes the
+  "sound early" case, which real cameras usually cause.
+- **Personal auto-tuning**: Check accuracy (right or left hand) and finished Follow-a-tune pieces can
+  tune the detection to you (offered, never forced; can't make your clips worse — tested).
+- Real **foot pedals** (USB/Bluetooth page-turners, MIDI sustain pedals).
+- Desk mode simulated on your clips: 50.8% (paper 56.1%) — usable; it now draws the invisible keyboard.
 
-**Interface:** set-up steps tick themselves off; Settings tidied (dark controls, Done always visible,
-only relevant rows, Reset all); phone portrait layout; Help page; octave −/+ buttons; Follow a tune
-reads ahead (next 2 notes) and has 4 more tunes (Für Elise, Minuet in G, Jingle bells, Amazing grace);
-Teach my fingers says which finger it saw; shorter what's-new note; status line follows Paper/Desk.
+**Interface:** Help page; set-up steps tick themselves off; "▶ Start camera & microphone" on the set-up
+panel; Test sound; Settings tidied (dark controls, Done always visible, Reset all, plain-English labels);
+phone portrait layout; octave −/+ buttons; keys shaded by loudness + a pp–ff readout; Check accuracy shows
+green/red note chips; Follow a tune reads ahead and has Für Elise, Minuet in G, Jingle bells, Amazing grace;
+hint when a sheet is taped crooked; ? opens Help.
 
-**Tests:** 51 unit + 18 browser tests (synthetic data only), CI green; offline after a single visit
-now really works (strict test). Desk mode simulated on your clips: 50.8% (paper 56.1%).
+**Delay:** audio path ~57 ms (headless); with the camera wait ~128 ms at 30 fps (~95 ms for clear-cut notes
+or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera/tracking time (debug view).
 
-**Delay:** audio path ~57 ms (headless); with the camera wait ~128 ms at 30 fps (~95 ms for clear-cut
-notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera/tracking time.
+**Tests:** 54 unit + 18 browser tests (synthetic data only), stable over 3 runs; CI green.
+
+**Next time:** record the clips in CLIPS.md (teach-my-fingers, Check accuracy right/left, a Follow-a-tune
+piece, held chords, mic close to the paper); try it on the Pixel 7 with `?debug=1` and "Copy diagnostics";
+improve auto-sync's measure for large "sound early" offsets.
+
 - **11:28** Fourth review (latest changes) found 6 issues, all fixed: a foot pedal moved the volume slider /
   changed the tune if those had focus; pedal keys were swallowed inside Settings; Reset all didn't
   switch off MIDI output, didn't restart a changed mic/camera, and a running calibration/teaching could
