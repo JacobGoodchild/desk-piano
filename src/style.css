@@ -86,3 +86,14 @@ body.setup #piano, body.setup #roll { display: none; }
 .tune select { max-width: 200px; background: #2c3546; color: var(--text); border: 1px solid #3a465c; border-radius: 6px; padding: 2px 4px; }
 #tuneProg { color: var(--text); }
 .checks button { padding: 1px 8px; font-size: 13px; }
+
+/* anything marked hidden stays hidden, even where a rule sets display (e.g. dialog label rows) */
+[hidden] { display: none !important; }
+/* dark form controls everywhere (selects and number boxes were browser-white) */
+select, input[type="number"] { background: #2c3546; color: var(--text); border: 1px solid #3a465c; border-radius: 6px; padding: 3px 6px; }
+input[type="number"] { width: 5.5em; }
+input[type="range"] { accent-color: var(--accent); }
+input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px; }
+/* Done stays reachable at the bottom of the settings while scrolling (phones) */
+dialog .buttons { position: sticky; bottom: -1px; background: var(--panel); padding: 8px 0 4px; margin-bottom: -4px; border-top: 1px solid #3a465c; }
+dialog form { max-height: calc(100dvh - 60px); }

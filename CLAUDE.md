@@ -493,3 +493,7 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   once silent, even with the pedal held. Marker reader compares the normal and mirrored reading and
   keeps the closer match (a one-bit misread on a mirrored webcam could give a wrong/unused id); on
   Jacob's clips (privately, 20 frames each) marker counts identical, no wrong ids before or after.
+- **07:53** Settings polish: dark drop-downs/number boxes/checkboxes, "Done" stays visible at the bottom while
+  scrolling (phones), Fixed-loudness slider only when Loudness = Fixed (Touch only when from taps), and
+  a global rule so hidden rows really hide (the classic-only option was showing). Classic engine's
+  shared-key cut-off is covered by this morning's note-holder counting. All 6 review items done.

@@ -822,6 +822,8 @@ function applySettings() {
   $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   $('cameraOnlyRow').hidden = settings.engine !== 'classic'; // only applies to the classic engine
+  $('fixedRow').hidden = settings.dynamics !== 'fixed';
+  $('touchRow').hidden = settings.dynamics === 'fixed';
   // Without a microphone the tap engine can never play, so fall back to the classic engine playing
   // clear finger strikes on their own (quieter, a little later, and hovering hands may trigger notes).
   const noMic = !!state.micFailed;
