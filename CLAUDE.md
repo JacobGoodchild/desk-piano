@@ -344,3 +344,32 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   (50–53%) → reverted; accuracy work paused at 54.4%. Added: mic bar flashes green (tap → note) /
   orange (tap heard, no finger seen); Touch setting (light/normal/heavy velocity curve); one-time
   "what's new" banner.
+
+## Overnight summary (draft, kept up to date)
+
+**Live:** https://jacobgoodchild.github.io/desk-piano/
+
+**Your four complaints**
+1. *Hovering hands played lots of keys* → fixed at the root. Notes now need a tap the microphone hears
+   **and** a finger that moved down more than the rest of that hand just before it ("tap-first"
+   engine). On your hovering clip: 55 false chords → 2 notes; resting hands: 11 → 2.
+2. *Wrong finger* → the same engine picks the finger that moved most compared with the hand's other
+   fingers (plus its depth change); "Teach my fingers" (Set-up) learns how your fingers move together.
+3. *Mic barely heard you* → the tap detector now judges taps against the room's background noise (your
+   webcam mic heard taps only 15–25 dB above it) and copes with compressed webcam audio: middle-C clip
+   4/4 taps found (was 1). Microphone picker, a "mic hears taps" check, a level bar and a hint.
+4. *Sound too quiet* → +6 dB default and a volume slider. *Desk mode* → Paper/Desk switch in the top bar.
+
+**Accuracy on your clips** (`scripts/clip-test.mjs`): **8.5% → 54.4%** overall. Middle C ×4: 4/4 (+1
+extra). Mary (simple, scored against the full verse — my guess): 15/26. Chromatic: 12/25. C-E-G chord:
+0/2 (the footage shows no per-finger signal for chords — chords within one hand are off by default).
+
+**Also new:** mirrored webcams handled; auto-sync of microphone vs camera timing; sounds (bright
+piano, electric piano, organ, harpsichord, strings, vibraphone, music box, bass), reverb, layering,
+split; record / play back / save .mid; MIDI output; metronome; note trail; played keys light up on
+the camera picture; Check accuracy; Touch curve; offline support; full-screen; set-up screen re-laid
+out; Settings in sections. 41 unit + 9 browser tests, CI green.
+
+**Best next steps:** record the clips listed in CLIPS.md ("teach my fingers" clip, slow scales, held
+chords, a mic close to the desk) and try it live — the debug view (`?debug=1`) shows the frame rate,
+sync correction and per-finger scores.
