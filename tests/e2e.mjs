@@ -170,6 +170,11 @@ const sc = sceneHomography(L, W, H, { tilt: 0.35, rotate: 0.05 });
 const Hp = fitHomography(sc.src, sc.dst);
 const known = markerCorners(L);
 const markers = L.markers.map((m) => ({ id: m.id, corners: known[m.id].map((p) => applyH(Hp, p.x, p.y)) }));
+const Lc = paperLayout('compact');
+const scC = sceneHomography(Lc, W, H, { tilt: 0.35, rotate: 0.05 });
+const HpC = fitHomography(scC.src, scC.dst);
+const knownC = markerCorners(Lc);
+const compactMarkers = Lc.markers.map((m) => ({ id: m.id, corners: knownC[m.id].map((p) => applyH(HpC, p.x, p.y)) }));
 const keyPoint = (midi) => {
   const r = L.kb.keyRect(midi);
   return applyH(Hp, L.keysX + (r.x0 + r.x1) / 2, L.keysY + (r.black ? 60 : 125));
@@ -256,6 +261,18 @@ await check('taps + finger strikes on the paper play the right notes, chords and
   assert.equal(names.length, 6, 'the tap with no finger movement added nothing: ' + JSON.stringify(result));
   assert.ok(result[1].vel > result[0].vel, 'louder tap → louder note');
   assert.ok(result.every((r) => r.how.startsWith('tap') || r.how.startsWith('land')), JSON.stringify(result));
+});
+
+await check('switches to the 2-octave paper when the camera sees it', async (page) => {
+  await startApp(page, '?sim=1');
+  const r = await page.evaluate((markers) => {
+    const dp = window.deskPiano;
+    dp.setVideoSize(1280, 720);
+    for (let i = 0; i < 6; i++) dp.injectMarkers(markers);
+    return { size: dp.settings.paperSize, form: document.querySelector('select[name=paperSize]').value, status: document.getElementById('status').textContent };
+  }, compactMarkers);
+  assert.deepEqual([r.size, r.form], ['compact', 'compact'], JSON.stringify(r));
+  assert.match(r.status, /2-octave/);
 });
 
 await check('no microphone: falls back to playing clear finger strikes from the camera', async (page) => {

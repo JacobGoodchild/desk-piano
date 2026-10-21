@@ -419,3 +419,7 @@ sync correction and per-finger scores.
   are "too little travel" and "not still moving down"; "off the keys" picks were mostly beyond the
   right-hand end of the paper. Tried a bigger allowance in front of the keys (24→30–48 mm): no change
   in correct notes → not changed.
+- **02:08** The app now recognises which paper is printed (full 3-sheet vs 2-octave — same marker numbers
+  in different places, so it fits both and keeps the one that explains the markers) and switches
+  after 5 agreeing looks. Synthetic unit + browser tests; on Jacob's clips (privately) it said "full"
+  in every frame where it could tell and never "2-octave".

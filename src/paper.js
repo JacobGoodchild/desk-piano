@@ -129,6 +129,23 @@ export function fitPaper(layout, found, scale = 1) {
   return H ? { H, used: new Set(ms.map((m) => m.id)), error: 0 } : null;
 }
 
+// Which printed paper is this: the full 3-sheet one or the 2-octave one? Both use the same marker
+// numbers in different places, so fit both and see which explains the markers. Returns 'full',
+// 'compact' or null when it can't tell (needs 5+ markers).
+export function detectPaperSize(found, scale = 1) {
+  const ids = new Set(found.map((m) => m.id));
+  if (ids.size < 5) return null;
+  if (ids.has(10) || ids.has(11)) return 'full'; // only the full paper has these
+  const fits = ['full', 'compact'].map((v) => ({ v, r: fitPaper(paperLayout(v), found, scale) }));
+  const [a, b] = fits.map((f) => (f.r ? { n: f.r.used.size, e: f.r.error } : { n: 0, e: Infinity }));
+  if (a.n >= b.n + 2) return 'full';
+  if (b.n >= a.n + 2) return 'compact';
+  // as many markers explained (or more), and a much closer fit
+  if (b.n >= a.n && b.e * 3 + 1 < a.e) return 'compact';
+  if (a.n >= b.n && a.e * 3 + 1 < b.e) return 'full';
+  return null;
+}
+
 function polyArea(q) {
   let a = 0;
   for (let i = 0; i < q.length; i++) { const p = q[i], r = q[(i + 1) % q.length]; a += p.x * r.y - r.x * p.y; }

@@ -11,7 +11,7 @@ import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
 import { FingerTeacher } from './tap-resolver.js';
 import { VelocityMapper } from './onset.js';
-import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from './paper.js';
+import { paperLayout, paperToKey, fitPaper, detectPaperSize, TIP_OFFSET_MM } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
 import { applyH, invertH } from './homography.js';
 import { deskKeyAt } from './desk.js';
@@ -371,6 +371,18 @@ function updatePaperFromMarkers(found, scale = 1) {
     const mir = found.filter((m) => m.mirrored).length > found.length / 2;
     if (mir !== state.cameraMirrored) { state.cameraMirrored = mir; applyMirror(); }
   }
+  // printed the other paper size than the one chosen in Settings? Switch after 5 agreeing looks.
+  const size = detectPaperSize(found, scale);
+  if (size && size !== settings.paperSize) {
+    state.sizeVotes = (state.sizeVotes || 0) + 1;
+    if (state.sizeVotes >= 5) {
+      state.sizeVotes = 0;
+      settings.paperSize = size;
+      $('settings').querySelector('form').elements.paperSize.value = size;
+      applySettings();
+      setStatus(`Found the ${size === 'compact' ? '2-octave (C4–C6)' : 'full (C3–C6)'} paper keyboard – switched to it.`);
+    }
+  } else if (size) state.sizeVotes = 0;
   const res = fitPaper(state.layout, found, scale);
   state.markersSeen = res ? res.used : new Set();
   // two markers alone (e.g. both at the back) pin down the front of the keys poorly: only use
