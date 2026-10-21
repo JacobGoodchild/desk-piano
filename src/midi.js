@@ -19,7 +19,23 @@ export class Recorder {
   constructor() { this.events = null; this.t0 = 0; this.last = null; }
   get recording() { return !!this.events; }
   start() { this.events = []; this.t0 = performance.now(); }
-  stop() { this.last = this.events; this.events = null; return this.last; }
+  stop() {
+    // close anything still held when recording stopped (notes, pedal), so playback and the saved
+    // file don't leave a note or the pedal stuck on
+    if (this.events) {
+      const t = performance.now() - this.t0;
+      const held = new Map();
+      let pedal = false;
+      for (const e of this.events) {
+        if (e.type === 'on') held.set(e.a, (held.get(e.a) || 0) + 1);
+        else if (e.type === 'off') held.set(e.a, Math.max(0, (held.get(e.a) || 0) - 1));
+        else if (e.type === 'pedal') pedal = !!e.a;
+      }
+      for (const [m, n] of held) for (let i = 0; i < n; i++) this.events.push({ t, type: 'off', a: m });
+      if (pedal) this.events.push({ t, type: 'pedal', a: false });
+    }
+    this.last = this.events; this.events = null; return this.last;
+  }
   add(type, a, b) { if (this.events) this.events.push({ t: performance.now() - this.t0, type, a, b }); }
 
   // Standard MIDI file (format 0, 480 ticks per beat at 120 bpm → 1 tick ≈ 1.04 ms)

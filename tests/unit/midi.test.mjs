@@ -16,3 +16,12 @@ test('recorder writes a valid standard MIDI file', () => {
   // the end-of-track marker
   assert.deepEqual([...f.slice(-3)], [0xff, 0x2f, 0x00]);
 });
+
+test('stopping a recording mid-note closes held notes and the pedal', () => {
+  const r = new Recorder();
+  r.start();
+  r.add('on', 60, 0.5); r.add('on', 64, 0.5); r.add('off', 64); r.add('pedal', true);
+  const ev = r.stop();
+  const tail = ev.slice(4);
+  assert.deepEqual(tail.map((e) => [e.type, e.a]), [['off', 60], ['pedal', false]]);
+});

@@ -108,6 +108,7 @@ export class Piano {
       sources.push(src);
       if (lo === hi) break;
     }
+    if (!sources.length) { gain.disconnect(); return null; } // samples not loaded (yet)
     const voice = { midi, gain, sources, held: true, start: t, released: false, vel };
     if (!this.voices.has(midi)) this.voices.set(midi, []);
     this.voices.get(midi).push(voice);

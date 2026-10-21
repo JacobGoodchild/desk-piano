@@ -104,12 +104,14 @@ function noteOn(midi, vel, info = {}) {
 }
 function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
-  if (n <= 0) state.active.delete(midi); else state.active.set(midi, n);
   for (let i = state.spans.length - 1; i >= 0; i--) if (state.spans[i].midi === midi && state.spans[i].end == null) { state.spans[i].end = performance.now(); break; }
+  recorder.add('off', midi);
+  // another finger (or a computer key) still holds this note: keep it sounding
+  if (n > 0) { state.active.set(midi, n); return; }
+  state.active.delete(midi);
   // release on every sound (the split/layer may have changed while the key was down)
   for (const v of new Set([state.inst, state.layer, state.split].filter(Boolean))) v.noteOff(midi);
   midiOut.noteOff(midi);
-  recorder.add('off', midi);
   drawPiano();
 }
 
@@ -177,17 +179,21 @@ async function startAudio() {
   await state.piano.load('samples/piano/', (p) => setStatus(`Loading piano sound… ${Math.round(p * 100)}%`));
 }
 
+let micGen = 0;
 async function startMic() {
   stopMic();
+  const gen = ++micGen; // a newer call (quick settings changes) wins; older ones clean up
   const speaker = settings.output === 'speaker';
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: { ...(settings.mic ? { deviceId: { exact: settings.mic } } : {}), echoCancellation: speaker, noiseSuppression: false, autoGainControl: false, channelCount: 1, latency: 0 },
   });
+  if (gen !== micGen) { stream.getTracks().forEach((t) => t.stop()); return; }
   state.micStream = stream;
   const track = stream.getAudioTracks()[0];
   const st = track.getSettings ? track.getSettings() : {};
   state.inputLatencyMs = st.latency ? st.latency * 1000 : 0;
   if (!state.workletLoaded) { await state.ctx.audioWorklet.addModule('src/tap-worklet.js'); state.workletLoaded = true; }
+  if (gen !== micGen) return; // stream already stopped by the newer call's stopMic()
   const src = state.ctx.createMediaStreamSource(stream);
   const node = new AudioWorkletNode(state.ctx, 'tap-detector', { numberOfInputs: 1, numberOfOutputs: 0 });
   src.connect(node);
@@ -239,8 +245,9 @@ async function startCamera() {
   const constraints = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } };
   if (settings.camera) constraints.deviceId = { exact: settings.camera };
   else constraints.facingMode = { ideal: 'user' }; // phone at the far side, screen facing you
+  // release the old camera first: many phones can't open a second one at the same time
+  if (video.srcObject) { video.srcObject.getTracks().forEach((t) => t.stop()); video.srcObject = null; }
   const stream = await navigator.mediaDevices.getUserMedia({ video: constraints });
-  if (video.srcObject) video.srcObject.getTracks().forEach((t) => t.stop());
   video.srcObject = stream;
   await video.play();
   state.video = { w: video.videoWidth, h: video.videoHeight };
@@ -395,12 +402,14 @@ function updatePaperFromMarkers(found, scale = 1) {
 
 // ---------------------------------------------------------------- plain desk calibration
 function startCalibration() {
+  fusion.allOff(); // camera frames stop going to the note engine while calibrating
   state.calib = 'c4';
   settings.desk = settings.desk || {};
   showCalib('Calibration: tap <b>middle C</b> with one finger.');
 }
 function recentre() {
   if (!settings.desk || !settings.desk.c5) return startCalibration();
+  fusion.allOff();
   state.calib = 'recentre';
   showCalib('Recentre: tap <b>middle C</b> again.');
 }
@@ -422,13 +431,14 @@ function calibrationEvents(events) {
   calibrationPoint(p);
 }
 function calibrationPoint(p) {
-  if (state.calib === 'c4') { settings.desk = { c4: p }; state.calib = 'c5'; showCalib('Now tap the <b>C above</b> middle C.'); }
+  // new points go into a draft, so cancelling half-way keeps the old (working) calibration
+  if (state.calib === 'c4') { state.calibDraft = { c4: p }; state.calib = 'c5'; showCalib('Now tap the <b>C above</b> middle C.'); }
   else if (state.calib === 'c5') {
-    settings.desk.c5 = p; state.calib = 'c6';
+    state.calibDraft.c5 = p; state.calib = 'c6';
     showCalib('Optional, for better accuracy at the ends: tap the <b>C above that</b> (two octaves above middle C). <button id="calibSkip">Skip</button>');
     $('calibSkip').onclick = () => finishCalib('Calibrated – play away!');
   }
-  else if (state.calib === 'c6') { settings.desk.c6 = p; finishCalib('Calibrated – play away!'); }
+  else if (state.calib === 'c6') { state.calibDraft.c6 = p; finishCalib('Calibrated – play away!'); }
   else if (state.calib === 'recentre') {
     const dx = p.x - settings.desk.c4.x, dy = p.y - settings.desk.c4.y;
     const c6 = settings.desk.c6;
@@ -436,12 +446,14 @@ function calibrationPoint(p) {
     finishCalib('Recentred.');
   }
 }
-function finishCalib(msg) { state.calib = null; saveSettings(settings); showCalib(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
+function finishCalib(msg) {
+  if (state.calibDraft) { settings.desk = state.calibDraft; state.calibDraft = null; }
+  state.calib = null; saveSettings(settings); showCalib(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
 function showCalib(html, onCancel) {
   const el = $('calib');
   el.hidden = false;
   el.innerHTML = `${html} <button id="calibCancel">Cancel</button>`;
-  $('calibCancel').onclick = () => { state.calib = null; if (onCancel) onCancel(); el.hidden = true; };
+  $('calibCancel').onclick = () => { state.calib = null; state.calibDraft = null; if (onCancel) onCancel(); el.hidden = true; };
 }
 
 // ---------------------------------------------------------------- teaching the app your fingers
@@ -449,6 +461,7 @@ const FINGER_NAMES = { 4: 'THUMB', 8: 'INDEX finger', 12: 'MIDDLE finger', 16: '
 const TEACH_TAPS = 3;
 function startTeaching() {
   if (!state.started) { setStatus('Press Start first, then teach your fingers.'); return; }
+  fusion.allOff();
   state.teach = { order: [4, 8, 12, 16, 20], idx: 0, count: 0, taps: [], teacher: new FingerTeacher() };
   showTeach();
 }
@@ -645,9 +658,10 @@ function drawOverlay() {
       }
     }
   }
-  if (settings.mode === 'desk' && settings.desk && settings.desk.c4) {
+  const deskPts = state.calibDraft || settings.desk; // show the new points while calibrating
+  if (settings.mode === 'desk' && deskPts && deskPts.c4) {
     g.fillStyle = '#ffcc33';
-    for (const p of [settings.desk.c4, settings.desk.c5, settings.desk.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
+    for (const p of [deskPts.c4, deskPts.c5, deskPts.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x), p.y, 8, 0, 7); g.fill(); }
   }
   for (const hand of state.hands) {
     const pts = hand.points;
@@ -949,6 +963,12 @@ async function listCameras() {
 // Computer keyboard: A row = white keys from C, W/E/T/Y/U/O/P = black keys.
 const KEYMAP = { a: 0, w: 1, s: 2, e: 3, d: 4, f: 5, t: 6, g: 7, y: 8, h: 9, u: 10, j: 11, k: 12, o: 13, l: 14, p: 15, ';': 16 };
 const kbdDown = new Map();
+function releaseComputerKeys() {
+  for (const midi of kbdDown.values()) noteOff(midi);
+  kbdDown.clear();
+  if (state.pedalKey) { state.pedalKey = false; updatePedal(); }
+}
+
 function bindKeys() {
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
@@ -957,18 +977,20 @@ function bindKeys() {
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }
     if (k === 'r' && !e.repeat && settings.mode === 'desk') { recentre(); return; }
     if (k === 'x' && !e.repeat) { state.kbdOctave = Math.min(3, state.kbdOctave + 1); drawPiano(); return; }
-    if (!(k in KEYMAP) || e.repeat || kbdDown.has(k)) return;
+    // held keys are tracked by physical key (e.code): with Shift, ';' comes back up as ':'
+    if (!(k in KEYMAP) || e.repeat || kbdDown.has(e.code)) return;
     ensureAudio();
     const midi = 60 + state.kbdOctave * 12 + KEYMAP[k] + settings.transpose;
     const vel = e.shiftKey ? 0.95 : e.ctrlKey ? 0.25 : 0.6;
-    kbdDown.set(k, midi);
+    kbdDown.set(e.code, midi);
     noteOn(midi, vel, { how: 'keyboard' });
   });
   window.addEventListener('keyup', (e) => {
     if (e.code === 'Space') { state.pedalKey = false; updatePedal(); return; }
-    const k = e.key.toLowerCase();
-    if (kbdDown.has(k)) { noteOff(kbdDown.get(k)); kbdDown.delete(k); }
+    if (kbdDown.has(e.code)) { noteOff(kbdDown.get(e.code)); kbdDown.delete(e.code); }
   });
+  // switching to another window while holding keys: their key-ups never arrive
+  window.addEventListener('blur', releaseComputerKeys);
   // on-screen keyboard: touch/click to play
   const cv = $('piano');
   const pointerNotes = new Map();
@@ -1016,7 +1038,11 @@ let wakeLock = null;
 async function keepAwake() {
   try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { /* not allowed */ }
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.started) keepAwake(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.started) keepAwake();
+  // in the background the camera stops, so fingers can't be seen lifting: let go of everything
+  if (document.visibilityState === 'hidden') { fusion.allOff(); releaseComputerKeys(); }
+});
 
 // offline support (not in ?sim test mode)
 if ('serviceWorker' in navigator && !SIM && location.protocol !== 'file:') {
@@ -1041,6 +1067,7 @@ window.deskPiano = {
   state, settings, get fusion() { return fusion; }, engines, strikes,
   ensureAudio,
   injectHandFrame: (frame) => handleHandFrame(frame),
+  noteOn, noteOff,
   injectTap: (tap) => handleTap(tap),
   injectMarkers: (found) => updatePaperFromMarkers(found, 1),
   setVideoSize: (w, h) => { state.video = { w, h }; },

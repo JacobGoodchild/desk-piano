@@ -77,6 +77,11 @@ export class TapFusion {
   }
 
   tick(now) {
+    // safety: release notes whose finger hasn't been seen lifting for a long time (also when the
+    // camera stops sending frames altogether)
+    for (const [id, s] of this.sounding) {
+      if (now - s.t > this.o.maxHoldMs) { this.sounding.delete(id); this.stop(s.midi, { fingerId: id }); }
+    }
     // taps whose camera frames never came
     const keep = [];
     for (const p of this.pending) {

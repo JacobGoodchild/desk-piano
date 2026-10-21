@@ -425,3 +425,12 @@ sync correction and per-finger scores.
   in every frame where it could tell and never "2-octave".
 - **02:10** Piano polyphony limit (48 voices, oldest fade out over ~0.1 s) so long pedalled passages
   can't overload a phone; browser test (100 pedalled notes → 48 sounding).
+- **02:14** Independent code review (a helper agent) found 7 real bugs, all fixed with tests where possible:
+  a note held by two fingers/sources was cut off when the first let go; cancelling a re-calibration
+  wiped the working desk calibration; notes could ring forever when camera frames stopped (calibrate/
+  teach/recentre, phone app in background) — now released, and the 4 s safety limit runs without
+  frames; computer-key notes/pedal stuck with Shift or window switch; two quick mic restarts left two
+  mics running (double notes); switching camera opened the new one before closing the old (fails on
+  many Android phones); stopping a recording mid-note left a stuck note/pedal on playback and in .mid.
+  Also: no empty voices before samples load. (Minor, not fixed: the repeat-note fallback can remember
+  a finger whose note was thrown away.)

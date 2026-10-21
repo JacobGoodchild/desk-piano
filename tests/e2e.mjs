@@ -191,6 +191,25 @@ const keyPoint = (midi) => {
   return applyH(Hp, L.keysX + (r.x0 + r.x1) / 2, L.keysY + (r.black ? 60 : 125));
 };
 
+await check('a note held by two sources lasts until both let go; cancelling a re-calibration keeps the old one', async (page) => {
+  await startApp(page, '?sim=1');
+  const r = await page.evaluate(() => {
+    const dp = window.deskPiano;
+    dp.noteOn(64, 0.5, { how: 'tap' }); dp.noteOn(64, 0.5, { how: 'keyboard' });
+    dp.noteOff(64);
+    const still = dp.state.active.has(64) && [...dp.state.inst.voices.get(64) || []].some((v) => !v.released);
+    dp.noteOff(64);
+    const gone = !dp.state.active.has(64);
+    dp.settings.desk = { c4: { x: 100, y: 300 }, c5: { x: 300, y: 300 } };
+    dp.startCalibration();
+    document.getElementById('calibCancel').click();
+    return { still, gone, desk: JSON.stringify(dp.settings.desk) };
+  });
+  assert.ok(r.still, 'still sounding while one source holds it');
+  assert.ok(r.gone);
+  assert.equal(r.desk, JSON.stringify({ c4: { x: 100, y: 300 }, c5: { x: 300, y: 300 } }));
+});
+
 await check('follow a tune: the next key lights up and advances on the right note', async (page) => {
   await startApp(page, '?sim=1');
   await page.selectOption('#tuneSel', { label: 'Mary had a little lamb' });
