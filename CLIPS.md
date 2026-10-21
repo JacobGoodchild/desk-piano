@@ -55,6 +55,11 @@ Add `--sweep` to try 486 combinations of the main settings (tap sensitivity, str
 distance, tap/landing match window, knuckle weighting) on the already-analysed clips — the slow hand
 tracking runs only once — and print the 10 best. Use it as a starting point, then confirm by hand.
 
+Experiment: `--self-teach 0.3` learns finger patterns from clear-cut taps in the other clips and
+re-scores each clip with them (leave-one-out). On the first clips it made things worse (32 → 26
+correct) because clear-cut taps never involved the middle finger — so the app does not teach itself;
+only the explicit "Teach my fingers" step (all five fingers) is used.
+
 More options: `--conf 0.3` (MediaPipe confidence thresholds; each value has its own cache),
 `--av-offset 30` (pretend the sound is 30 ms late, to test timing robustness), `--no-sync` (turn
 off the engine's automatic sound/picture timing correction), `--engine classic` (old engine).

@@ -18,6 +18,7 @@ import { OnsetDetector, peakToVelocity } from '../src/onset.js';
 import { StrikeDetector } from '../src/strike.js';
 import { Fusion } from '../src/fusion.js';
 import { TapFusion } from '../src/tap-fusion.js';
+import { FingerTeacher } from '../src/tap-resolver.js';
 import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from '../src/paper.js';
 import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
@@ -81,7 +82,7 @@ function tapsFromAudio(samples, sensitivity) {
 
 // Replays one clip's frames + taps through the same logic as the app, in time order,
 // with camera results arriving `latency` ms after the frame was captured.
-function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {}, resolverOpts = {}, tipOffset = TIP_OFFSET_MM, engine = 'tap', avOffset = 0 }) {
+function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, strikeOpts = {}, fusionOpts = {}, resolverOpts = {}, tipOffset = TIP_OFFSET_MM, engine = 'tap', avOffset = 0, templates = null, learn = null }) {
   const layout = paperLayout(variant);
   let paperInv = null, paperFrames = 0, markerCounts = [];
   const detector = new StrikeDetector(strikeOpts);
@@ -99,6 +100,16 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     opts: fusionOpts,
   };
   const fusion = engine === 'tap' ? new TapFusion({ ...handlers, resolverOpts, opts: { autoSync: !flag('no-sync'), ...fusionOpts } }) : new Fusion(handlers);
+  if (engine === 'tap' && templates) fusion.resolver.templates = templates;
+  if (engine === 'tap' && learn) {
+    // collect the movement patterns of clear-cut single-finger taps (for self-teaching experiments)
+    const orig = fusion.resolver.resolve.bind(fusion.resolver);
+    fusion.resolver.resolve = (t, a) => {
+      const picks = orig(t, a);
+      if (picks.length === 1 && picks[0].margin >= learn.margin) learn.teacher.add(picks[0].tip, fusion.resolver.pattern(t));
+      return picks;
+    };
+  }
   const events = [];
   for (const f of frames) events.push({ at: f.t + latency, kind: 'frame', f });
   for (const tp0 of taps) { const tp = { ...tp0, t: tp0.t + avOffset }; events.push({ at: tp.t + 3, kind: 'tap', tp }); }
@@ -252,6 +263,7 @@ async function main() {
   const overall = totalExpected || totalDetected ? totalCorrect / Math.max(totalExpected, totalDetected) : 1;
   console.log(`\nOVERALL: ${totalCorrect} correct of ${totalExpected} expected (${totalDetected} detected) → ${(overall * 100).toFixed(1)}%`);
   if (flag('sweep')) sweep(analysed, { variant, latency });
+  if (opt('self-teach')) selfTeach(analysed, { variant, latency, margin: Number(opt('self-teach')) });
   if (jsonOut) writeFileSync(resolve(jsonOut), JSON.stringify({ when: new Date().toISOString(), variant, latency, sensitivity, overall, results }, null, 2));
   await browser.close();
   await close();
@@ -311,6 +323,23 @@ function sweep(analysed, { variant, latency }) {
   rows.sort((a, b) => b.accuracy - a.accuracy || a.falseNotes - b.falseNotes);
   console.log(`\nSWEEP (${combos.length} combinations) – best 10:`);
   for (const r of rows.slice(0, 10)) console.log(`  ${(r.accuracy * 100).toFixed(1)}%  notes in no-play clips: ${r.falseNotes}  ` + Object.entries(r).filter(([k]) => !['accuracy', 'falseNotes'].includes(k)).map(([k, v]) => `${k}=${v}`).join(' '));
+}
+
+// --self-teach M: learn finger patterns from clear-cut taps (margin ≥ M) in all OTHER clips, then score
+// each clip using them (leave-one-out) — tests whether the app could teach itself while you play.
+function selfTeach(analysed, { variant, latency, margin }) {
+  let correct = 0, expN = 0, detN = 0, base = 0;
+  for (const a of analysed) {
+    const teacher = new FingerTeacher();
+    for (const b of analysed) if (b !== a) replay(b.frames, tapsFromAudio(b.audio, 0.65), { variant, latency, learn: { teacher, margin } });
+    const t0 = replay(a.frames, tapsFromAudio(a.audio, 0.65), { variant, latency });
+    const t1 = replay(a.frames, tapsFromAudio(a.audio, 0.65), { variant, latency, templates: teacher.templates() });
+    if (!a.exp) continue;
+    const s0 = score(a.exp, groupChords(t0.notes)), s1 = score(a.exp, groupChords(t1.notes));
+    base += s0.correct; correct += s1.correct; expN += a.exp.length; detN += groupChords(t1.notes).length;
+    console.log(`  ${a.clip}: ${s0.correct} → ${s1.correct} correct (taught fingers: ${Object.keys(teacher.templates()).join(',')})`);
+  }
+  console.log(`SELF-TEACH margin ${margin}: correct ${base} → ${correct} of ${expN}`);
 }
 
 // Synthetic clip for --self-test: the rendered paper (no hands) with tap sounds. Written only to
