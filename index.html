@@ -125,13 +125,13 @@
     <h3>How notes are detected</h3>
     <label>Tap sensitivity <input name="sensitivity" type="range" min="0" max="1" step="0.05"></label>
     <label>Note detection
-      <select name="engine"><option value="tap">Tap-first (recommended)</option><option value="classic">Classic (finger landings)</option></select>
+      <select name="engine"><option value="tap">Tap + pressing finger (recommended)</option><option value="classic">Older: finger landings</option></select>
     </label>
     <label>Response
       <select name="response"><option value="accurate">More accurate (waits 2 camera frames)</option><option value="fast">Faster (1 frame, less accurate)</option></select>
     </label>
     <label class="row"><input name="chords" type="checkbox"> Allow chords within one hand (can add extra notes)</label>
-    <label class="row" id="cameraOnlyRow"><input name="cameraOnly" type="checkbox"> Classic only: also play finger strikes the microphone didn't hear</label>
+    <label class="row" id="cameraOnlyRow"><input name="cameraOnly" type="checkbox"> Also play finger strikes the microphone didn't hear</label>
     <h3>Screen</h3>
     <label class="row"><input name="showCamera" type="checkbox"> Show camera picture</label>
     <label class="row"><input name="mirror" type="checkbox"> Mirror camera picture</label>
