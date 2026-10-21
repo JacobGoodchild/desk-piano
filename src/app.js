@@ -1251,7 +1251,13 @@ async function keepAwake() {
   try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { /* not allowed */ }
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && state.started) keepAwake();
+  if (document.visibilityState === 'visible' && state.started) {
+    keepAwake();
+    // phones pause the camera picture (and sometimes the audio) in the background: resume them
+    const v = $('video');
+    if (v.srcObject && v.paused) v.play().catch(() => {});
+    if (state.ctx && state.ctx.state === 'suspended') state.ctx.resume().catch(() => {});
+  }
   // in the background the camera stops, so fingers can't be seen lifting: let go of everything
   if (document.visibilityState === 'hidden') { fusion.allOff(); releaseComputerKeys(); }
 });
