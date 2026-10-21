@@ -29,6 +29,7 @@ const settings = loadSettings();
 if (params.get('debug') === '1') settings.debug = true;
 
 const state = {
+  keyVel: new Map(), // midi → velocity of its last note
   ctx: null, piano: null, started: false,
   layout: paperLayout(settings.paperSize),
   paperH: null, paperInv: null, paperSeen: 0, markersSeen: new Set(),
@@ -94,6 +95,8 @@ function updatePedal() {
 function noteOn(midi, vel, info = {}) {
   if (midi == null || midi < 21 || midi > 108) return;
   state.active.set(midi, (state.active.get(midi) || 0) + 1);
+  state.keyVel.set(midi, vel); // shade of the lit key
+  if (info.how !== 'playback' && info.how !== 'test') $('dyn').textContent = dynamicMark(vel);
   state.lastNoteT = performance.now();
   state.spans.push({ midi, start: performance.now(), end: null, vel, how: info.how || 'keyboard' });
   if (state.spans.length > 300) state.spans.shift();
@@ -128,6 +131,14 @@ function noteOn(midi, vel, info = {}) {
     if (state.latencies.length > 50) state.latencies.shift();
   }
   drawPiano();
+}
+// loudness as a music marking, for the readout next to the mic bar
+function dynamicMark(v) { return v < 0.2 ? 'pp' : v < 0.35 ? 'p' : v < 0.5 ? 'mp' : v < 0.65 ? 'mf' : v < 0.8 ? 'f' : 'ff'; }
+// lit key colour: lighter blue for soft notes, deeper for loud ones
+function litColour(midi, black) {
+  const v = Math.max(0, Math.min(1, state.keyVel.get(midi) ?? 0.6));
+  const l = black ? 62 - 22 * v : 78 - 26 * v; // lightness %
+  return `hsl(212, 100%, ${l}%)`;
 }
 function noteOff(midi) {
   const n = (state.active.get(midi) || 0) - 1;
@@ -666,9 +677,9 @@ function drawPiano() {
     if (isBlack(m)) continue;
     const x = (whiteIndex(m) - w0) * kw;
     const on = state.active.has(m);
-    g.fillStyle = m === state.tuneWrong && on ? '#ff6b6b' : on ? '#4fa3ff' : m === nextKey ? '#9be7b0' : aheadKeys.has(m) ? '#ddf5e3' : '#f4f4f0';
+    g.fillStyle = m === state.tuneWrong && on ? '#ff6b6b' : on ? litColour(m, false) : m === nextKey ? '#9be7b0' : aheadKeys.has(m) ? '#ddf5e3' : '#f4f4f0';
     g.fillRect(x + 1, 0, kw - 2, H - 2);
-    g.fillStyle = on ? '#fff' : m === 60 ? '#c00' : '#888';
+    g.fillStyle = on ? '#0b1d33' : m === 60 ? '#c00' : '#888';
     g.font = `${m === 60 ? 'bold ' : ''}${Math.max(9, Math.min(13, kw * 0.38))}px system-ui`;
     g.textAlign = 'center';
     g.fillText(noteName(m), x + kw / 2, H - 8);
@@ -676,7 +687,7 @@ function drawPiano() {
   for (let m = low; m <= high; m++) {
     if (!isBlack(m)) continue;
     const x = (whiteIndex(m) - w0 + 1) * kw - kw * 0.3;
-    g.fillStyle = m === state.tuneWrong && state.active.has(m) ? '#ff6b6b' : state.active.has(m) ? '#4fa3ff' : m === nextKey ? '#2fa35a' : aheadKeys.has(m) ? '#1f4a2c' : '#111';
+    g.fillStyle = m === state.tuneWrong && state.active.has(m) ? '#ff6b6b' : state.active.has(m) ? litColour(m, true) : m === nextKey ? '#2fa35a' : aheadKeys.has(m) ? '#1f4a2c' : '#111';
     g.fillRect(x, 0, kw * 0.6, H * 0.6);
   }
   // fingertip dots

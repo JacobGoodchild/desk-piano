@@ -598,3 +598,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   invisibly; a false "sheets crooked" hint while the app was switching paper size; the offline cache
   kept a copy of the page per query string (?debug=1 …); wording now says offline works once you've
   played while online. Guard test checks the Pages copy line precisely.
+- **11:47** Dynamics you can see: lit keys are paler for soft notes and deeper blue for loud ones, and a small
+  pp–ff readout beside the Mic bar shows how loud the last note was (checked in a screenshot).

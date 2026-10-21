@@ -111,3 +111,4 @@ dialog form { max-height: calc(100dvh - 60px); }
 .oct button { padding: 0 9px; line-height: 22px; }
 .oct b { min-width: 22px; text-align: center; color: var(--text); }
 .teachSeen { color: var(--muted); font-size: 13px; }
+.dyn { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-size: 17px; color: var(--text); min-width: 28px; }
