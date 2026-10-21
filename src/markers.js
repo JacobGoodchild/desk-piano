@@ -130,8 +130,11 @@ export function detectMarkers(grey, w, h, opts = {}) {
     const area = polyArea(quad);
     if (area < minArea || n / area < 0.3 || n / area > 1.05) continue;
     // also try the quad mirrored (many webcams send a mirror image)
-    const m = readMarker(grey, w, h, quad) || readMarker(grey, w, h, [quad[1], quad[0], quad[3], quad[2]], true);
-    if (m) results.push(m);
+    // Read both ways and keep the closer match: a mirror image of some codes is only a bit or two
+    // from another code, so taking the first read could give the wrong id.
+    const a = readMarker(grey, w, h, quad), b = readMarker(grey, w, h, [quad[1], quad[0], quad[3], quad[2]], true);
+    const m = !a ? b : !b ? a : a.dist < b.dist ? a : b.dist < a.dist ? b : a.id === b.id ? a : null;
+    if (m) { delete m.dist; results.push(m); }
   }
   return results;
 }
@@ -216,15 +219,16 @@ function readMarker(grey, w, h, quad, mirrored = false) {
   }
   if (borderDark < 19) return null;
   // try the four rotations; rotation k means the printed top-left is at quad[k]
-  let rc = code;
+  // best match over all rotations (at most one wrong bit)
+  let rc = code, best = null;
   for (let k = 0; k < 4; k++) {
     for (let id = 0; id < MARKER_CODES.length; id++) {
-      if (popcount(MARKER_CODES[id] ^ rc) <= 1) {
-        const corners = [0, 1, 2, 3].map((i) => quad[(i - k + 4) % 4]);
-        return { id, corners, mirrored };
+      const dist = popcount(MARKER_CODES[id] ^ rc);
+      if (dist <= 1 && (!best || dist < best.dist)) {
+        best = { id, corners: [0, 1, 2, 3].map((i) => quad[(i - k + 4) % 4]), mirrored, dist };
       }
     }
     rc = rot(rc);
   }
-  return null;
+  return best;
 }

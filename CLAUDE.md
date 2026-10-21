@@ -489,3 +489,7 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **07:47** Desk mode: calibration now remembers the camera picture size; a different resolution is rescaled,
   a rotated picture asks for a new calibration (checklist). 3-tap perspective curve only used when it
   stays finite over the whole keyboard (no more silent notes past C6). Browser test added.
+- **07:49** Fading synth sounds (electric piano, harpsichord, vibraphone, music box) now free their oscillators
+  once silent, even with the pedal held. Marker reader compares the normal and mirrored reading and
+  keeps the closer match (a one-bit misread on a mirrored webcam could give a wrong/unused id); on
+  Jacob's clips (privately, 20 frames each) marker counts identical, no wrong ids before or after.

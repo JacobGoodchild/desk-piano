@@ -31,6 +31,9 @@ class SynthBase {
     const v = this.makeVoice(midi, vel, t);
     v.held = true; v.released = false; v.midi = midi;
     this.voices.set(midi, v);
+    // sounds that die away by themselves: free the (now silent) oscillators even if the key or
+    // the pedal is still held, so "pedal always on" doesn't pile up hundreds of running nodes
+    if (this.life) setTimeout(() => { if (this.voices.get(midi) === v) this._stop(midi, this.ctx.currentTime, 0.05); }, this.life * 1000);
     return v;
   }
   noteOff(midi) {
@@ -59,7 +62,7 @@ class SynthBase {
 
 // Electric piano: two-operator FM, bright bell-like attack that mellows, long decay.
 export class ElectricPiano extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.17; this.setVolume(1, true); this.releaseTime = 0.08; }
+  constructor(ctx, dest) { super(ctx, dest); this.life = 19; this.trim = 0.17; this.setVolume(1, true); this.releaseTime = 0.08; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain();
@@ -101,7 +104,7 @@ export class Organ extends SynthBase {
 
 // Harpsichord: bright plucked sawtooth through a closing filter.
 export class Harpsichord extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.28; this.setVolume(1, true); this.releaseTime = 0.05; }
+  constructor(ctx, dest) { super(ctx, dest); this.life = 9; this.trim = 0.28; this.setVolume(1, true); this.releaseTime = 0.05; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain(); amp.connect(this.out);
@@ -133,7 +136,7 @@ export class Strings extends SynthBase {
 
 // Vibraphone: metal bars (sine + bell partial) with a gentle motor tremolo, long ring.
 export class Vibraphone extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.115; this.setVolume(1, true); this.releaseTime = 0.25; }
+  constructor(ctx, dest) { super(ctx, dest); this.life = 18; this.trim = 0.115; this.setVolume(1, true); this.releaseTime = 0.25; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi);
     const amp = ctx.createGain(); amp.connect(this.out);
@@ -155,7 +158,7 @@ export class Vibraphone extends SynthBase {
 
 // Music box: tiny plucked steel comb — bright, short, sweet.
 export class MusicBox extends SynthBase {
-  constructor(ctx, dest) { super(ctx, dest); this.trim = 0.13; this.setVolume(1, true); this.releaseTime = 0.4; }
+  constructor(ctx, dest) { super(ctx, dest); this.life = 7; this.trim = 0.13; this.setVolume(1, true); this.releaseTime = 0.4; }
   makeVoice(midi, vel, t) {
     const ctx = this.ctx, f = mtof(midi + 12);
     const amp = ctx.createGain(); amp.connect(this.out);
