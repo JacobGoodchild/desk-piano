@@ -363,8 +363,11 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
 **Accuracy on your clips** (`scripts/clip-test.mjs`): **8.5% → 56.1%** overall. Middle C ×4: 4/4 (+1
 extra). Mary (simple, scored against the full verse — my guess): 15/26. Chromatic: 12/25. C-E-G chord:
 0/2 (the footage shows no per-finger signal for chords — chords within one hand are off by default).
+Hovering and resting clips: 3 stray notes in total (from 66).
 
-**Also new:** mirrored webcams handled; auto-sync of microphone vs camera timing; sounds (bright
+**Also new:** mirrored webcams handled; auto-sync of microphone vs camera timing; clear-cut notes
+play a frame early; plain desk mode has an optional third calibration tap for perspective; set-up shows
+the measured tap→sound delay; mic bar flashes green/orange; "Copy diagnostics" in the debug view; sounds (bright
 piano, electric piano, organ, harpsichord, strings, vibraphone, music box, bass), reverb, layering,
 split; record / play back / save .mid; MIDI output; metronome; note trail; played keys light up on
 the camera picture; Check accuracy; Touch curve; offline support; full-screen; set-up screen re-laid
