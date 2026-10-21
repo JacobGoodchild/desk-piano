@@ -1267,7 +1267,7 @@ document.addEventListener('visibilitychange', () => {
     if (track && track.readyState === 'ended') startCamera().catch((e) => setStatus(`Camera: ${e.message}`)); // stopped for good: reopen
     else if (v.srcObject && v.paused) v.play().catch(() => {});
     const mic = state.micStream && state.micStream.getAudioTracks()[0];
-    if (mic && mic.readyState === 'ended') startMic().catch((e) => setStatus(`Microphone: ${e.message}`));
+    if (mic && mic.readyState === 'ended') startMic().then(() => { state.micFailed = false; applySettings(); }).catch((e) => { state.micFailed = true; applySettings(); setStatus(`Microphone: ${e.message}`); });
     if (state.ctx && state.ctx.state === 'suspended') state.ctx.resume().catch(() => {});
   }
   // in the background the camera stops, so fingers can't be seen lifting: let go of everything

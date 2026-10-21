@@ -637,3 +637,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
 - **12:18** Browsers without per-frame camera callbacks (e.g. some Firefox versions): only new camera pictures are
   processed (was every screen refresh, repeating the same picture). Diagnostics include the tap
   time-out, fingertip offset and mic failure.
+- **12:21** Last review (final small changes): 1 bug fixed — if the microphone can't be reopened after returning to
+  the page, the app now switches to camera-only playing (as at start-up) instead of silently playing nothing.
