@@ -508,3 +508,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   defaults 0/7, tuned 7/7. Leave-one-clip-out test on Jacob's clips (`clip-test --auto-tune`): a wider
   grid (weights too) tuned on the chromatic clip made the others WORSE (22→19 right, 3→7 stray) →
   narrowed to the two gates, which never triggers on these clips (defaults already best) = no harm.
+- **08:08** Live end-to-end re-check (middle-C clip through the real app, fake camera/mic, CPU tracking ~7 fps,
+  note names only): this morning's version and today's behave the same (mostly C4, 1–5 stray notes per
+  60 s run in both) → no regression; the strays come from the very low headless frame rate.
