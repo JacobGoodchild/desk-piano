@@ -39,7 +39,7 @@ jobs:
       - name: Collect site files (app only – no tests or scripts)
         run: |
           mkdir _site
-          cp -r index.html print.html sw.js src vendor samples CREDITS.md _site/
+          cp -r index.html print.html help.html sw.js src vendor samples CREDITS.md _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
         with:

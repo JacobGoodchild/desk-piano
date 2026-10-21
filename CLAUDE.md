@@ -527,3 +527,6 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   running; a check during a tune dropped the tune's recording; a restarted tune missed its first
   tap; desk calibration dots drawn in old camera pixels after a resolution change. The tune-finished
   message now closes by itself. Browser test for the crash case.
+- **08:23** New **Help** page (help.html, linked in the top bar): set-up, playing, getting it right, what's on
+  screen, extras, privacy — plain English; checked on laptop and phone; cached offline; deployed (the
+  Pages workflow copies an explicit file list, so it was added there).

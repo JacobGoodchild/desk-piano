@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desk Piano – help</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg: #151a24; --panel: #1f2633; --text: #e8ecf3; --muted: #9aa6b8; --accent: #4fa3ff; --good: #3ecf7a; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.55 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  header { background: var(--panel); padding: 10px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; position: sticky; top: 0; }
+  header h1 { font-size: 18px; margin: 0; }
+  a { color: var(--accent); }
+  main { max-width: 760px; margin: 0 auto; padding: 8px 16px 48px; }
+  h2 { font-size: 19px; margin: 28px 0 6px; border-top: 1px solid #2c3546; padding-top: 18px; }
+  h2:first-of-type { border-top: 0; }
+  li { margin: 4px 0; }
+  .tip { background: #23402c; border-left: 3px solid var(--good); padding: 8px 12px; border-radius: 6px; }
+  kbd { background: #2c3546; border-radius: 4px; padding: 0 5px; font-size: 13px; }
+  nav { font-size: 14px; color: var(--muted); }
+  nav a { margin-right: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Desk Piano – help</h1>
+  <a href="index.html">← back to the piano</a>
+  <a href="print.html">Print the keyboard</a>
+</header>
+<main>
+  <nav><a href="#setup">Setting up</a><a href="#play">Playing</a><a href="#better">Getting it right</a><a href="#screen">What's on screen</a><a href="#extras">Extras</a><a href="#privacy">Privacy</a></nav>
+
+  <h2 id="setup">Setting up</h2>
+  <ol>
+    <li><b>Print the keyboard</b> at 100% size (“Actual size”, not “Fit to page”) on A4 landscape. Cut along the dashed lines, overlap the sheets on the grey strips, tape them together and tape the strip to the desk. Keep the black square markers uncovered.</li>
+    <li><b>Place the camera on the far side of the paper</b>, facing you and tilted down at your hands (about 45°) — a phone on a stand or a pile of books works well. On a phone the app uses the front camera so you can see the screen.</li>
+    <li><b>Press Start</b> and allow the camera and microphone. The set-up screen ticks each step off as it's done: paper markers found, microphone hearing taps, both hands seen.</li>
+    <li><b>Headphones are best.</b> The microphone listens for your taps, and piano sound from a speaker can confuse it (there's a Speakers setting if you must).</li>
+  </ol>
+  <p>No printer? Press <b>Desk</b> in the top bar and tap middle C, then the C above it, on the bare desk. An optional third tap (two octaves above middle C) makes the far ends more accurate. Press <kbd>R</kbd> or <b>Recentre</b> to re-tap middle C if your hands drift.</p>
+
+  <h2 id="play">Playing</h2>
+  <ul>
+    <li>Tap the keys with the <b>pad of your finger</b>, firmly enough to make a small “tok” — the microphone decides <i>when</i> a note plays and how loud; the camera decides <i>which</i> key.</li>
+    <li>A note lasts while your finger stays down and stops when you lift it. Hovering or resting hands don't play.</li>
+    <li><b>Sustain pedal:</b> the Pedal button, or hold <kbd>Space</kbd>. Settings → “Pedal always on”.</li>
+    <li>Loud and soft: tap harder or softer. After a few notes the app learns your own softest and hardest taps. Settings → Touch makes it lighter or heavier.</li>
+  </ul>
+
+  <h2 id="better">Getting it right</h2>
+  <ul>
+    <li><b>Teach my fingers</b> (set-up screen, 30 seconds): rest a hand on the keys and tap three times with each finger. The app learns how your fingers move together, which helps it pick the finger that actually pressed.</li>
+    <li><b>Check accuracy</b> (set-up screen): play C D E F G F E D C. You get a score — and if notes were missed or wrong, the app replays what you played with slightly different detection settings and offers to keep the ones that suit you. <b>Forget</b> undoes taught fingers and tuning.</li>
+    <li>Watch the <b>orange dots</b> on the on-screen keyboard: one per fingertip the camera sees. If they're on the wrong keys, move the camera so the whole paper is in view.</li>
+    <li>The <b>Mic</b> bar flashes <span style="color:var(--good)">green</span> when a tap became a note and <span style="color:#ffaa33">orange</span> when a tap was heard but no pressing finger was seen.</li>
+  </ul>
+  <p class="tip">The microphone matters most. If your webcam is high up, pick the laptop's or phone's own microphone in Settings → Devices, as close to the paper as possible. Keep your other fingers still while one presses.</p>
+  <p>Settings → Response: “More accurate” waits a moment longer for the camera; “Faster” plays sooner but picks the wrong finger more often. Chords within one hand are off by default (they can add extra notes).</p>
+
+  <h2 id="screen">What's on screen</h2>
+  <ul>
+    <li>The on-screen keyboard lights up the notes you play (blue), with fingertip dots (orange). You can also play it by touch or with the computer keys <kbd>A</kbd>–<kbd>;</kbd> (black keys <kbd>W E T Y U O P</kbd>, <kbd>Z</kbd>/<kbd>X</kbd> octave).</li>
+    <li>The camera picture shows the paper outline, your hand points and the keys being played.</li>
+    <li>Settings → Debug view (or add <code>?debug=1</code> to the address): frame rate, measured delay from tap to sound, the reason a tap didn't play, and “Copy diagnostics” (numbers only).</li>
+  </ul>
+
+  <h2 id="extras">Extras</h2>
+  <ul>
+    <li><b>Sounds:</b> grand, bright and honky-tonk piano, electric piano, organ, harpsichord, strings, vibraphone, music box, bass — layer two together, or split the keyboard below middle C. Room reverb.</li>
+    <li><b>Follow a tune:</b> pick a tune and the next key lights up green; wrong notes flash red.</li>
+    <li><b>● Rec</b> records what you play; play it back or save it as a MIDI file. Settings → MIDI output sends notes to a real keyboard or music app.</li>
+    <li><b>♩</b> metronome (tempo in Settings), <b>⛶</b> full screen.</li>
+    <li>Works offline after your first visit.</li>
+  </ul>
+
+  <h2 id="privacy">Privacy</h2>
+  <p>The camera and microphone are analysed on your device and never recorded, uploaded or saved. Only your settings are kept, in this browser.</p>
+</main>
+</body>
+</html>

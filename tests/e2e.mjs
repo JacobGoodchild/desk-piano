@@ -118,6 +118,12 @@ await check('print page renders sheets with markers', async (page) => {
   assert.equal(await page.locator('.sheet').count(), paperLayout('compact').pages.length);
 });
 
+await check('help page loads and links back to the piano', async (page) => {
+  await page.goto(url + 'help.html');
+  assert.match(await page.textContent('h1'), /help/);
+  assert.equal(await page.getAttribute('header a', 'href'), 'index.html');
+});
+
 await check('computer keyboard plays notes with the pedal', async (page) => {
   await page.goto(url + 'index.html');
   await page.keyboard.down('a');
