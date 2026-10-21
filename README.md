@@ -19,8 +19,12 @@ saved or uploaded. After the first visit it also works offline.
    paper, facing you, tilted down at your hands. Headphones are best.
 3. Press **Start**. The set-up screen ticks off: piano loaded, microphone hearing taps, camera,
    hand-tracking speed, both hands, and every paper marker (missing ones are outlined red).
+   The numbered steps tick themselves off as each one is done.
 4. Optional but recommended: **Teach my fingers** (set-up screen) — tap 3 times with each finger.
-5. Play. Tap firmly enough that the mic hears it (watch the green "Mic" bar).
+5. Optional: **Check accuracy** (set-up screen) — play C D E F G F E D C. If it got notes wrong, the
+   app replays what you played with slightly different detection settings and offers to keep the
+   ones that suit you (**Forget** undoes it). Finishing a *Follow a tune* piece offers the same.
+6. Play. Tap firmly enough that the mic hears it (watch the green "Mic" bar).
 
 No paper? Press **Desk** in the top bar and tap middle C, then the C above, to calibrate (optionally
 a third tap two octaves above middle C makes the far ends more accurate). **R** recentres.
