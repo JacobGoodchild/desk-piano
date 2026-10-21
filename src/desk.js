@@ -32,3 +32,33 @@ export function deskKeyAt(cal, x, y) {
   const v = (px * nx + py * ny) / L2; // octaves towards the camera
   return kb.keyAt(C4_X + u * OCT_MM, TAP_Y - v * OCT_MM, 60);
 }
+
+// Where the invisible keys are, for drawing on the camera picture: white-key boundary lines (from
+// the back to the front of the keys) and the position of each C, in the calibration's picture
+// pixels. Same geometry as deskKeyAt.
+export function deskKeyLines(cal, low = 48, high = 84) {
+  if (!cal || !cal.c4 || !cal.c5) return null;
+  const dx = cal.c5.x - cal.c4.x, dy = cal.c5.y - cal.c4.y;
+  if (dx * dx + dy * dy < 1) return null;
+  let nx = -dy, ny = dx;
+  if (ny < 0) { nx = -nx; ny = -ny; }
+  let g = 0;
+  if (cal.c6) {
+    const u6 = ((cal.c6.x - cal.c4.x) * dx + (cal.c6.y - cal.c4.y) * dy) / (dx * dx + dy * dy);
+    if (u6 > 1.6 && u6 < 3.3) g = (u6 - 2) / u6;
+  }
+  const toU = (k) => k / ((1 + g) - g * k); // inverse of the perspective curve
+  const at = (k, v) => { const u = toU(k); return { x: cal.c4.x + u * dx + v * nx, y: cal.c4.y + u * dy + v * ny }; };
+  const vBack = TAP_Y / OCT_MM, vFront = (TAP_Y - kb.whiteLen) / OCT_MM;
+  const lines = [], cs = [];
+  const c4w = whiteIdx(60);
+  for (let m = low; m <= high + 1; m++) {
+    if (isBlackKey(m)) continue;
+    const k = (whiteIdx(m) - c4w - 0.5) / 7; // left edge of this white key, in octaves from C4's centre
+    lines.push([at(k, vBack), at(k, vFront)]);
+    if (m % 12 === 0 && m <= high) cs.push({ midi: m, p: at((whiteIdx(m) - c4w) / 7, vFront * 0.5) });
+  }
+  return { lines, cs };
+}
+const whiteIdx = (m) => Math.floor(m / 12) * 7 + [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6][m % 12];
+const isBlackKey = (m) => [1, 3, 6, 8, 10].includes(m % 12);

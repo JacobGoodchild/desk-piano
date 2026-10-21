@@ -611,3 +611,5 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   (no needless drift now), +20 ms 29/57 (was 32), −20 ms 28/57 (was 23, never corrected) — better overall
   and on the side real cameras usually err (picture later than sound). Clips overall still 56.1%.
   The synthetic unit test sets its own −17 ms target (its fake fingers stop 17 ms before the tap).
+- **11:55** Desk mode: once calibrated, the camera picture shows the invisible keyboard (white-key edges, each C
+  labelled), drawn with the same geometry as the note mapping (unit test: each drawn C maps to that C).

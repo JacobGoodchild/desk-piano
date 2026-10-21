@@ -15,7 +15,7 @@ import { VelocityMapper } from './onset.js';
 import { paperLayout, paperToKey, fitPaper, detectPaperSize, TIP_OFFSET_MM } from './paper.js';
 import { detectMarkers, toGrey } from './markers.js';
 import { applyH, invertH } from './homography.js';
-import { deskKeyAt } from './desk.js';
+import { deskKeyAt, deskKeyLines } from './desk.js';
 import { loadSettings, saveSettings, DEFAULTS } from './settings.js';
 import { noteName, isBlack, whiteIndex } from './notes.js';
 import { HAND_CONNECTIONS } from './hand-connections.js';
@@ -764,6 +764,14 @@ function drawOverlay() {
     // saved points are in the camera pixels at calibration time (the draft is in today's)
     const sx = !state.calibDraft && deskPts.w ? vw / deskPts.w : 1, sy = !state.calibDraft && deskPts.h ? vh / deskPts.h : 1;
     for (const p of [deskPts.c4, deskPts.c5, deskPts.c6].filter(Boolean)) { g.beginPath(); g.arc(X(p.x * sx), p.y * sy, 8, 0, 7); g.fill(); }
+    // the invisible keyboard: white-key edges and the C's (once calibrated)
+    const kl = !state.calibDraft && deskKeyLines(deskPts, state.layout.variant.low, state.layout.variant.high);
+    if (kl) {
+      g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = 1.5;
+      for (const [a, b] of kl.lines) { g.beginPath(); g.moveTo(X(a.x * sx), a.y * sy); g.lineTo(X(b.x * sx), b.y * sy); g.stroke(); }
+      g.fillStyle = 'rgba(255,204,51,0.95)'; g.font = `bold ${Math.round(vw / 45)}px system-ui`; g.textAlign = 'center';
+      for (const c of kl.cs) g.fillText(noteName(c.midi), X(c.p.x * sx), c.p.y * sy);
+    }
   }
   for (const hand of state.hands) {
     const pts = hand.points;
