@@ -371,7 +371,11 @@ the measured tap→sound delay; mic bar flashes green/orange; "Copy diagnostics"
 piano, electric piano, organ, harpsichord, strings, vibraphone, music box, bass), reverb, layering,
 split; record / play back / save .mid; MIDI output; metronome; note trail; played keys light up on
 the camera picture; Check accuracy; Touch curve; offline support; full-screen; set-up screen re-laid
-out; Settings in sections. 40 unit + 8 browser tests, CI green.
+out; Settings in sections; **Follow a tune** (next key lights up green); orange dots on the on-screen
+keyboard show the key under each fingertip; plays from the camera alone if the microphone is refused;
+recognises which paper size you printed; 48-voice polyphony limit; 7 stuck/cut-off-note and phone
+camera-switching bugs fixed after a code review; "why no note" diagnostics. 45 unit + 13 browser
+tests, CI green.
 
 **Best next steps:** record the clips listed in CLIPS.md ("teach my fingers" clip, slow scales, held
 chords, a mic close to the desk) and try it live — the debug view (`?debug=1`) shows the frame rate,
