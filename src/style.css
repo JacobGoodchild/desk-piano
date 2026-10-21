@@ -76,3 +76,5 @@ body.setup #piano, body.setup #roll { display: none; }
 .teachInfo { font-size: 13px; color: var(--muted); margin: 6px 0; }
 #metroBtn.beat { box-shadow: 0 0 0 3px var(--accent); }
 #metroBtn.accent { box-shadow: 0 0 0 3px var(--good); }
+.news { background: #23402c; border-bottom: 1px solid #3ecf7a; padding: 6px 12px; font-size: 13px; }
+.news button { margin-left: 8px; padding: 2px 10px; }
