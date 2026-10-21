@@ -118,7 +118,7 @@ export class TapResolver {
     for (const p of picks) bestByHand.set(p.hand, Math.max(bestByHand.get(p.hand) ?? -Infinity, p.lead));
     const top = Math.max(-Infinity, ...bestByHand.values());
     const kept = picks.filter((p) => bestByHand.size < 2 || bestByHand.get(p.hand) >= top * o.handRatio);
-    for (const p of kept) this.lastPick.set(p.hand, { tip: p.tip, t });
+    // (the caller records which finger actually played: see played())
     return kept;
   }
 
@@ -189,6 +189,9 @@ export class TapResolver {
     }
     return bestVec;
   }
+
+  // Remember the finger that really played (for the repeated-note fallback).
+  played(pick, t) { this.lastPick.set(pick.hand, { tip: pick.tip, t }); }
 
   // Has this finger lifted (or slid sideways off its key) since it landed at (landX, landY)?
   lifted(id, landY, size, landX = null) {

@@ -121,6 +121,7 @@ export class TapFusion {
         if (this.log.length > 200) this.log.shift();
         this.play(midi, tap.velocity, { fingerId: p.id, how: 'tap', t: tap.t - this.syncOffset, tap });
         played++;
+        this.resolver.played(p, tap.t);
         if (!p.repeat && this.syncQueue.length < 50) this.syncQueue.push({ t: tap.t, pick: p });
       }
       if (!played) {
