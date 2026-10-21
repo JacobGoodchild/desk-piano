@@ -1247,9 +1247,9 @@ if ('serviceWorker' in navigator && !SIM && location.protocol !== 'file:') {
 
 $('start').onclick = start;
 // one-time "what's new" note (not in tests)
-if (!SIM && (settings.seenNews || 0) < 2) {
+if (!SIM && (settings.seenNews || 0) < 3) {
   $('news').hidden = false;
-  $('newsOk').onclick = () => { settings.seenNews = 2; saveSettings(settings); $('news').hidden = true; };
+  $('newsOk').onclick = () => { settings.seenNews = 3; saveSettings(settings); $('news').hidden = true; };
 }
 if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings(settings); setSetup(true, false); }
 bindSettings();

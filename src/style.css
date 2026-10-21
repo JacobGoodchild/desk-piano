@@ -116,3 +116,4 @@ dialog form { max-height: calc(100dvh - 60px); }
 .chip { font-size: 12px; padding: 1px 6px; border-radius: 4px; font-weight: 600; }
 .chip.hit { background: #23402c; color: var(--good); }
 .chip.miss { background: #4a2326; color: #ff8d8d; }
+.news a { color: var(--accent); }
