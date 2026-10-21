@@ -53,7 +53,9 @@ self.addEventListener('fetch', (e) => {
       const cache = await caches.open(CACHE);
       try {
         const res = await fetch(req, { cache: 'no-cache' }); // revalidate: no stale modules after a deploy
-        if (res.ok) e.waitUntil(cache.put(req, res.clone()));
+        // one copy per file: store without the query (?debug=1 etc.); offline lookups ignore it anyway
+        const key = new URL(req.url); key.search = '';
+        if (res.ok) e.waitUntil(cache.put(key.href, res.clone()));
         return res;
       } catch {
         const hit = await cache.match(req, { ignoreSearch: true });

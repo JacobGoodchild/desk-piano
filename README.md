@@ -9,7 +9,7 @@ strings.
 - **Print the keyboard:** https://jacobgoodchild.github.io/desk-piano/print.html (A4 landscape, 100% scale)
 
 Everything runs in your browser. Camera and microphone are analysed on the device and never recorded,
-saved or uploaded. After the first visit it also works offline.
+saved or uploaded. Once you have played while online, it also works offline.
 
 ## Quick start
 

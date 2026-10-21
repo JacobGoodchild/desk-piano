@@ -446,7 +446,8 @@ function updatePaperFromMarkers(found, scale = 1) {
   // crooked or with a gap (smoothed so one odd frame doesn't trigger the hint)
   const known = new Set(state.layout.markers.map((m) => m.id));
   const odd = res ? new Set(found.filter((m) => known.has(m.id) && !res.used.has(m.id)).map((m) => m.id)).size : 0;
-  state.oddMarkers = (state.oddMarkers || 0) * 0.8 + odd * 0.2;
+  // (not while it's deciding the other paper size was printed: then markers don't fit for that reason)
+  state.oddMarkers = state.sizeVotes > 0 ? 0 : (state.oddMarkers || 0) * 0.8 + odd * 0.2;
   // two markers alone (e.g. both at the back) pin down the front of the keys poorly: only use
   // them if there's nothing better
   if (res && (res.used.size >= 3 || !state.paperH)) {
@@ -984,6 +985,7 @@ function bindSettings() {
     const prev = { output: settings.output, mic: settings.mic, camera: settings.camera };
     // stop any calibration or teaching run first, so it can't write its old values back
     state.calib = null; state.calibDraft = null; state.teach = null; $('calib').hidden = true;
+    if (state.check) { state.check = null; resumeTuneRecording(); }
     for (const k of Object.keys(settings)) delete settings[k];
     Object.assign(settings, loadSettings(), { ...DEFAULTS }, keep);
     engines.tap.resolver.templates = null;

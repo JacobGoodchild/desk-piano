@@ -9,5 +9,6 @@ test('every source file and page is saved for offline use and deployed', () => {
   const wf = readFileSync(new URL('../../.github/workflows/pages.yml', import.meta.url), 'utf8');
   const src = readdirSync(new URL('../../src/', import.meta.url)).filter((f) => /\.(js|css)$/.test(f)).map((f) => `src/${f}`);
   for (const f of [...src, 'index.html', 'print.html', 'help.html']) assert.ok(sw.includes(`'${f}'`), `${f} missing from sw.js APP list`);
-  for (const f of ['index.html', 'print.html', 'help.html', 'sw.js', 'src']) assert.ok(wf.includes(f), `${f} missing from the Pages copy step`);
+  const copy = wf.split('\n').find((l) => l.includes('cp -r')) || '';
+  for (const f of ['index.html', 'print.html', 'help.html', 'sw.js', 'src', 'vendor', 'samples']) assert.ok(copy.split(/\s+/).includes(f), `${f} missing from the Pages copy step`);
 });

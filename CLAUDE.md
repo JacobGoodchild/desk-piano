@@ -594,3 +594,7 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
   deploy copy step. Also, on a first visit the piano samples and hand-tracking files loaded before the
   offline helper was running, so they were never saved: the page now hands it the list once ready.
   New strict browser test: one visit, then offline reload → page and piano work.
+- **11:45** Fifth review (latest batch) found 4 small issues, all fixed: Reset all left an accuracy check running
+  invisibly; a false "sheets crooked" hint while the app was switching paper size; the offline cache
+  kept a copy of the page per query string (?debug=1 …); wording now says offline works once you've
+  played while online. Guard test checks the Pages copy line precisely.
