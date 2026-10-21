@@ -500,3 +500,4 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **07:53** Tried per-finger score boosts for thumb/little finger (0.8–2×): no boost is best (56.1%) → reverted.
   The current engine sits at a local optimum on these 8 clips; more accuracy needs new clips.
 - **07:55** Set-up steps tick themselves off live (paper/camera/markers/microphone/hands) — checked in a screenshot.
+- **07:57** Phone portrait: shorter on-screen piano, no note trail, compact header → the set-up checklist is visible.

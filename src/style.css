@@ -100,3 +100,10 @@ dialog form { max-height: calc(100dvh - 60px); }
 .setupPanel li { transition: color .3s; }
 .setupPanel li.done { color: var(--muted); }
 .setupPanel li.done::marker { content: '✔ '; color: var(--good); }
+@media (orientation: portrait) and (max-width: 700px) {
+  header button { padding: 5px 9px; }
+  #roll { display: none; }
+  #piano { height: 20vh; min-height: 80px; }
+  #camWrap, body.setup #camWrap { max-height: 32vh; }
+  .news { font-size: 12px; }
+}
