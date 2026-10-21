@@ -9,15 +9,20 @@ export function makeReverbBus(ctx, destination = ctx.destination) {
   conv.buffer = roomImpulse(ctx, 2.2);
   input.connect(dry).connect(destination);
   input.connect(conv).connect(wet).connect(destination);
+  let amount = 0.2, pedal = false;
+  const apply = () => {
+    const t = ctx.currentTime;
+    // with the sustain pedal down every string is free to ring in sympathy: a little more resonance
+    const a = Math.min(1, amount + (pedal ? 0.12 : 0));
+    wet.gain.setTargetAtTime(a * 0.6, t, pedal ? 0.15 : 0.3);
+    dry.gain.setTargetAtTime(1 - Math.min(1, amount) * 0.25, t, 0.05);
+  };
   const bus = {
     input,
-    setAmount(a) { // 0..1
-      const t = ctx.currentTime;
-      wet.gain.setTargetAtTime(Math.min(1, a) * 0.6, t, 0.05);
-      dry.gain.setTargetAtTime(1 - Math.min(1, a) * 0.25, t, 0.05);
-    },
+    setAmount(a) { amount = a; apply(); }, // 0..1
+    setPedal(on) { if (on !== pedal) { pedal = on; apply(); } },
   };
-  bus.setAmount(0.2);
+  apply();
   return bus;
 }
 

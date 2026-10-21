@@ -72,6 +72,7 @@ function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
   for (const v of new Set([state.inst, state.layer, state.split].filter(Boolean))) v.setSustain(on);
+  if (state.bus) state.bus.setPedal(on);
   if (on !== state.pedalWas) { midiOut.pedal(on); recorder.add('pedal', on); state.pedalWas = on; }
 }
 
