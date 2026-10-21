@@ -539,3 +539,5 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   30 fps 56.1% / 3 stray, 15 fps 50.9% / 5, 10 fps 47.4% / 3. Shorter waits re-checked: 70 ms still best.
 - **08:33** Real foot pedals: USB/Bluetooth page-turner pedals (Page Up/Down, arrow keys) and a MIDI sustain
   pedal (controller 64 on any MIDI input, once MIDI is enabled) work as the sustain pedal. Tests added.
+- **08:33** Early decisions re-measured: margin 0.2 → 27% of notes play a frame early (was 11%) at full
+  accuracy; 0.15 → 40% early but −1 note; 0.05 → 63% early, 49%. Kept 0.2.
