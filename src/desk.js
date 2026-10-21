@@ -20,7 +20,8 @@ export function deskKeyAt(cal, x, y) {
   if (cal.c6) {
     // k(u) = (1+g)u / (1+g·u) passes through k(0)=0, k(1)=1 and k(u6)=2
     const u6 = ((cal.c6.x - cal.c4.x) * dx + (cal.c6.y - cal.c4.y) * dy) / L2;
-    if (u6 > 1.2 && u6 < 3.5) {
+    // only when the curve stays finite over the whole keyboard (C2–C7, u from −2 to +3)
+    if (u6 > 1.6 && u6 < 3.3) {
       const g = (u6 - 2) / u6;
       const den = 1 + g * u;
       if (den > 0.05) u = ((1 + g) * u) / den;

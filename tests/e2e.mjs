@@ -400,6 +400,19 @@ await check('plain desk mode: calibrate on C4 and C5, then play by position', as
   });
   const cal = names.pop();
   assert.deepEqual(names, ['E4', 'G4', 'F#4'], cal);
+  // same camera at twice the resolution: the same spot maps to the same key; rotated → no key
+  const k = await page.evaluate(() => {
+    const dp = window.deskPiano;
+    const { w, h } = dp.state.video;
+    const before = dp.keyForPoint(500, 400);
+    dp.setVideoSize(w * 2, h * 2);
+    const scaled = dp.keyForPoint(1000, 800);
+    dp.setVideoSize(h, w);
+    const turned = dp.keyForPoint(500, 400);
+    dp.setVideoSize(w, h);
+    return { before, scaled, turned };
+  });
+  assert.deepEqual(k, { before: 64, scaled: 64, turned: null }, JSON.stringify(k));
 });
 
 await check('teach my fingers: five fingers × three taps are learnt and saved', async (page) => {

@@ -62,7 +62,16 @@ engines.tap.resolver.templates = settings.fingerTemplates || null;
 function shiftNote(m) { return m == null ? null : m + settings.transpose + settings.octave * 12; }
 
 function keyForPoint(x, y) {
-  if (settings.mode === 'desk') return shiftNote(deskKeyAt(settings.desk, x, y));
+  if (settings.mode === 'desk') {
+    // calibration points are in the camera picture's pixels at the time: rescale if the picture
+    // size changed (e.g. another camera resolution); a rotated picture needs a new calibration
+    const cal = settings.desk, vw = state.video.w, vh = state.video.h;
+    if (cal && cal.w && vw && (cal.w !== vw || cal.h !== vh)) {
+      if ((cal.w > cal.h) !== (vw > vh)) return null;
+      x *= cal.w / vw; y *= cal.h / vh;
+    }
+    return shiftNote(deskKeyAt(cal, x, y));
+  }
   if (!state.paperInv) return null;
   const p = applyH(state.paperInv, x, y);
   return shiftNote(paperToKey(state.layout, p.x, p.y, TIP_OFFSET_MM));
@@ -458,14 +467,16 @@ function calibrationPoint(p) {
   }
   else if (state.calib === 'c6') { state.calibDraft.c6 = p; finishCalib('Calibrated – play away!'); }
   else if (state.calib === 'recentre') {
+    const cal = settings.desk, vw = state.video.w, vh = state.video.h;
+    if (cal.w && vw && (cal.w !== vw || cal.h !== vh)) p = { x: p.x * cal.w / vw, y: p.y * cal.h / vh }; // into calibration pixels
     const dx = p.x - settings.desk.c4.x, dy = p.y - settings.desk.c4.y;
     const c6 = settings.desk.c6;
-    settings.desk = { c4: p, c5: { x: settings.desk.c5.x + dx, y: settings.desk.c5.y + dy }, ...(c6 ? { c6: { x: c6.x + dx, y: c6.y + dy } } : {}) };
+    settings.desk = { c4: p, c5: { x: settings.desk.c5.x + dx, y: settings.desk.c5.y + dy }, ...(c6 ? { c6: { x: c6.x + dx, y: c6.y + dy } } : {}), w: settings.desk.w, h: settings.desk.h };
     finishCalib('Recentred.');
   }
 }
 function finishCalib(msg) {
-  if (state.calibDraft) { settings.desk = state.calibDraft; state.calibDraft = null; }
+  if (state.calibDraft) { settings.desk = { ...state.calibDraft, w: state.video.w, h: state.video.h }; state.calibDraft = null; }
   state.calib = null; saveSettings(settings); showCalib(msg); setTimeout(() => { if (!state.calib) $('calib').hidden = true; }, 2500); }
 function showCalib(html, onCancel) {
   const el = $('calib');
@@ -759,7 +770,11 @@ function updateChecks() {
     rows.push('<span class="no">!</span><span>I can see your hands but can’t hear any taps. Tap more firmly, move the microphone closer to the paper (or pick another one in Settings → Devices), or raise Tap sensitivity.</span>');
   }
   if (settings.mode === 'paper') tick(state.markersSeen.size === state.layout.markers.length, `Paper markers: ${state.markersSeen.size} of ${state.layout.markers.length}`);
-  else tick(!!(settings.desk && settings.desk.c5), 'Desk calibrated <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>');
+  else {
+    const d = settings.desk, vw = state.video.w, vh = state.video.h;
+    const turned = d && d.w && vw && (d.w > d.h) !== (vw > vh);
+    tick(!!(d && d.c5) && !turned, `${turned ? 'Desk calibration was made with the camera the other way round –' : 'Desk calibrated'} <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>`);
+  }
   if (settings.engine !== 'classic' && !state.teach) {
     const taught = !!(settings.fingerTemplates && [4, 8, 12, 16, 20].every((t) => settings.fingerTemplates[t]));
     tick(taught, taught ? 'Fingers taught' : 'Fingers not taught yet – <button id="teachCheckBtn">Teach my fingers</button> (30 s, helps it pick the right finger)');
