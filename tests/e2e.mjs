@@ -399,6 +399,20 @@ await check('switches to the 2-octave paper when the camera sees it', async (pag
   assert.match(r.status, /2-octave/);
 });
 
+await check('warns when some paper markers don’t line up (crooked sheets)', async (page) => {
+  await startApp(page, '?sim=1');
+  const shown = await page.evaluate(async (markers) => {
+    const dp = window.deskPiano;
+    dp.setVideoSize(1280, 720);
+    // sheet 3's markers shifted by 25 px, as if that sheet were taped crooked
+    const moved = markers.map((m) => (m.id === 7 || m.id === 10 || m.id === 11 ? { ...m, corners: m.corners.map((c) => ({ x: c.x + 60, y: c.y + 30 })) } : m));
+    for (let i = 0; i < 15; i++) dp.injectMarkers(moved);
+    await new Promise((r) => setTimeout(r, 400));
+    return document.getElementById('checks').textContent;
+  }, markers);
+  assert.match(shown, /don’t line up/);
+});
+
 await check('no microphone: falls back to playing clear finger strikes from the camera', async (page) => {
   // the microphone is refused; the camera still works
   await page.addInitScript(() => {

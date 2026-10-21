@@ -441,6 +441,11 @@ function updatePaperFromMarkers(found, scale = 1) {
   } else if (size) state.sizeVotes = 0;
   const res = fitPaper(state.layout, found, scale);
   state.markersSeen = res ? res.used : new Set();
+  // markers read fine but left out because they don't fit with the others: usually a sheet taped
+  // crooked or with a gap (smoothed so one odd frame doesn't trigger the hint)
+  const known = new Set(state.layout.markers.map((m) => m.id));
+  const odd = res ? new Set(found.filter((m) => known.has(m.id) && !res.used.has(m.id)).map((m) => m.id)).size : 0;
+  state.oddMarkers = (state.oddMarkers || 0) * 0.8 + odd * 0.2;
   // two markers alone (e.g. both at the back) pin down the front of the keys poorly: only use
   // them if there's nothing better
   if (res && (res.used.size >= 3 || !state.paperH)) {
@@ -830,6 +835,7 @@ function updateChecks() {
     const turned = d && d.w && vw && (d.w > d.h) !== (vw > vh);
     tick(!!(d && d.c5) && !turned, `${turned ? 'Desk calibration was made with the camera the other way round –' : 'Desk calibrated'} <button id="calibBtn">Calibrate</button> <button id="recentreBtn">Recentre</button>`);
   }
+  if (settings.mode === 'paper' && state.oddMarkers > 1.5) rows.push('<span class="no">!</span><span>Some markers don’t line up with the rest – check the sheets are taped straight, with the key lines continuing across the joins.</span>');
   if (settings.engine !== 'classic' && !state.teach) {
     const taught = !!(settings.fingerTemplates && [4, 8, 12, 16, 20].every((t) => settings.fingerTemplates[t]));
     tick(taught, taught ? 'Fingers taught' : 'Fingers not taught yet – <button id="teachCheckBtn">Teach my fingers</button> (30 s, helps it pick the right finger)');

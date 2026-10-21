@@ -583,3 +583,6 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
 - **11:33** App's own per-frame work measured (two synthetic hands, headless): 0.2 ms median, 0.5 ms 95th
   percentile; screen keeps 60 fps → hand tracking is the only real cost. Set-up: **Test sound** button
   (C E G C) to check headphones/volume (not counted by Follow a tune). Browser test.
+- **11:37** Checklist: one hand in view counts as fine. New hint when paper markers are read but don't fit
+  with the rest (a sheet taped crooked/with a gap). On Jacob's clips the sheets agree to ~1.3 px and the
+  hint never fires; browser test with a shifted sheet.
