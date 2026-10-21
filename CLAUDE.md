@@ -340,3 +340,7 @@ scale two octaves with thumb-under. (He uploaded the hovering clip twice — ide
   of 0.5: hands found in a few more frames but accuracy 52.6% vs 54.4% → kept 0.5.
 - **21:35 → 01:21** The session's worker was restarted over and over (~4 h lost, nothing lost from git;
   wake-ups queued up and arrived together at 01:21). Carrying on.
+- **01:35** Lint clean. Tried subtracting neighbouring fingers' movement (dragged-along fingers): worse
+  (50–53%) → reverted; accuracy work paused at 54.4%. Added: mic bar flashes green (tap → note) /
+  orange (tap heard, no finger seen); Touch setting (light/normal/heavy velocity curve); one-time
+  "what's new" banner.
