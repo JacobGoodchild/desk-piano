@@ -580,3 +580,6 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
 - **11:29** Desk mode simulated on the clips (`clip-test --desk 2|3`: perfect calibration taken from the paper's
   C4/C5(/C6), printed keys otherwise ignored): **50.8%** vs 56.1% with the paper — usable; the third
   calibration tap made no difference at this camera angle. (Real calibration taps add some error.)
+- **11:33** App's own per-frame work measured (two synthetic hands, headless): 0.2 ms median, 0.5 ms 95th
+  percentile; screen keeps 60 fps → hand tracking is the only real cost. Set-up: **Test sound** button
+  (C E G C) to check headphones/volume (not counted by Follow a tune). Browser test.

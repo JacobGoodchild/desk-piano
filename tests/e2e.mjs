@@ -280,6 +280,11 @@ await check('follow a tune: the next key lights up and advances on the right not
   await startApp(page, '?sim=1');
   await page.selectOption('#tuneSel', { label: 'Mary had a little lamb' });
   assert.match(await page.textContent('#tuneProg'), /^0 \/ 26/);
+  // set-up: Test sound plays C E G C
+  await page.evaluate(() => { window.deskPiano.state.played.length = 0; });
+  await page.evaluate(() => document.getElementById('testSound').click());
+  await page.waitForTimeout(900);
+  assert.deepEqual(await page.evaluate(() => window.deskPiano.state.played.filter((p) => p.how === 'test').map((p) => p.name)), ['C4', 'E4', 'G4', 'C5']);
   for (const k of ['KeyD', 'KeyS', 'KeyA', 'KeyG']) { await page.keyboard.press(k); await page.waitForTimeout(60); } // E D C, then a wrong F
   assert.match(await page.textContent('#tuneProg'), /^3 \/ 26 · 1 wrong/);
   assert.equal(await page.evaluate(() => window.deskPiano.state.tune.next), 62);

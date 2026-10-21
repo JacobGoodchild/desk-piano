@@ -100,7 +100,7 @@ function noteOn(midi, vel, info = {}) {
   const entry = { midi, name: noteName(midi), vel: Math.round(vel * 100) / 100, how: info.how || 'keyboard', t: performance.now() };
   state.played.push(entry);
   if (state.check && info.how && info.how.startsWith('tap')) checkNote(midi);
-  if (state.tune && info.how !== 'playback') {
+  if (state.tune && info.how !== 'playback' && info.how !== 'test') {
     const want = state.tune.next, wasDone = state.tune.done;
     state.tune.play(midi);
     if (!wasDone && state.tune.done && state.rec && !state.check) {
@@ -924,6 +924,14 @@ function setSetup(on, autoStart = true) {
   requestAnimationFrame(drawPiano);
 }
 
+// a quick C major arpeggio + chord to check headphones and volume
+async function testSound() {
+  await ensureAudio();
+  const notes = [60, 64, 67, 72];
+  notes.forEach((m, i) => setTimeout(() => noteOn(m, 0.55, { how: 'test' }), i * 180));
+  setTimeout(() => notes.forEach((m) => noteOff(m)), 1800);
+}
+
 function bindOctave() {
   const step = (d) => {
     settings.octave = Math.max(-2, Math.min(2, settings.octave + d));
@@ -1203,6 +1211,7 @@ if (!loadSettings().seenSetup && !SIM) { settings.seenSetup = true; saveSettings
 bindSettings();
 bindTunes();
 bindOctave();
+$('testSound').onclick = testSound;
 // don't leave buttons focused after a click: Space (the sustain pedal) would press them again
 document.addEventListener('click', (e) => { const b = e.target.closest && e.target.closest('button'); if (b && !b.closest('dialog')) b.blur(); });
 bindKeys();
