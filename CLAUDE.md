@@ -607,3 +607,7 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
 - **11:50** Why −20 ms isn't corrected: the measured finger-stop→tap gap barely moves with the true offset
   (in-sync median ≈ −29 ms, −20 ms offset ≈ −14 ms, +20 ms ≈ −33 ms), so the measure saturates on the
   "sound early" side. Needs a better landing measure (next clip session); nothing changed.
+- **11:52** Auto-sync target re-measured for today's engine: −29 ms (was −17). Sync test, 2nd pass: in sync 32/57
+  (no needless drift now), +20 ms 29/57 (was 32), −20 ms 28/57 (was 23, never corrected) — better overall
+  and on the side real cameras usually err (picture later than sound). Clips overall still 56.1%.
+  The synthetic unit test sets its own −17 ms target (its fake fingers stop 17 ms before the tap).

@@ -180,6 +180,7 @@ test('edge cases: no hands at all → taps rejected, nothing played', () => {
 
 test('auto-sync: taps that consistently arrive late (mic/camera clock offset) get shifted back', () => {
   const ctx = setup();
+  ctx.fusion.o.syncTargetMs = -17; // these synthetic fingers stop ~17 ms before the tap (the real clips: ~29)
   const fingers = [4, 8, 12, 16, 20];
   const N = 80, gap = 300, LATE = 60;
   let t = 0;
