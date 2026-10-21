@@ -779,6 +779,15 @@ function updateChecks() {
     const taught = !!(settings.fingerTemplates && [4, 8, 12, 16, 20].every((t) => settings.fingerTemplates[t]));
     tick(taught, taught ? 'Fingers taught' : 'Fingers not taught yet – <button id="teachCheckBtn">Teach my fingers</button> (30 s, helps it pick the right finger)');
   }
+  // set-up steps tick themselves off as they're done
+  const paperOk = settings.mode === 'paper' && state.markersSeen.size >= 4;
+  const stepDone = {
+    paper: paperOk, camera: paperOk || (settings.mode === 'desk' && state.video.w > 0),
+    markers: settings.mode === 'paper' && state.markersSeen.size === state.layout.markers.length,
+    mic: !!state.micNode && lastTap != null && lastTap < 60,
+    hands: state.hands.length >= 2,
+  };
+  for (const li of document.querySelectorAll('#setupPanel li[data-step]')) li.classList.toggle('done', !!stepDone[li.dataset.step]);
   const html = rows.join('');
   if (el.dataset.html !== html) {
     el.innerHTML = html; el.dataset.html = html;

@@ -97,3 +97,6 @@ input[type="checkbox"] { accent-color: var(--accent); width: 16px; height: 16px;
 /* Done stays reachable at the bottom of the settings while scrolling (phones) */
 dialog .buttons { position: sticky; bottom: -1px; background: var(--panel); padding: 8px 0 4px; margin-bottom: -4px; border-top: 1px solid #3a465c; }
 dialog form { max-height: calc(100dvh - 60px); }
+.setupPanel li { transition: color .3s; }
+.setupPanel li.done { color: var(--muted); }
+.setupPanel li.done::marker { content: '✔ '; color: var(--good); }

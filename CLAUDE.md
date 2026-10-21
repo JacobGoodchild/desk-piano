@@ -499,3 +499,4 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   shared-key cut-off is covered by this morning's note-holder counting. All 6 review items done.
 - **07:53** Tried per-finger score boosts for thumb/little finger (0.8–2×): no boost is best (56.1%) → reverted.
   The current engine sits at a local optimum on these 8 clips; more accuracy needs new clips.
+- **07:55** Set-up steps tick themselves off live (paper/camera/markers/microphone/hands) — checked in a screenshot.
