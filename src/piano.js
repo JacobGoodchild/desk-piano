@@ -48,6 +48,7 @@ export class Piano {
 
   async load(baseUrl = 'samples/piano/', onProgress) {
     const jobs = [];
+    this.urls = []; // remembered so the app can save them for offline use
     // load the mid layer first so something is playable quickly
     const order = [1, 3, 0, 2].map((i) => LAYERS[i]);
     for (const L of order) for (const m of sampleMidis()) jobs.push({ m, v: L.v });
@@ -55,7 +56,9 @@ export class Piano {
     let done = 0;
     const fetchOne = async ({ m, v, rel }) => {
       const name = rel ? `rel${m}.mp3` : fileName(m, v);
-      const res = await fetch(baseUrl + encodeURIComponent(name));
+      const url = baseUrl + encodeURIComponent(name);
+      this.urls.push(url);
+      const res = await fetch(url);
       if (!res.ok) throw new Error(`sample ${name}: ${res.status}`);
       const buf = await this.ctx.decodeAudioData(await res.arrayBuffer());
       this.buffers.set(rel ? `rel-${m}` : `${m}-${v}`, buf);

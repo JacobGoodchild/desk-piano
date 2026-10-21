@@ -217,6 +217,7 @@ async function startAudio() {
   updatePedal();
   setStatus('Loading piano sound…');
   await state.piano.load('samples/piano/', (p) => setStatus(`Loading piano sound… ${Math.round(p * 100)}%`));
+  saveForOffline();
 }
 
 let micGen = 0;
@@ -1191,6 +1192,16 @@ async function start() {
   if (settings.mode === 'desk' && !(settings.desk && settings.desk.c5)) startCalibration();
 }
 
+// On a first visit the samples and the hand-tracking files load before the offline helper (sw.js)
+// is running, so it never sees them: hand it the list once it's ready (it skips what it already has).
+function saveForOffline() {
+  if (!('serviceWorker' in navigator) || SIM || location.protocol === 'file:') return;
+  navigator.serviceWorker.ready.then((reg) => {
+    const urls = ['vendor/mediapipe/vision_bundle.mjs', 'vendor/mediapipe/wasm/vision_wasm_internal.js', 'vendor/mediapipe/wasm/vision_wasm_internal.wasm', 'vendor/models/hand_landmarker.task', ...((state.piano && state.piano.urls) || [])];
+    if (reg.active) reg.active.postMessage({ type: 'cache', urls });
+  }).catch(() => { /* fine without it */ });
+}
+
 // keep the phone screen on while playing
 let wakeLock = null;
 async function keepAwake() {
@@ -1205,6 +1216,7 @@ document.addEventListener('visibilitychange', () => {
 // offline support (not in ?sim test mode)
 if ('serviceWorker' in navigator && !SIM && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => { /* fine without it */ });
+  saveForOffline();
 }
 
 $('start').onclick = start;

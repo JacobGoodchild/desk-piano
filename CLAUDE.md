@@ -586,3 +586,8 @@ notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera
 - **11:37** Checklist: one hand in view counts as fine. New hint when paper markers are read but don't fit
   with the rest (a sheet taped crooked/with a gap). On Jacob's clips the sheets agree to ~1.3 px and the
   hint never fires; browser test with a shifted sheet.
+- **11:41** Offline fix: the install-time file list was missing today's auto-tune.js (offline after one visit
+  would have failed) — added, plus a unit test that every src file/page is in the offline list and the
+  deploy copy step. Also, on a first visit the piano samples and hand-tracking files loaded before the
+  offline helper was running, so they were never saved: the page now hands it the list once ready.
+  New strict browser test: one visit, then offline reload → page and piano work.
