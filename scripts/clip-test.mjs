@@ -112,7 +112,8 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     };
   }
   const events = [];
-  for (const f of frames) events.push({ at: f.t + latency, kind: 'frame', f });
+  const keepEvery = Number(opt('frame-step', 1)); // --frame-step 2/3: simulate a slower camera/tracker
+  frames.forEach((f, i) => { if (i % keepEvery === 0) events.push({ at: f.t + latency, kind: 'frame', f }); });
   for (const tp0 of taps) { const tp = { ...tp0, t: tp0.t + avOffset }; events.push({ at: tp.t + 3, kind: 'tap', tp }); }
   events.sort((a, b) => a.at - b.at);
   for (const e of events) {

@@ -511,3 +511,8 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **08:08** Live end-to-end re-check (middle-C clip through the real app, fake camera/mic, CPU tracking ~7 fps,
   note names only): this morning's version and today's behave the same (mostly C4, 1–5 stray notes per
   60 s run in both) → no regression; the strays come from the very low headless frame rate.
+- **08:12** Slow devices: simulated slower hand tracking by dropping frames from the clips (`clip-test
+  --frame-step 2|3`): 15 fps 47.4%, 10 fps 40.4% with the old wait. Best wait: 70 ms at 15 fps, 140 ms at
+  10 fps (45.6%) — but the app capped it at 90 ms. New rule: fast cameras 2 frames; slower
+  max(70, 2.1 frames − 70 ms), up to 210 ms. The tap time-out now also allows for tracking time (the
+  live run's "no camera frame in time" drops are gone; 2 live runs: 31 of 33 notes C4).

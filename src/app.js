@@ -358,7 +358,14 @@ function processVideoFrame(t) {
 function adaptWait() {
   const f = fps();
   const frameMs = f > 5 ? 1000 / f : 33;
-  engines.tap.resolver.o.afterMs = Math.max(25, Math.min(90, (settings.response === 'fast' ? 1 : 2) * frameMs + 4));
+  // how long to wait after a tap for camera frames. Fast cameras: 2 frames. Slow trackers (measured by
+  // dropping frames from the real clips): 15 fps scored best at 70 ms, 10 fps at 140 ms (45.6% vs
+  // 40.4% at 70 ms) → max(70, 2.1 frames − 70 ms).
+  const accurate = frameMs <= 34 ? 2 * frameMs + 4 : Math.max(70, 2.1 * frameMs - 70);
+  engines.tap.resolver.o.afterMs = Math.max(25, Math.min(210, settings.response === 'fast' ? frameMs + 4 : accurate));
+  // a frame for time t only arrives after it has been tracked: on slow devices allow for that
+  // before giving up on a tap
+  engines.tap.o.maxWaitMs = Math.max(250, engines.tap.resolver.o.afterMs + frameMs + (state.trackMs || 0) + 50);
   // in accurate mode, clear-cut notes (one finger well ahead) still play after one frame
   engines.tap.o.earlyMs = settings.response === 'fast' ? 0 : Math.max(20, frameMs + 4);
 }
