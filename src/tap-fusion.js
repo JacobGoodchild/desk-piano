@@ -80,7 +80,7 @@ export class TapFusion {
     // taps whose camera frames never came
     const keep = [];
     for (const p of this.pending) {
-      if (now - p.t > this.o.maxWaitMs) this.stats.tapsRejected++;
+      if (now - p.t > this.o.maxWaitMs) { this.stats.tapsRejected++; this.stats.why = this.stats.why || {}; this.stats.why['no camera frame in time'] = (this.stats.why['no camera frame in time'] || 0) + 1; }
       else keep.push(p);
     }
     this.pending = keep;
@@ -118,7 +118,13 @@ export class TapFusion {
         played++;
         if (!p.repeat && this.syncQueue.length < 50) this.syncQueue.push({ t: tap.t, pick: p });
       }
-      if (!played) this.stats.tapsRejected++;
+      if (!played) {
+        this.stats.tapsRejected++;
+        const why = picks.length ? (suspicious ? 'echo' : 'off the keys') : (this.resolver.lastWhy || []).join(' / ') || 'nothing';
+        this.stats.why = this.stats.why || {};
+        this.stats.why[why] = (this.stats.why[why] || 0) + 1;
+        this.stats.lastWhy = why;
+      }
     }
     this.pending = still;
   }

@@ -53,8 +53,10 @@ export class TapResolver {
   resolve(t, afterMs = this.o.afterMs) {
     const o = this.o;
     const win = this.frames.filter((f) => f.t >= t - o.lookbackMs && f.t <= t + afterMs);
-    if (!win.length) return [];
+    this.lastWhy = []; // why nothing was picked (for diagnostics): one reason per hand
+    if (!win.length) { this.lastWhy.push('no frames'); return []; }
     const last = win[win.length - 1];
+    if (!last.hands.length) this.lastWhy.push('no hands');
     // the frame closest to the tap, and the one ~lateMs before it
     const atTap = nearest(win, t), before = nearest(this.frames, t - o.lateMs);
     const picks = [];
@@ -77,8 +79,12 @@ export class TapResolver {
           const f = fingers.find((x) => x.tip === prev.tip);
           if (f && f.late >= o.minLate * o.repeatLateFactor && f.after <= o.maxAfter) {
             picks.push({ id: `${hand.label}-${f.tip}`, hand: hand.label, tip: f.tip, x: P[f.tip].x, y: P[f.tip].y, travel: f.travel, lead: 0, size, repeat: true });
+            continue;
           }
         }
+        // the most-moved finger, and which test it failed
+        const top = fingers.reduce((a, b) => (b.score > a.score ? b : a));
+        this.lastWhy.push(top.travel < o.minTravel ? 'too little travel' : top.late < o.minLate ? 'not still moving down' : 'kept moving after the tap');
         continue;
       }
       let best = cands.reduce((a, b) => (b.score > a.score ? b : a));
@@ -98,7 +104,7 @@ export class TapResolver {
       // how clearly the best finger beats the runner-up (for deciding early)
       const runnerUp = Math.max(-Infinity, ...fingers.filter((f) => f !== best).map((f) => f.score));
       const margin = best.score - runnerUp;
-      if (bestLead < o.minLead) continue;
+      if (bestLead < o.minLead) { this.lastWhy.push('no finger ahead of the others'); continue; }
       for (const f of cands) {
         const lead = f.score - typical;
         if (f === best || (lead >= o.minLead && lead >= bestLead * o.chordRatio)) {

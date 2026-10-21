@@ -413,3 +413,9 @@ sync correction and per-finger scores.
 - **02:03** New: **Follow a tune** — pick a public-domain tune (6 of them) and the next key lights up green
   on the on-screen keyboard, advancing on the right note and counting wrong ones (unit + browser
   tests; checked in laptop and phone screenshots — moved to the top of the side panel so phones see it).
+- **02:06** Diagnostics: the tap engine records *why* a heard tap played nothing (no hands / too little
+  travel / not still moving down / kept moving / no finger ahead / off the keys / no frame in time);
+  shown in the debug view and per clip in `clip-test --verbose`. On the clips the leading reasons
+  are "too little travel" and "not still moving down"; "off the keys" picks were mostly beyond the
+  right-hand end of the paper. Tried a bigger allowance in front of the keys (24→30–48 mm): no change
+  in correct notes → not changed.

@@ -131,7 +131,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     fusion.tick(e.at);
   }
   fusion.tick(1e12);
-  return { notes, markerCounts, paperFrames, early: fusion.stats && fusion.stats.early || 0 };
+  return { notes, markerCounts, paperFrames, early: fusion.stats && fusion.stats.early || 0, why: fusion.stats && fusion.stats.why || {} };
 }
 
 // group notes starting within 60 ms into chords
@@ -235,7 +235,7 @@ async function main() {
     const audio = decodeAudio(file);
     const taps = tapsFromAudio(audio, sensitivity);
     analysed.push({ clip, frames, audio, exp });
-    const { notes, markerCounts, paperFrames } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)), tipOffset: Number(opt('tip-offset', TIP_OFFSET_MM)), engine: opt('engine', 'tap'), avOffset: Number(opt('av-offset', 0)) });
+    const { notes, markerCounts, paperFrames, why } = replay(frames, taps, { variant, latency, octave: Number(opt('octave', 0)), tipOffset: Number(opt('tip-offset', TIP_OFFSET_MM)), engine: opt('engine', 'tap'), avOffset: Number(opt('av-offset', 0)) });
     const groups = groupChords(notes);
     const handFrames = frames.filter((f) => f.hands.length).length;
     const sc = exp ? score(exp, groups) : null;
@@ -258,6 +258,7 @@ async function main() {
       const iois = groups.slice(1).map((g, k) => Math.round(g.t - groups[k].t));
       console.log(`  note times (s): ${groups.map((g) => (g.t / 1000).toFixed(2)).join(' ')}`);
       console.log(`  gaps between notes (ms): ${iois.join(' ')}`);
+      console.log(`  taps not played, why: ${Object.entries(why).map(([k, v]) => `${k} ×${v}`).join(', ') || 'none'}`);
     }
   }
   const overall = totalExpected || totalDetected ? totalCorrect / Math.max(totalExpected, totalDetected) : 1;

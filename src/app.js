@@ -681,6 +681,7 @@ function drawDebug() {
     `tap→sound: last ${fmt(state.lastLatency)} ms, average ${fmt(avg)} ms (${lat.length} taps)`,
     `sound/picture sync correction: ${engines.tap.syncOffset.toFixed(0)} ms`,
     `engine ${fusion === engines.classic ? "classic" : "tap"}${state.micFailed ? " (no microphone)" : ""}: taps ${fusion.stats.taps}, rejected (no finger) ${fusion.stats.tapsRejected}, notes ${fusion.stats.notes}`,
+    `last tap not played: ${fusion.stats.lastWhy || '—'}`,
     `paper markers: ${[...state.markersSeen].join(',') || 'none'}`,
     `last tap, finger scores (thumb→little): ${(() => { const ls = engines.tap.resolver.lastScores; return ls ? ls.fingers.map((f) => f.score).join(' ') : '–'; })()}`,
     `fingers: ${fingers.join('  ')}`,
