@@ -143,7 +143,7 @@ function replay(frames, taps, { variant, latency, octave = 0, transpose = 0, str
     fusion.tick(e.at);
   }
   fusion.tick(1e12);
-  return { notes, markerCounts, paperFrames, early: fusion.stats && fusion.stats.early || 0, why: fusion.stats && fusion.stats.why || {} };
+  return { notes, markerCounts, paperFrames, early: fusion.stats && fusion.stats.early || 0, why: fusion.stats && fusion.stats.why || {}, syncOffset: fusion.syncOffset };
 }
 
 // group notes starting within 60 ms into chords
@@ -276,6 +276,7 @@ async function main() {
   const overall = totalExpected || totalDetected ? totalCorrect / Math.max(totalExpected, totalDetected) : 1;
   console.log(`\nOVERALL: ${totalCorrect} correct of ${totalExpected} expected (${totalDetected} detected) → ${(overall * 100).toFixed(1)}%`);
   if (flag('sweep')) sweep(analysed, { variant, latency });
+  if (opt('sync-test')) syncTest(analysed, { variant, latency, sensitivity });
   if (flag('auto-tune')) autoTuneTest(analysed, { variant, latency, sensitivity });
   if (opt('self-teach')) selfTeach(analysed, { variant, latency, margin: Number(opt('self-teach')) });
   if (jsonOut) writeFileSync(resolve(jsonOut), JSON.stringify({ when: new Date().toISOString(), variant, latency, sensitivity, overall, results }, null, 2));
@@ -337,6 +338,35 @@ function sweep(analysed, { variant, latency }) {
   rows.sort((a, b) => b.accuracy - a.accuracy || a.falseNotes - b.falseNotes);
   console.log(`\nSWEEP (${combos.length} combinations) – best 10:`);
   for (const r of rows.slice(0, 10)) console.log(`  ${(r.accuracy * 100).toFixed(1)}%  notes in no-play clips: ${r.falseNotes}  ` + Object.entries(r).filter(([k]) => !['accuracy', 'falseNotes'].includes(k)).map(([k, v]) => `${k}=${v}`).join(' '));
+}
+
+// --sync-test: all clips played back to back (twice) with deliberate sound/picture offsets, to see
+// how fast auto-sync corrects them and what that does to accuracy. Grid via --grid on syncSamples/syncGain.
+function syncTest(analysed, { variant, latency, sensitivity }) {
+  const offsets = String(opt('sync-test')).split(',').map(Number);
+  const grid = JSON.parse(opt('grid', 'null')) || { syncSamples: [25, 12, 8], syncGain: [0.5, 0.8] };
+  let combos = [{}];
+  for (const [k, vals] of Object.entries(grid)) combos = combos.flatMap((c) => vals.map((v) => ({ ...c, [k]: v })));
+  const scored = analysed.filter((a) => a.exp);
+  const frames = [], taps = [], ranges = [];
+  let t0 = 0;
+  for (let round = 0; round < 2; round++) for (const a of scored) {
+    const fr = a.frames, end = fr.length ? fr[fr.length - 1].t : 0;
+    for (const f of fr) frames.push({ ...f, t: f.t + t0 });
+    for (const tp of tapsFromAudio(a.audio, sensitivity)) taps.push({ ...tp, t: tp.t + t0 });
+    ranges.push({ a, from: t0, to: t0 + end + 500, round });
+    t0 += end + 2000;
+  }
+  console.log(`\nSYNC TEST (${scored.length} clips × 2 in a row):`);
+  for (const off of offsets) for (const c of [{ autoSync: false }, ...combos.map((x) => ({ autoSync: true, ...x }))]) {
+    const { notes, syncOffset } = replay(frames, taps, { variant, latency, avOffset: off, fusionOpts: { syncSamples: 25, syncGain: 0.5, ...c } });
+    let correct = [0, 0], n = [0, 0], stray = [0, 0];
+    for (const r of ranges) {
+      const g = groupChords(notes.filter((x) => x.t >= r.from && x.t < r.to).map((x) => ({ ...x, t: x.t - r.from })));
+      if (r.a.exp.length) { correct[r.round] += score(r.a.exp, g).correct; n[r.round] += r.a.exp.length; } else stray[r.round] += g.length;
+    }
+    console.log(`  offset ${off} ms ${JSON.stringify(c)}: 1st pass ${correct[0]}/${n[0]} (${stray[0]} stray), 2nd pass ${correct[1]}/${n[1]} (${stray[1]} stray), final correction ${Math.round(syncOffset)} ms`);
+  }
 }
 
 // --auto-tune: tests the app's personal auto-tuning (Check accuracy). For each clip with expected

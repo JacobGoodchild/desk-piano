@@ -118,6 +118,7 @@ side ~45° down, the mic as close to the paper as possible, and say nothing whil
 `--sweep --grid '{"minLead":[0.02,0.04],"afterMs":[35,70]}'` to try specific values. The old
 landing-based engine is still available with `--engine classic`.
 
+`--sync-test 0,20,-20` plays all clips back to back with deliberate sound/picture offsets to test auto-sync.
 `--desk 2|3` simulates plain desk mode (a perfect 2- or 3-tap calibration taken from the paper).
 `--auto-tune` checks the app's personal auto-tuning (Set-up → Check accuracy): it tunes on each
 clip alone and scores the other clips with the result. Tuning must never make the other clips worse;

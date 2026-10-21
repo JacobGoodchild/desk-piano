@@ -18,6 +18,8 @@ export const TAP_FUSION_DEFAULTS = {
   autoSync: true,
   syncTargetMs: -17,
   syncSamples: 25,
+  syncDeadband: 15, // ms: smaller errors are left alone (noise)
+  syncGain: 0.5, // fraction of the measured error corrected per step (at most 30 ms a step)
   syncMaxMs: 120,
 };
 
@@ -68,8 +70,8 @@ export class TapFusion {
       if (this.syncData.length >= this.o.syncSamples) {
         const sorted = [...this.syncData].sort((a, b) => a - b);
         const err = sorted[sorted.length >> 1] - this.o.syncTargetMs; // >0: picture runs late vs sound
-        if (Math.abs(err) > 15) {
-          this.syncOffset = Math.max(-this.o.syncMaxMs, Math.min(this.o.syncMaxMs, this.syncOffset + Math.max(-30, Math.min(30, err * 0.5))));
+        if (Math.abs(err) > this.o.syncDeadband) {
+          this.syncOffset = Math.max(-this.o.syncMaxMs, Math.min(this.o.syncMaxMs, this.syncOffset + Math.max(-30, Math.min(30, err * this.o.syncGain))));
         }
         this.syncData = [];
       }
