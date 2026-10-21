@@ -79,7 +79,10 @@ function keyForPoint(x, y) {
   return shiftNote(paperToKey(state.layout, p.x, p.y, TIP_OFFSET_MM));
 }
 
-function pedalDown() { return settings.pedalAlways || state.pedalKey || state.pedalButton; }
+function pedalDown() { return !!(settings.pedalAlways || state.pedalKey || state.pedalButton || state.pedalMidi); }
+// Space, or a USB/Bluetooth foot pedal: "page-turner" pedals send Page Up/Down or arrow keys
+const PEDAL_KEYS = new Set(['Space', 'PageDown', 'PageUp', 'ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight']);
+midiOut.onPedal = (on) => { state.pedalMidi = on; updatePedal(); };
 function updatePedal() {
   const on = pedalDown();
   $('pedal').setAttribute('aria-pressed', String(on));
@@ -1081,7 +1084,7 @@ function releaseComputerKeys() {
 function bindKeys() {
   window.addEventListener('keydown', (e) => {
     if (e.target && ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
-    if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
+    if (PEDAL_KEYS.has(e.code)) { e.preventDefault(); if (!e.repeat) { state.pedalKey = true; updatePedal(); } return; }
     const k = e.key.toLowerCase();
     if (k === 'z' && !e.repeat) { state.kbdOctave = Math.max(-3, state.kbdOctave - 1); drawPiano(); return; }
     if (k === 'r' && !e.repeat && settings.mode === 'desk') { recentre(); return; }
@@ -1095,7 +1098,7 @@ function bindKeys() {
     noteOn(midi, vel, { how: 'keyboard' });
   });
   window.addEventListener('keyup', (e) => {
-    if (e.code === 'Space') { state.pedalKey = false; updatePedal(); return; }
+    if (PEDAL_KEYS.has(e.code)) { state.pedalKey = false; updatePedal(); return; }
     if (kbdDown.has(e.code)) { noteOff(kbdDown.get(e.code)); kbdDown.delete(e.code); }
   });
   // switching to another window while holding keys: their key-ups never arrive

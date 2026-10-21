@@ -6,6 +6,10 @@ export class MidiOut {
   async enable() {
     if (!navigator.requestMIDIAccess) throw new Error('This browser has no Web MIDI');
     this.access = await navigator.requestMIDIAccess();
+    // a sustain pedal plugged into a MIDI keyboard or adapter (controller 64) works as the pedal
+    const listen = () => { for (const inp of this.access.inputs.values()) inp.onmidimessage = (e) => this._in(e.data); };
+    listen();
+    this.access.onstatechange = listen;
     return this.outputs();
   }
   outputs() { return this.access ? [...this.access.outputs.values()].map((o) => ({ id: o.id, name: o.name })) : []; }
@@ -13,6 +17,7 @@ export class MidiOut {
   noteOn(midi, vel) { if (this.port) this.port.send([0x90, midi & 127, Math.max(1, Math.min(127, Math.round(vel * 127)))]); }
   noteOff(midi) { if (this.port) this.port.send([0x80, midi & 127, 64]); }
   pedal(on) { if (this.port) this.port.send([0xb0, 64, on ? 127 : 0]); }
+  _in(d) { if (d && d.length >= 3 && (d[0] & 0xf0) === 0xb0 && d[1] === 64 && this.onPedal) this.onPedal(d[2] >= 64); }
 }
 
 export class Recorder {

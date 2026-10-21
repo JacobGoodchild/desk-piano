@@ -25,3 +25,12 @@ test('stopping a recording mid-note closes held notes and the pedal', () => {
   const tail = ev.slice(4);
   assert.deepEqual(tail.map((e) => [e.type, e.a]), [['off', 60], ['pedal', false]]);
 });
+
+test('a MIDI sustain pedal (controller 64) on any input works the pedal', async () => {
+  const { MidiOut } = await import('../../src/midi.js');
+  const m = new MidiOut();
+  const seen = [];
+  m.onPedal = (on) => seen.push(on);
+  m._in([0xb0, 64, 127]); m._in([0xb3, 64, 0]); m._in([0xb0, 7, 100]); m._in([0x90, 60, 100]);
+  assert.deepEqual(seen, [true, false]);
+});

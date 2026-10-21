@@ -135,6 +135,11 @@ await check('computer keyboard plays notes with the pedal', async (page) => {
   await page.keyboard.down('Space');
   assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'true');
   await page.keyboard.up('Space');
+  // a USB "page-turner" foot pedal sends Page Down
+  await page.keyboard.down('PageDown');
+  assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'true');
+  await page.keyboard.up('PageDown');
+  assert.equal(await page.getAttribute('#pedal', 'aria-pressed'), 'false');
   const played = await page.evaluate(() => window.deskPiano.state.played.map((p) => [p.name, p.vel]));
   assert.equal(played[0][0], 'C4');
   assert.equal(played[1][0], 'C5');

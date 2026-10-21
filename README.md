@@ -44,7 +44,8 @@ alone — quieter and less reliable (hovering hands can set notes off), so allow
 
 ## Controls
 
-- **Pedal** button or **Space** = sustain pedal (Settings: "Pedal always on").
+- **Pedal** button or **Space** = sustain pedal (Settings: "Pedal always on"). A USB/Bluetooth foot pedal
+  ("page turner": Page Up/Down or arrow keys) or a MIDI sustain pedal (after MIDI → Find devices) works too.
 - **● Rec** records what you play; **▶ Play back**; **Save .mid** downloads a MIDI file.
 - Volume slider, **⛶** full screen (locks phones to landscape).
 - Computer keys **A–;** play C4–E5 (W E T Y U O P = black keys), **Z / X** octave, Shift = loud,
