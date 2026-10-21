@@ -501,3 +501,10 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
   The current engine sits at a local optimum on these 8 clips; more accuracy needs new clips.
 - **07:55** Set-up steps tick themselves off live (paper/camera/markers/microphone/hands) — checked in a screenshot.
 - **07:57** Phone portrait: shorter on-screen piano, no note trail, compact header → the set-up checklist is visible.
+- **08:02** New: **personal auto-tuning** in Check accuracy. While you play the exercise the app keeps the
+  hand frames + taps in memory, then replays them with 20 variations of the two movement gates
+  (minLead/minLate) and, if one gets ≥2 more notes right, offers "Keep it" (saved as settings.tuned;
+  Forget clears it). Synthetic unit test: a player whose finger barely moves just before the tap —
+  defaults 0/7, tuned 7/7. Leave-one-clip-out test on Jacob's clips (`clip-test --auto-tune`): a wider
+  grid (weights too) tuned on the chromatic clip made the others WORSE (22→19 right, 3→7 stray) →
+  narrowed to the two gates, which never triggers on these clips (defaults already best) = no harm.

@@ -212,6 +212,29 @@ await check('a note held by two sources lasts until both let go; cancelling a re
   assert.equal(r.desk, JSON.stringify({ c4: { x: 100, y: 300 }, c5: { x: 300, y: 300 } }));
 });
 
+await check('personal tuning: applied to the engine, forgotten by Forget; a check with no data just reports', async (page) => {
+  await startApp(page, '?sim=1');
+  const r = await page.evaluate(async () => {
+    const dp = window.deskPiano;
+    const o = dp.engines.tap.resolver.o;
+    const before = o.minLate;
+    dp.settings.tuned = { minLate: 0.02 };
+    dp.applySettings();
+    const tuned = o.minLate;
+    document.getElementById('forgetBtn').click();
+    const after = o.minLate;
+    // an accuracy check where taps were heard but nothing useful was seen
+    dp.startCheck();
+    for (let i = 0; i < 6; i++) dp.state.check.rec.taps.push({ t: performance.now() - 1000 + i * 100, velocity: 0.5 });
+    dp.state.check.got.push(62, 64);
+    dp.finishCheck();
+    await new Promise((res) => setTimeout(res, 300));
+    return { before, tuned, after, saved: dp.settings.tuned, msg: document.getElementById('calib').textContent };
+  });
+  assert.deepEqual([r.tuned, r.after, r.saved], [0.02, r.before, null], JSON.stringify(r));
+  assert.match(r.msg, /Accuracy check: 2 of 9/);
+});
+
 await check('follow a tune: the next key lights up and advances on the right note', async (page) => {
   await startApp(page, '?sim=1');
   await page.selectOption('#tuneSel', { label: 'Mary had a little lamb' });

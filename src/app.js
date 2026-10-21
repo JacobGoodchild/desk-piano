@@ -9,6 +9,7 @@ import { Metronome } from './metronome.js';
 import { StrikeDetector } from './strike.js';
 import { Fusion } from './fusion.js';
 import { TapFusion } from './tap-fusion.js';
+import { autoTune, alignCorrect, TUNE_GRID } from './auto-tune.js';
 import { FingerTeacher } from './tap-resolver.js';
 import { VelocityMapper } from './onset.js';
 import { paperLayout, paperToKey, fitPaper, detectPaperSize, TIP_OFFSET_MM } from './paper.js';
@@ -57,6 +58,7 @@ const handlers = {
 const engines = { tap: new TapFusion(handlers), classic: new Fusion(handlers) };
 let fusion = engines[settings.engine] || engines.tap;
 engines.tap.resolver.templates = settings.fingerTemplates || null;
+const baseResolver = { ...engines.tap.resolver.o }; // defaults, before any personal tuning
 
 // ---------------------------------------------------------------- keys & notes
 function shiftNote(m) { return m == null ? null : m + settings.transpose + settings.octave * 12; }
@@ -258,6 +260,7 @@ function handleTap({ t, peak, floor, velocity }) {
   if (state.teach) { state.teach.taps.push(t); return; } // teaching: no notes
   if (state.calib) { calibTaps.push(t); return; } // resolved against the camera in calibrationEvents
   const tap = { t, velocity: vel, peak, floor };
+  if (state.check && state.check.rec.taps.length < 100) state.check.rec.taps.push({ t, velocity: vel });
   const played = fusion.onTap(tap, strikes);
   // learn the loudness range only from taps that really were notes (not talking or knocks);
   // the tap engine decides a moment later, so it's learnt in noteOn
@@ -370,6 +373,7 @@ function handleHandFrame(frame) {
   updateHover(frame.hands);
   if (state.teach) { engines.tap.resolver.pushFrame(frame); teachStep(); return; }
   if (state.calib) { engines.tap.resolver.pushFrame(frame); calibrationEvents(events); return; }
+  if (state.check && state.check.rec.frames.length < 3000) state.check.rec.frames.push(frame);
   if (fusion === engines.tap) fusion.onFrame(frame);
   else fusion.onStrikeEvents(events, strikes);
   fusion.tick(performance.now());
@@ -525,7 +529,7 @@ function teachStep() {
 const CHECK_NOTES = [60, 62, 64, 65, 67, 65, 64, 62, 60];
 function startCheck() {
   if (!state.started) { setStatus('Press Start first.'); return; }
-  state.check = { got: [], t0: performance.now() };
+  state.check = { got: [], t0: performance.now(), rec: { frames: [], taps: [] } }; // rec: in memory only, for auto-tuning
   showCalib(`Accuracy check: play <b>${CHECK_NOTES.map(noteName).join(' ')}</b> slowly, one finger per note (thumb on middle C).`, () => { state.check = null; });
 }
 function checkNote(midi) {
@@ -537,13 +541,21 @@ function finishCheck() {
   const c = state.check; state.check = null;
   const correct = alignCorrect(CHECK_NOTES, c.got);
   const extra = Math.max(0, c.got.length - correct);
-  showCalib(`Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}. ${correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.'}`);
-}
-// number of notes matched in order (longest common subsequence)
-function alignCorrect(a, b) {
-  const dp = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
-  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
-  return dp[a.length][b.length];
+  const msg = `Accuracy check: <b>${correct} of ${CHECK_NOTES.length}</b> notes right${extra ? `, ${extra} wrong or extra` : ''}. Heard: ${c.got.map(noteName).join(' ') || 'nothing'}.`;
+  const tips = correct >= 8 ? 'Great!' : 'Tips: tap firmly so the mic hears it, keep the other fingers still, try “Teach my fingers”.';
+  if (correct >= CHECK_NOTES.length || fusion !== engines.tap || c.rec.taps.length < 5) { showCalib(`${msg} ${tips}`); return; }
+  showCalib(`${msg} Tuning the note detection to your playing…`);
+  // let the message show before the (short) number crunching
+  setTimeout(() => {
+    const r = autoTune({
+      frames: c.rec.frames, taps: c.rec.taps, expected: CHECK_NOTES, keyFor: (p) => keyForPoint(p.x, p.y),
+      base: { ...engines.tap.resolver.o }, fusionOpts: { ...engines.tap.o }, templates: engines.tap.resolver.templates, syncOffset: engines.tap.syncOffset,
+    });
+    if (!r.params) { showCalib(`${msg} ${tips}`); return; }
+    showCalib(`${msg} <b>Tuned to your playing:</b> replaying what you just played with adjusted detection gets <b>${r.after} of ${CHECK_NOTES.length}</b>. <button id="tuneKeep" class="primary">Keep it</button> <button id="tuneNo">No thanks</button>`);
+    $('tuneKeep').onclick = () => { settings.tuned = { ...(settings.tuned || {}), ...r.params }; applySettings(); finishCalib('Tuned – try Check accuracy again to see the difference.'); };
+    $('tuneNo').onclick = () => { $('calib').hidden = true; };
+  }, 30);
 }
 
 // ---------------------------------------------------------------- drawing
@@ -831,6 +843,7 @@ function applySettings() {
   $('roll').classList.toggle('hidden', !settings.showRoll);
   $('hint').hidden = settings.output !== 'speaker' && state.started;
   $('cameraOnlyRow').hidden = settings.engine !== 'classic'; // only applies to the classic engine
+  for (const k of Object.keys(TUNE_GRID)) engines.tap.resolver.o[k] = settings.tuned && k in settings.tuned ? settings.tuned[k] : baseResolver[k]; // personal tuning
   $('fixedRow').hidden = settings.dynamics !== 'fixed';
   $('touchRow').hidden = settings.dynamics === 'fixed';
   // Without a microphone the tap engine can never play, so fall back to the classic engine playing
@@ -989,7 +1002,7 @@ function bindSettings() {
     } catch { /* not supported */ }
   };
   if (!document.documentElement.requestFullscreen) $('fullBtn').hidden = true;
-  $('forgetBtn').onclick = () => { settings.fingerTemplates = null; engines.tap.resolver.templates = null; saveSettings(settings); setStatus('Taught finger patterns forgotten.'); };
+  $('forgetBtn').onclick = () => { settings.fingerTemplates = null; settings.tuned = null; engines.tap.resolver.templates = null; applySettings(); setStatus('Taught finger patterns and personal tuning forgotten.'); };
 }
 
 async function listCameras() {
@@ -1121,6 +1134,6 @@ window.deskPiano = {
   injectMarkers: (found) => updatePaperFromMarkers(found, 1),
   setVideoSize: (w, h) => { state.video = { w, h }; },
   keyForPoint,
-  startCalibration, recentre, startTeaching, startCheck,
+  startCalibration, recentre, startTeaching, startCheck, finishCheck,
   applySettings,
 };

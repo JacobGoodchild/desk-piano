@@ -23,6 +23,7 @@ import { paperLayout, paperToKey, fitPaper, TIP_OFFSET_MM } from '../src/paper.j
 import { applyH, invertH } from '../src/homography.js';
 import { noteName, parseNote } from '../src/notes.js';
 import { HandIds } from '../src/hand-ids.js';
+import { TUNE_GRID } from '../src/auto-tune.js';
 
 const REPO = realpathSync(new URL('..', import.meta.url).pathname);
 const args = process.argv.slice(2);
@@ -264,6 +265,7 @@ async function main() {
   const overall = totalExpected || totalDetected ? totalCorrect / Math.max(totalExpected, totalDetected) : 1;
   console.log(`\nOVERALL: ${totalCorrect} correct of ${totalExpected} expected (${totalDetected} detected) → ${(overall * 100).toFixed(1)}%`);
   if (flag('sweep')) sweep(analysed, { variant, latency });
+  if (flag('auto-tune')) autoTuneTest(analysed, { variant, latency, sensitivity });
   if (opt('self-teach')) selfTeach(analysed, { variant, latency, margin: Number(opt('self-teach')) });
   if (jsonOut) writeFileSync(resolve(jsonOut), JSON.stringify({ when: new Date().toISOString(), variant, latency, sensitivity, overall, results }, null, 2));
   await browser.close();
@@ -324,6 +326,44 @@ function sweep(analysed, { variant, latency }) {
   rows.sort((a, b) => b.accuracy - a.accuracy || a.falseNotes - b.falseNotes);
   console.log(`\nSWEEP (${combos.length} combinations) – best 10:`);
   for (const r of rows.slice(0, 10)) console.log(`  ${(r.accuracy * 100).toFixed(1)}%  notes in no-play clips: ${r.falseNotes}  ` + Object.entries(r).filter(([k]) => !['accuracy', 'falseNotes'].includes(k)).map(([k, v]) => `${k}=${v}`).join(' '));
+}
+
+// --auto-tune: tests the app's personal auto-tuning (Check accuracy). For each clip with expected
+// notes, tune on that clip alone (same grid and rule as src/auto-tune.js: at least 2 more notes
+// right), then score all the OTHER clips with the tuned settings vs the defaults. Shows whether
+// tuning on one short exercise carries over to other playing.
+function autoTuneTest(analysed, { variant, latency, sensitivity }) {
+  const tapsOf = new Map(analysed.map((a) => [a.clip, tapsFromAudio(a.audio, sensitivity)]));
+  const evalClip = (a, extra) => {
+    const { notes } = replay(a.frames, tapsOf.get(a.clip), { variant, latency, resolverOpts: extra });
+    const groups = groupChords(notes);
+    if (!a.exp.length) return { correct: 0, n: 0, det: groups.length, falseNotes: groups.length };
+    const sc = score(a.exp, groups);
+    return { correct: sc.correct, n: a.exp.length, det: groups.length, falseNotes: 0, score: sc.correct - 0.5 * Math.max(0, groups.length - sc.correct) };
+  };
+  let combos = [{}];
+  for (const [k, vals] of Object.entries(TUNE_GRID)) combos = combos.flatMap((c) => vals.map((v) => ({ ...c, [k]: v })));
+  const withExp = analysed.filter((a) => a.exp);
+  console.log('\nAUTO-TUNE (tune on one clip, score the others):');
+  for (const A of withExp.filter((a) => a.exp.length)) {
+    const base = evalClip(A, {});
+    let best = null;
+    for (const c of combos) {
+      const r = evalClip(A, c);
+      if (!best || r.score > best.r.score) best = { r, c };
+    }
+    const ok = best.r.correct >= base.correct + 2 && best.r.score > base.score;
+    const params = ok ? best.c : {};
+    let d = { correct: 0, n: 0, det: 0, falseNotes: 0 }, t = { correct: 0, n: 0, det: 0, falseNotes: 0 };
+    for (const B of withExp) {
+      if (B === A) continue;
+      const rb = evalClip(B, {}), rt = evalClip(B, params);
+      for (const k of Object.keys(d)) { d[k] += rb[k]; t[k] += rt[k]; }
+    }
+    const pct = (x) => (x.n ? (100 * x.correct / Math.max(x.n, x.det - x.falseNotes)).toFixed(1) : '-');
+    console.log(`  tuned on ${A.clip}: ${base.correct}→${best.r.correct}/${A.exp.length} ${ok ? JSON.stringify(params) : '(not clearly better: kept defaults)'}`);
+    console.log(`    other clips: defaults ${d.correct}/${d.n} correct (${pct(d)}%), ${d.falseNotes} stray; tuned ${t.correct}/${t.n} (${pct(t)}%), ${t.falseNotes} stray`);
+  }
 }
 
 // --self-teach M: learn finger patterns from clear-cut taps (margin ≥ M) in all OTHER clips, then score
