@@ -546,3 +546,29 @@ better, more polished interface." Wake-ups scheduled with `send_later` every 30 
 - **11:23** Settings → "Reset all" (with a confirm): back to defaults incl. taught fingers, tuning and desk
   calibration; browser test.
 - **11:24** Follow a tune: the two notes after the next one show in a fainter green (read ahead).
+
+## Day-run summary (draft, kept up to date)
+
+**Live:** https://jacobgoodchild.github.io/desk-piano/ (Help page: …/help.html)
+
+**Bugs fixed:** all 5 left over from the overnight review (desk calibration survives camera
+resolution changes; safe 3-tap perspective curve; silent synth voices freed under the pedal; mirrored
+marker misreads; classic-engine shared keys) + 5 more found by a third review of today's code (a
+crash when changing tune right after finishing one, stale in-memory recordings, desk dots).
+
+**Accuracy / feel**
+- Personal **auto-tuning** in Check accuracy and after Follow-a-tune pieces (offered, never forced;
+  tested leave-one-clip-out on your clips so it can't make things worse there).
+- Slower hand tracking handled much better (simulated by dropping frames from your clips): waits
+  scale with frame rate, tap time-out allows for tracking time, hand positions interpolated between
+  frames → 10 fps 40.4% → 47.4%, 15 fps 47.4% → 50.9%; 30 fps unchanged at 56.1%.
+- 27% of notes now play a frame early (was 11%) at the same accuracy.
+- Real **foot pedals**: USB/Bluetooth page-turner pedals and MIDI sustain pedals.
+
+**Interface:** set-up steps tick themselves off; Settings tidied (dark controls, Done always visible,
+only relevant rows, Reset all); phone portrait layout; Help page; octave −/+ buttons; Follow a tune
+reads ahead (next 2 notes) and has 4 more tunes (Für Elise, Minuet in G, Jingle bells, Amazing grace);
+Teach my fingers says which finger it saw; shorter what's-new note; status line follows Paper/Desk.
+
+**Delay:** audio path ~57 ms (headless); with the camera wait ~128 ms at 30 fps (~95 ms for clear-cut
+notes or in Fast mode), ~95 ms with a 60 fps camera — plus the device's camera/tracking time.
